@@ -1,0 +1,12 @@
+export function GTMNoScript({ containerId = "GTM-M8TC63Z6" }: { containerId?: string }) {
+  return (
+    <noscript>
+      <iframe
+        src={`https://www.googletagmanager.com/ns.html?id=${containerId}`}
+        height="0"
+        width="0"
+        style={{ display: "none", visibility: "hidden" }}
+      />
+    </noscript>
+  )
+}
