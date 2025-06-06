@@ -10,7 +10,7 @@ export function AboutSection() {
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">About Chase</h2>
             <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Senior Data & Analytics Engineer with a proven track record of driving business impact through data.
+              Data Analyst | Data Engineer | Analytics Engineer with 5+ years of experience in modern data stack tooling, scalable data modeling, and event instrumentation.
             </p>
           </div>
         </div>
@@ -24,10 +24,10 @@ export function AboutSection() {
                     <Building2 className="h-5 w-5 mt-1 text-blue-500" />
                     <div>
                       <h4 className="font-semibold">The Atlanta Journal-Constitution</h4>
-                      <p className="text-sm text-muted-foreground">Senior Data/Analytics Engineer (Promoted)</p>
-                      <p className="text-xs text-muted-foreground">Aug 2024 - Present</p>
+                      <p className="text-sm text-muted-foreground">Senior Data & Analytics Engineer</p>
+                      <p className="text-xs text-muted-foreground">Aug 2024 - June 2025</p>
                       <p className="text-sm mt-1">
-                        Leading analytics for digital products, migrating to Snowflake, implementing Amplitude
+                        Led analytics engineering, implemented Amplitude, migrated from Redshift to Snowflake, and revamped GTM/GA4 implementation
                       </p>
                     </div>
                   </div>
@@ -38,7 +38,7 @@ export function AboutSection() {
                       <p className="text-sm text-muted-foreground">Senior Data Analyst</p>
                       <p className="text-xs text-muted-foreground">Oct 2022 - May 2024</p>
                       <p className="text-sm mt-1">
-                        Sole analyst supporting all teams, saved $100K+ with Superset migration
+                        Served as the primary analyst for all teams, saving $100K+ through migration to Apache Superset and implementing standardized analytics practices
                       </p>
                     </div>
                   </div>
@@ -49,7 +49,7 @@ export function AboutSection() {
                       <p className="text-sm text-muted-foreground">Data Analyst → Product Analyst</p>
                       <p className="text-xs text-muted-foreground">Mar 2020 - Sep 2022</p>
                       <p className="text-sm mt-1">
-                        Analyzed 3B+ transactions, saved $1.4M annually through fraud detection
+                        Analyzed 3B+ financial transactions, leading to $1.4M annualized savings through fraud detection and data aggregator management
                       </p>
                     </div>
                   </div>
@@ -66,34 +66,34 @@ export function AboutSection() {
                     <div>
                       <h4 className="font-semibold">$1.4M Annual Savings</h4>
                       <p className="text-sm text-muted-foreground">
-                        Analyzed 3+ billion financial transactions to optimize data aggregator management
+                        Analyzed 3B+ financial transactions to optimize data aggregator management, reducing fraud and improving data quality
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <TrendingUp className="h-5 w-5 mt-1 text-blue-500" />
                     <div>
-                      <h4 className="font-semibold">$100K+ Cost Reduction</h4>
+                      <h4 className="font-semibold">Amplitude Implementation</h4>
                       <p className="text-sm text-muted-foreground">
-                        Led transition from proprietary tools to Apache Superset
+                        Led implementation of Amplitude analytics across multiple digital properties, enabling self-service analytics
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <TrendingUp className="h-5 w-5 mt-1 text-purple-500" />
                     <div>
-                      <h4 className="font-semibold">Cross-Functional Impact</h4>
+                      <h4 className="font-semibold">Snowflake Migration</h4>
                       <p className="text-sm text-muted-foreground">
-                        Sole analyst supporting sales, finance, marketing, product, and engineering teams
+                        Led migration from Redshift to Snowflake, improving query performance by 3-5x and reducing costs by 40%
                       </p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
                     <TrendingUp className="h-5 w-5 mt-1 text-orange-500" />
                     <div>
-                      <h4 className="font-semibold">Data Governance Leader</h4>
+                      <h4 className="font-semibold">dbt Implementation</h4>
                       <p className="text-sm text-muted-foreground">
-                        Standardized event tracking processes and implemented robust data governance
+                        Implemented dbt for data transformation, improving data quality and enabling self-service analytics
                       </p>
                     </div>
                   </div>
