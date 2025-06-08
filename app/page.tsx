@@ -149,7 +149,7 @@ export default function Home() {
                 title="Redshift to Snowflake Migration"
                 description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
                 tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
-                image="/redshift_showflake_migration_hero_card.png?height=200&width=300"
+                image="/redshift_snowflake_migration_hero_card.png?height=200&width=300"
               />
               <ProjectCard
                 title="GTM/GA4 Implementation & Migration"

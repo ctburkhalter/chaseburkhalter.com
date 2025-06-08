@@ -1,30 +1,20 @@
-# New Project
+# chaseburkhalter.com
 
-*Automatically synced with your [v0.dev](https://v0.dev) deployments*
+This repository contains the source code for my personal portfolio built with Next.js and Tailwind CSS. It showcases real-world analytics projects and interactive demos.
 
-[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://vercel.com/chase-burkhalters-projects/v0-new-project-k0stgqnpu91)
-[![Built with v0](https://img.shields.io/badge/Built%20with-v0.dev-black?style=for-the-badge)](https://v0.dev/chat/projects/k0sTGqNpu91)
+## Development
 
-## Overview
+```bash
+pnpm install
+pnpm dev
+```
 
-This repository will stay in sync with your deployed chats on [v0.dev](https://v0.dev).
-Any changes you make to your deployed app will be automatically pushed to this repository from [v0.dev](https://v0.dev).
+Run `pnpm build` to create a production build.
 
 ## Deployment
 
-Your project is live at:
+The site is deployed on Vercel and updates automatically when changes are pushed to the `main` branch.
 
-**[https://vercel.com/chase-burkhalters-projects/v0-new-project-k0stgqnpu91](https://vercel.com/chase-burkhalters-projects/v0-new-project-k0stgqnpu91)**
+## License
 
-## Build your app
-
-Continue building your app on:
-
-**[https://v0.dev/chat/projects/k0sTGqNpu91](https://v0.dev/chat/projects/k0sTGqNpu91)**
-
-## How It Works
-
-1. Create and modify your project using [v0.dev](https://v0.dev)
-2. Deploy your chats from the v0 interface
-3. Changes are automatically pushed to this repository
-4. Vercel deploys the latest version from this repository
+MIT
