@@ -5,10 +5,9 @@ if (typeof window !== "undefined" && !window.global) {
   window.global = window
 }
 
-// Placeholder for your actual Segment, GTM, and Amplitude keys
+// Placeholder for your actual Segment and GTM keys
 const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY || "YOUR_SEGMENT_WRITE_KEY"
 const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID || "GTM-XXXXXXX"
-const AMPLITUDE_API_KEY = process.env.NEXT_PUBLIC_AMPLITUDE_API_KEY || "YOUR_AMPLITUDE_API_KEY"
 
 // Types for our analytics events
 export type AnalyticsEvent = {
@@ -171,72 +170,6 @@ class GTMProvider implements AnalyticsProvider {
   }
 }
 
-// Amplitude Provider
-class AmplitudeProvider implements AnalyticsProvider {
-  private isInitialized = false
-
-  initialize(): void {
-    if (this.isInitialized || typeof window === "undefined") return
-
-    // Load Amplitude script - using a safer approach to avoid global references
-    try {
-      const script = document.createElement("script")
-      script.type = "text/javascript"
-      script.async = true
-      script.src = "https://cdn.amplitude.com/libs/amplitude-8.5.0-min.js"
-      script.onload = () => {
-        if (window.amplitude) {
-          window.amplitude.getInstance().init(AMPLITUDE_API_KEY)
-        }
-      }
-      document.head.appendChild(script)
-      this.isInitialized = true
-    } catch (error) {
-      console.error("Failed to load Amplitude:", error)
-    }
-  }
-
-  trackEvent(event: AnalyticsEvent): void {
-    if (typeof window === "undefined" || !window.amplitude) return
-    try {
-      window.amplitude.getInstance().logEvent(event.name, event.properties)
-    } catch (error) {
-      console.error("Failed to track event with Amplitude:", error)
-    }
-  }
-
-  trackPageView(pageView: PageViewEvent): void {
-    if (typeof window === "undefined" || !window.amplitude) return
-    try {
-      window.amplitude.getInstance().logEvent("Page Viewed", {
-        page_path: pageView.path,
-        page_title: pageView.title,
-        page_referrer: pageView.referrer,
-        ...pageView.properties,
-      })
-    } catch (error) {
-      console.error("Failed to track page view with Amplitude:", error)
-    }
-  }
-
-  identify(userId: string, traits?: Record<string, any>): void {
-    if (typeof window === "undefined" || !window.amplitude) return
-    try {
-      window.amplitude.getInstance().setUserId(userId)
-
-      if (traits && window.amplitude.Identify) {
-        const identify = new window.amplitude.Identify()
-        Object.entries(traits).forEach(([key, value]) => {
-          identify.set(key, value)
-        })
-        window.amplitude.getInstance().identify(identify)
-      }
-    } catch (error) {
-      console.error("Failed to identify user with Amplitude:", error)
-    }
-  }
-}
-
 // Main Analytics Manager
 class AnalyticsManager {
   private providers: AnalyticsProvider[] = []
@@ -256,7 +189,6 @@ class AnalyticsManager {
     if (this.providers.length === 0) {
       this.providers.push(new SegmentProvider())
       this.providers.push(new GTMProvider())
-      this.providers.push(new AmplitudeProvider())
     }
 
     // Initialize all providers
@@ -287,6 +219,8 @@ class AnalyticsManager {
     this.providers.forEach((provider) => provider.trackPageView(pageView))
   }
 
+
+
   identify(userId: string, traits?: Record<string, any>): void {
     if (!this.isInitialized && typeof window !== "undefined") {
       this.initialize()
@@ -303,7 +237,7 @@ declare global {
   interface Window {
     analytics: any
     dataLayer: any[]
+    global: any
     amplitude: any
-    global: any // Add global to the Window interface
   }
 }
