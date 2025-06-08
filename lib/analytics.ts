@@ -5,9 +5,9 @@ if (typeof window !== "undefined" && !window.global) {
   window.global = window
 }
 
-// Placeholder for your actual Segment and GTM keys
-const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY || "YOUR_SEGMENT_WRITE_KEY"
-const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID || "GTM-XXXXXXX"
+// Segment and GTM credentials are expected to be provided via environment variables
+const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY ?? ""
+const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID ?? ""
 
 // Types for our analytics events
 export type AnalyticsEvent = {
