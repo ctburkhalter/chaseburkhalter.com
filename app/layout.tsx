@@ -52,6 +52,44 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Person",
+              name: "Chase Burkhalter",
+              url: "https://chaseburkhalter.com",
+              email: "chase@chaseburkhalter.com",
+              telephone: "+1-334-333-4308",
+              jobTitle: "Senior Data & Analytics Engineer",
+              description: "Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance with 5+ years of experience.",
+              address: {
+                "@type": "PostalAddress",
+                addressLocality: "Atlanta",
+                addressRegion: "GA",
+                addressCountry: "US"
+              },
+              sameAs: [
+                "https://www.linkedin.com/in/chase-burkhalter/",
+                "https://github.com/ctburkhalter"
+              ],
+              knowsAbout: [
+                "Product Analytics",
+                "Event Tracking",
+                "Data Governance",
+                "Snowflake",
+                "dbt",
+                "Amplitude",
+                "Segment",
+                "Google Analytics",
+                "Data Engineering"
+              ]
+            })
+          }}
+        />
+      </head>
       <body className={inter.className}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
