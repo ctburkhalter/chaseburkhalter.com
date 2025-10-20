@@ -12,12 +12,12 @@ import { useAnalytics } from "@/hooks/use-analytics"
 
 // Sample data for the analytics demo
 const pageViewData = [
-  { date: "2025-01", views: 1200, users: 800, sessions: 950 },
-  { date: "2025-02", views: 1900, users: 1200, sessions: 1400 },
-  { date: "2025-03", views: 1500, users: 1000, sessions: 1200 },
-  { date: "2025-04", views: 2200, users: 1500, sessions: 1800 },
-  { date: "2025-05", views: 2800, users: 1800, sessions: 2100 },
-  { date: "2025-06", views: 3100, users: 2000, sessions: 2400 },
+  { date: "2024-08", views: 1200, users: 800, sessions: 950 },
+  { date: "2024-09", views: 1900, users: 1200, sessions: 1400 },
+  { date: "2024-10", views: 1500, users: 1000, sessions: 1200 },
+  { date: "2024-11", views: 2200, users: 1500, sessions: 1800 },
+  { date: "2024-12", views: 2800, users: 1800, sessions: 2100 },
+  { date: "2025-01", views: 3100, users: 2000, sessions: 2400 },
 ]
 
 const conversionData = [
