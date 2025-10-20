@@ -15,7 +15,6 @@ export const metadata: Metadata = {
   title: "Chase Burkhalter | Senior Data & Analytics Engineer",
   description:
     "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance.",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
