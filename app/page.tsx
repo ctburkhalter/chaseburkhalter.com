@@ -183,11 +183,6 @@ export default function Home() {
                 demoLink="https://www.avo.app/"
               />
             </div>
-            <div className="flex justify-center">
-              <Button variant="outline" size="lg">
-                View All Projects <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
           </div>
         </section>
 
