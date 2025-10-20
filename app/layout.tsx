@@ -15,6 +15,34 @@ export const metadata: Metadata = {
   title: "Chase Burkhalter | Senior Data & Analytics Engineer",
   description:
     "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance.",
+  keywords: ["Data Analytics", "Analytics Engineer", "Product Analytics", "Event Tracking", "Data Governance", "Snowflake", "dbt", "Amplitude", "Segment"],
+  authors: [{ name: "Chase Burkhalter", url: "https://chaseburkhalter.com" }],
+  creator: "Chase Burkhalter",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://chaseburkhalter.com",
+    title: "Chase Burkhalter | Senior Data & Analytics Engineer",
+    description:
+      "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance.",
+    siteName: "Chase Burkhalter Portfolio",
+    images: [
+      {
+        url: "https://chaseburkhalter.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "Chase Burkhalter - Senior Data & Analytics Engineer",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Chase Burkhalter | Senior Data & Analytics Engineer",
+    description:
+      "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance.",
+    images: ["https://chaseburkhalter.com/og-image.png"],
+  },
+  metadataBase: new URL("https://chaseburkhalter.com"),
 }
 
 export default function RootLayout({
