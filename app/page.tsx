@@ -11,14 +11,21 @@ import { AboutSection } from "@/components/about-section"
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
           <div className="flex gap-6 md:gap-10">
-            <Link href="/" className="flex items-center space-x-2">
-              <BarChart3 className="h-6 w-6" />
+            <Link href="/" className="flex items-center space-x-2" aria-label="Chase Burkhalter Home">
+              <BarChart3 className="h-6 w-6" aria-hidden="true" />
               <span className="inline-block font-bold">Chase Burkhalter</span>
             </Link>
-            <nav className="hidden md:flex gap-6">
+            <nav className="hidden md:flex gap-6" aria-label="Main navigation">
               <Link
                 href="#about"
                 className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
@@ -58,7 +65,7 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-muted">
           <div className="container px-4 md:px-6">
@@ -88,7 +95,7 @@ export default function Home() {
                     <span>Available for opportunities</span>
                   </div>
                   <span>•</span>
-                  <span>Atlanta, GA (Remote/Hybrid)</span>
+                  <span>Dothan, AL (Remote/Hybrid)</span>
                 </div>
               </div>
               <div className="flex items-center justify-center">
@@ -144,42 +151,44 @@ export default function Home() {
                 description="Led the implementation of Amplitude at AJC, replacing Google Analytics and enabling stakeholder self-service analytics across digital properties. Established standardized event tracking and dashboards for key user journeys."
                 tags={["Amplitude", "Product Analytics", "Event Tracking", "Migration"]}
                 image="/amp_implementation_hero_card.png?height=200&width=300"
+                caseStudyLink="https://amplitude.com/customers"
               />
               <ProjectCard
                 title="Redshift to Snowflake Migration"
                 description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
                 tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
                 image="/redshift_snowflake_migration_hero_card.png?height=200&width=300"
+                caseStudyLink="https://www.snowflake.com/customers/"
               />
               <ProjectCard
                 title="GTM/GA4 Implementation & Migration"
                 description="Led the migration from Universal Analytics to GA4, implementing a comprehensive tracking strategy with Google Tag Manager to improve data quality and enable advanced analytics capabilities."
                 tags={["GA4", "Google Tag Manager", "Analytics", "Migration"]}
                 image="/gtm_ga4_migration_hero_card.png?height=200&width=300"
+                caseStudyLink="https://marketingplatform.google.com/about/analytics/"
               />
               <ProjectCard
                 title="$100K+ Annual Savings with Superset"
                 description="Orchestrated the transition from proprietary visualization tools to Apache Superset at Shortcut, resulting in $100K+ annual cost savings while improving self-service analytics capabilities."
                 tags={["Apache Superset", "Cost Optimization", "Data Visualization"]}
                 image="/superset_savings_hero_card.png?height=200&width=300"
+                demoLink="https://superset.apache.org/"
+                githubLink="https://github.com/apache/superset"
               />
               <ProjectCard
                 title="Cross-Functional Analytics Platform"
                 description="Built and maintained comprehensive analytics infrastructure supporting product, marketing, sales, and executive teams with unified reporting and self-service analytics capabilities."
                 tags={["dbt", "Snowflake", "Segment", "Multi-team Support"]}
                 image="/x_functional_analytics_platform_hero_card.png?height=200&width=300"
+                githubLink="https://github.com/dbt-labs/dbt-core"
               />
               <ProjectCard
                 title="Event Tracking & Data Governance"
                 description="Established standardized event tracking processes and data governance frameworks across multiple organizations, improving data quality and enabling self-service analytics."
                 tags={["Event Tracking", "Data Governance", "Documentation", "Avo"]}
                 image="/event_tracking_data_gov_hero_card.png?height=200&width=300"
+                demoLink="https://www.avo.app/"
               />
-            </div>
-            <div className="flex justify-center">
-              <Button variant="outline" size="lg">
-                View All Projects <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </div>
           </div>
         </section>
@@ -365,7 +374,7 @@ export default function Home() {
                     </a>
                   </p>
                   <p className="text-sm text-muted-foreground">334-333-4308</p>
-                  <p className="text-sm text-muted-foreground">Atlanta, GA (Open to remote/hybrid)</p>
+                  <p className="text-sm text-muted-foreground">Dothan, AL (Open to remote/hybrid)</p>
                 </div>
                 <div className="flex justify-center gap-4 pt-4">
                   <Button asChild>
@@ -384,15 +393,28 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
           <p className="text-sm text-muted-foreground md:text-base">© 2025 Chase Burkhalter. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="#" className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base">
+            <Link
+              href="https://www.linkedin.com/in/chase-burkhalter/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Visit Chase Burkhalter's LinkedIn profile"
+            >
               LinkedIn
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base">
+            <Link
+              href="https://github.com/ctburkhalter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Visit Chase Burkhalter's GitHub profile"
+            >
               GitHub
             </Link>
             <Link
               href="mailto:chase@chaseburkhalter.com"
               className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Send email to Chase Burkhalter"
             >
               Email
             </Link>
