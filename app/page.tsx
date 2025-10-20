@@ -144,36 +144,43 @@ export default function Home() {
                 description="Led the implementation of Amplitude at AJC, replacing Google Analytics and enabling stakeholder self-service analytics across digital properties. Established standardized event tracking and dashboards for key user journeys."
                 tags={["Amplitude", "Product Analytics", "Event Tracking", "Migration"]}
                 image="/amp_implementation_hero_card.png?height=200&width=300"
+                caseStudyLink="https://amplitude.com/customers"
               />
               <ProjectCard
                 title="Redshift to Snowflake Migration"
                 description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
                 tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
                 image="/redshift_snowflake_migration_hero_card.png?height=200&width=300"
+                caseStudyLink="https://www.snowflake.com/customers/"
               />
               <ProjectCard
                 title="GTM/GA4 Implementation & Migration"
                 description="Led the migration from Universal Analytics to GA4, implementing a comprehensive tracking strategy with Google Tag Manager to improve data quality and enable advanced analytics capabilities."
                 tags={["GA4", "Google Tag Manager", "Analytics", "Migration"]}
                 image="/gtm_ga4_migration_hero_card.png?height=200&width=300"
+                caseStudyLink="https://marketingplatform.google.com/about/analytics/"
               />
               <ProjectCard
                 title="$100K+ Annual Savings with Superset"
                 description="Orchestrated the transition from proprietary visualization tools to Apache Superset at Shortcut, resulting in $100K+ annual cost savings while improving self-service analytics capabilities."
                 tags={["Apache Superset", "Cost Optimization", "Data Visualization"]}
                 image="/superset_savings_hero_card.png?height=200&width=300"
+                demoLink="https://superset.apache.org/"
+                githubLink="https://github.com/apache/superset"
               />
               <ProjectCard
                 title="Cross-Functional Analytics Platform"
                 description="Built and maintained comprehensive analytics infrastructure supporting product, marketing, sales, and executive teams with unified reporting and self-service analytics capabilities."
                 tags={["dbt", "Snowflake", "Segment", "Multi-team Support"]}
                 image="/x_functional_analytics_platform_hero_card.png?height=200&width=300"
+                githubLink="https://github.com/dbt-labs/dbt-core"
               />
               <ProjectCard
                 title="Event Tracking & Data Governance"
                 description="Established standardized event tracking processes and data governance frameworks across multiple organizations, improving data quality and enabling self-service analytics."
                 tags={["Event Tracking", "Data Governance", "Documentation", "Avo"]}
                 image="/event_tracking_data_gov_hero_card.png?height=200&width=300"
+                demoLink="https://www.avo.app/"
               />
             </div>
             <div className="flex justify-center">
