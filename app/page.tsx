@@ -95,7 +95,7 @@ export default function Home() {
                     <span>Available for opportunities</span>
                   </div>
                   <span>•</span>
-                  <span>Atlanta, GA (Remote/Hybrid)</span>
+                  <span>Dothan, AL (Remote/Hybrid)</span>
                 </div>
               </div>
               <div className="flex items-center justify-center">
@@ -374,7 +374,7 @@ export default function Home() {
                     </a>
                   </p>
                   <p className="text-sm text-muted-foreground">334-333-4308</p>
-                  <p className="text-sm text-muted-foreground">Atlanta, GA (Open to remote/hybrid)</p>
+                  <p className="text-sm text-muted-foreground">Dothan, AL (Open to remote/hybrid)</p>
                 </div>
                 <div className="flex justify-center gap-4 pt-4">
                   <Button asChild>

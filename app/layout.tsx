@@ -70,8 +70,8 @@ export default function RootLayout({
               description: "Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance with 5+ years of experience.",
               address: {
                 "@type": "PostalAddress",
-                addressLocality: "Atlanta",
-                addressRegion: "GA",
+                addressLocality: "Dothan",
+                addressRegion: "Al",
                 addressCountry: "US"
               },
               sameAs: [
