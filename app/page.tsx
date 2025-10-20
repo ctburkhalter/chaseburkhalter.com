@@ -384,15 +384,28 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">
           <p className="text-sm text-muted-foreground md:text-base">© 2025 Chase Burkhalter. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <Link href="#" className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base">
+            <Link
+              href="https://www.linkedin.com/in/chase-burkhalter/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Visit Chase Burkhalter's LinkedIn profile"
+            >
               LinkedIn
             </Link>
-            <Link href="#" className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base">
+            <Link
+              href="https://github.com/ctburkhalter"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Visit Chase Burkhalter's GitHub profile"
+            >
               GitHub
             </Link>
             <Link
               href="mailto:chase@chaseburkhalter.com"
               className="text-sm text-muted-foreground underline-offset-4 hover:underline md:text-base"
+              aria-label="Send email to Chase Burkhalter"
             >
               Email
             </Link>
