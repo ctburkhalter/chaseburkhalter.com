@@ -84,7 +84,13 @@ export function AnalyticsDemo() {
               variant={trackingEnabled ? "outline" : "default"}
               onClick={() => {
                 setTrackingEnabled(!trackingEnabled)
-                trackEvent(`tracking_${!trackingEnabled ? "enabled" : "disabled"}`)
+                trackEvent({
+                  name: `tracking_${!trackingEnabled ? "enabled" : "disabled"}`,
+                  properties: {
+                    demo_section: true,
+                    tracking_enabled: !trackingEnabled
+                  }
+                })
               }}
             >
               {trackingEnabled ? "Disable Tracking" : "Enable Tracking"}

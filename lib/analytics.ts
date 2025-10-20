@@ -38,7 +38,7 @@ class SegmentProvider implements AnalyticsProvider {
     if (this.isInitialized || typeof window === "undefined") return
 
     // Load Segment snippet
-    !(() => {
+    (() => {
       var analytics = (window.analytics = window.analytics || [])
       if (!analytics.initialize) {
         if (analytics.invoked) {
@@ -130,16 +130,16 @@ class GTMProvider implements AnalyticsProvider {
     window.dataLayer = window.dataLayer || []
 
     // Load GTM script
-    ;((w, d, s, l, i) => {
-      w[l] = w[l] || []
-      w[l].push({ "gtm.start": new Date().getTime(), event: "gtm.js" })
-      var f = d.getElementsByTagName(s)[0],
+    ;(<T extends Record<string, any>>(w: T, d: Document, s: string, l: string, i: string) => {
+      ;(w as any)[l] = (w as any)[l] || []
+      ;(w as any)[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
+      const f = d.getElementsByTagName(s)[0],
         j = d.createElement(s) as HTMLScriptElement,
-        dl = l != "dataLayer" ? "&l=" + l : ""
+        dl = l !== 'dataLayer' ? '&l=' + l : ''
       j.async = true
-      j.src = "https://www.googletagmanager.com/gtm.js?id=" + i + dl
+      j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
       f.parentNode?.insertBefore(j, f)
-    })(window, document, "script", "dataLayer", GTM_CONTAINER_ID)
+    })(window, document, 'script', 'dataLayer', GTM_CONTAINER_ID)
 
     this.isInitialized = true
   }
@@ -242,4 +242,17 @@ declare global {
     dataLayer: any[]
     global: any
   }
+  
+  // Add type definitions for GTM dataLayer
+  interface DataLayerObject {
+    [key: string]: any;
+    'gtm.start'?: number;
+    event?: string;
+  }
+  
+  interface DataLayer extends Array<DataLayerObject> {
+    push: (...args: DataLayerObject[]) => number;
+  }
+  
+  var dataLayer: DataLayer;
 }
