@@ -30,7 +30,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AnalyticsProvider>
               {/* GTM noscript tag for when JavaScript is disabled */}
-              <GTMNoScript containerId="GTM-M8TC63Z6" />
+              <GTMNoScript />
               {children}
             </AnalyticsProvider>
           </ThemeProvider>
