@@ -45,7 +45,9 @@ export function AnalyticsDemo() {
 
   const handleTrackEvent = (eventName: string) => {
     if (trackingEnabled) {
-      console.log(`Event tracked: ${eventName}`)
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`Event tracked: ${eventName}`)
+      }
       setEventCount((prev) => prev + 1)
 
       // Actually track the event using our analytics hook

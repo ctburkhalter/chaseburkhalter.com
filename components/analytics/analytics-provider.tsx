@@ -16,7 +16,9 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     window.onerror = function (message, source, lineno, colno, error) {
       // Log analytics errors but don't let them break the app
       if (source?.includes("analytics") || message?.toString().includes("analytics")) {
-        console.error("Analytics error caught:", { message, source, lineno, colno, error })
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Analytics error caught:", { message, source, lineno, colno, error })
+        }
         return true // Prevent default error handling
       }
 

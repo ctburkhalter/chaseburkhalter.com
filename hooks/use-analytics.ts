@@ -14,7 +14,9 @@ export function useAnalytics() {
     try {
       analytics.initialize()
     } catch (error) {
-      console.error("Failed to initialize analytics:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to initialize analytics:", error)
+      }
     }
   }, [])
 
@@ -31,7 +33,9 @@ export function useAnalytics() {
           },
         })
       } catch (error) {
-        console.error("Failed to track page view:", error)
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Failed to track page view:", error)
+        }
       }
     }
   }, [pathname, searchParams])
@@ -41,7 +45,9 @@ export function useAnalytics() {
     try {
       analytics.trackEvent(event)
     } catch (error) {
-      console.error("Failed to track event:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to track event:", error)
+      }
     }
   }, [])
 
@@ -50,7 +56,9 @@ export function useAnalytics() {
     try {
       analytics.identify(userId, traits)
     } catch (error) {
-      console.error("Failed to identify user:", error)
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to identify user:", error)
+      }
     }
   }, [])
 
