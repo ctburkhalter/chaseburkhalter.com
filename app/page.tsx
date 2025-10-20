@@ -11,14 +11,21 @@ import { AboutSection } from "@/components/about-section"
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:p-4 focus:bg-primary focus:text-primary-foreground"
+      >
+        Skip to main content
+      </a>
       <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center space-x-4 sm:justify-between sm:space-x-0">
           <div className="flex gap-6 md:gap-10">
-            <Link href="/" className="flex items-center space-x-2">
-              <BarChart3 className="h-6 w-6" />
+            <Link href="/" className="flex items-center space-x-2" aria-label="Chase Burkhalter Home">
+              <BarChart3 className="h-6 w-6" aria-hidden="true" />
               <span className="inline-block font-bold">Chase Burkhalter</span>
             </Link>
-            <nav className="hidden md:flex gap-6">
+            <nav className="hidden md:flex gap-6" aria-label="Main navigation">
               <Link
                 href="#about"
                 className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
@@ -58,7 +65,7 @@ export default function Home() {
           </div>
         </div>
       </header>
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         {/* Hero Section */}
         <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-muted">
           <div className="container px-4 md:px-6">
