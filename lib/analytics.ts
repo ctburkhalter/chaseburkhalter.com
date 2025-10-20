@@ -241,6 +241,5 @@ declare global {
     analytics: any
     dataLayer: any[]
     global: any
-    amplitude: any
   }
 }
