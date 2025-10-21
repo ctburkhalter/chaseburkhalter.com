@@ -41,16 +41,16 @@ export default function Home() {
                 Projects
               </Link>
               <Link
-                href="#demos"
-                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
-              >
-                Analytics Demos
-              </Link>
-              <Link
                 href="#skills"
                 className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 Skills
+              </Link>
+              <Link
+                href="#demos"
+                className="flex items-center text-sm font-medium text-muted-foreground transition-colors hover:text-primary"
+              >
+                Analytics Demos
               </Link>
               <Link
                 href="#contact"
@@ -153,61 +153,37 @@ export default function Home() {
                 description="Led the implementation of Amplitude at AJC, replacing Google Analytics and enabling stakeholder self-service analytics across digital properties. Established standardized event tracking and dashboards for key user journeys."
                 tags={["Amplitude", "Product Analytics", "Event Tracking", "Migration"]}
                 image="/amp_implementation_hero_card.png?height=200&width=300"
-                caseStudyLink="https://amplitude.com/customers"
               />
               <ProjectCard
                 title="Redshift to Snowflake Migration"
                 description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
                 tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
                 image="/redshift_snowflake_migration_hero_card.png?height=200&width=300"
-                caseStudyLink="https://www.snowflake.com/customers/"
               />
               <ProjectCard
                 title="GTM/GA4 Implementation & Migration"
                 description="Led the migration from Universal Analytics to GA4, implementing a comprehensive tracking strategy with Google Tag Manager to improve data quality and enable advanced analytics capabilities."
                 tags={["GA4", "Google Tag Manager", "Analytics", "Migration"]}
                 image="/gtm_ga4_migration_hero_card.png?height=200&width=300"
-                caseStudyLink="https://marketingplatform.google.com/about/analytics/"
               />
               <ProjectCard
                 title="$100K+ Annual Savings with Superset"
                 description="Orchestrated the transition from proprietary visualization tools to Apache Superset at Shortcut, resulting in $100K+ annual cost savings while improving self-service analytics capabilities."
                 tags={["Apache Superset", "Cost Optimization", "Data Visualization"]}
                 image="/superset_savings_hero_card.png?height=200&width=300"
-                demoLink="https://superset.apache.org/"
-                githubLink="https://github.com/apache/superset"
               />
               <ProjectCard
                 title="Cross-Functional Analytics Platform"
                 description="Built and maintained comprehensive analytics infrastructure supporting product, marketing, sales, and executive teams with unified reporting and self-service analytics capabilities."
                 tags={["dbt", "Snowflake", "Segment", "Multi-team Support"]}
                 image="/x_functional_analytics_platform_hero_card.png?height=200&width=300"
-                githubLink="https://github.com/dbt-labs/dbt-core"
               />
               <ProjectCard
                 title="Event Tracking & Data Governance"
                 description="Established standardized event tracking processes and data governance frameworks across multiple organizations, improving data quality and enabling self-service analytics."
                 tags={["Event Tracking", "Data Governance", "Documentation", "Avo"]}
                 image="/event_tracking_data_gov_hero_card.png?height=200&width=300"
-                demoLink="https://www.avo.app/"
               />
-            </div>
-          </div>
-        </section>
-
-        {/* Analytics Demos Section */}
-        <section id="demos" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center justify-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Analytics Demos</h2>
-                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Interactive demonstrations of product analytics, event tracking, and data visualization techniques.
-                </p>
-              </div>
-            </div>
-            <div className="mx-auto grid max-w-5xl gap-6 py-12">
-              <AnalyticsDemo />
             </div>
           </div>
         </section>
@@ -348,6 +324,23 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Analytics Demos Section */}
+        <section id="demos" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">Analytics Demos</h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Interactive demonstrations of product analytics, event tracking, and data visualization techniques.
+                </p>
+              </div>
+            </div>
+            <div className="mx-auto grid max-w-5xl gap-6 py-12">
+              <AnalyticsDemo />
             </div>
           </div>
         </section>
