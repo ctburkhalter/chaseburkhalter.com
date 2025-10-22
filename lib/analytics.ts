@@ -106,6 +106,26 @@ class SegmentProvider {
           const anonymousId = window.analytics?.user?.()?.anonymousId?.()
           AnalyticsLogger.info("Segment ready with anonymousId", { anonymousId })
 
+          // Add middleware to filter out invalid userId values
+          // This prevents "me" or other invalid userIds from being sent to destinations
+          window.analytics.addSourceMiddleware(({ payload, next }: any) => {
+            // Check if userId exists and is invalid
+            if (payload.obj?.userId) {
+              const userId = payload.obj.userId
+
+              // Filter out invalid userIds (like "me", empty strings, etc.)
+              if (userId === "me" || userId === "" || userId === null || userId === undefined) {
+                AnalyticsLogger.info("Filtering out invalid userId", { userId, eventType: payload.obj.type })
+                // Remove userId from the payload
+                delete payload.obj.userId
+              }
+            }
+
+            next(payload)
+          })
+
+          AnalyticsLogger.info("Segment middleware installed to filter invalid userIds")
+
           // Execute any queued callbacks
           this.readyCallbacks.forEach(cb => cb())
           this.readyCallbacks = []
