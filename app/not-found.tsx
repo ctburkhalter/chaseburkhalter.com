@@ -32,11 +32,13 @@ export default function NotFound() {
               Go Home
             </Link>
           </Button>
-          <Button asChild variant="outline" onClick={handleBack}>
-            <button type="button">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Go Back
-            </button>
+          <Button 
+            variant="outline" 
+            onClick={handleBack}
+            className="flex items-center"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Go Back
           </Button>
         </div>
         <div className="pt-8">
