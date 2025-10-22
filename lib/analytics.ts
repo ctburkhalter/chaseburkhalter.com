@@ -106,7 +106,7 @@ class SegmentProvider {
           const anonymousId = window.analytics?.user?.()?.anonymousId?.()
           AnalyticsLogger.info("Segment ready with anonymousId", { anonymousId })
 
-          // Add middleware to filter out invalid userId values
+          // Add middleware to filter out invalid userId values and ensure Amplitude gets proper IDs
           // This prevents "me" or other invalid userIds from being sent to destinations
           window.analytics.addSourceMiddleware(({ payload, next }: any) => {
             // Check if userId exists and is invalid
@@ -114,17 +114,39 @@ class SegmentProvider {
               const userId = payload.obj.userId
 
               // Filter out invalid userIds (like "me", empty strings, etc.)
-              if (userId === "me" || userId === "" || userId === null || userId === undefined) {
+              // Amplitude requires minimum 5 characters for userId
+              if (userId === "me" || userId === "" || userId === null || userId === undefined || userId.length < 5) {
                 AnalyticsLogger.info("Filtering out invalid userId", { userId, eventType: payload.obj.type })
                 // Remove userId from the payload
                 delete payload.obj.userId
               }
             }
 
+            // Ensure Amplitude receives deviceId from anonymousId when userId is not present
+            // Amplitude requires either userId OR deviceId - we use anonymousId as deviceId
+            if (!payload.obj?.userId && payload.obj?.anonymousId) {
+              // Configure Amplitude-specific integration settings
+              if (!payload.obj.integrations) {
+                payload.obj.integrations = {}
+              }
+              if (!payload.obj.integrations['Actions Amplitude']) {
+                payload.obj.integrations['Actions Amplitude'] = {}
+              }
+
+              // Ensure anonymousId is used as deviceId for Amplitude
+              // This is critical when userId is not set
+              payload.obj.integrations['Actions Amplitude'].device_id = payload.obj.anonymousId
+
+              AnalyticsLogger.info("Mapped anonymousId to Amplitude deviceId", {
+                anonymousId: payload.obj.anonymousId,
+                eventType: payload.obj.type
+              })
+            }
+
             next(payload)
           })
 
-          AnalyticsLogger.info("Segment middleware installed to filter invalid userIds")
+          AnalyticsLogger.info("Segment middleware installed to filter invalid userIds and map anonymousId to Amplitude deviceId")
 
           // Execute any queued callbacks
           this.readyCallbacks.forEach(cb => cb())
@@ -195,8 +217,9 @@ class SegmentProvider {
 
     // Validate userId before calling identify
     // This prevents invalid userIds from being stored in Segment
-    if (!userId || userId === "me" || userId.trim().length < 3) {
-      AnalyticsLogger.warn("Invalid userId provided to identify(), ignoring", { userId })
+    // Amplitude requires minimum 5 characters for userId
+    if (!userId || userId.trim().length < 5) {
+      AnalyticsLogger.warn("Invalid userId provided to identify() - must be at least 5 characters", { userId })
       return
     }
 
@@ -296,8 +319,9 @@ class GTMProvider {
     }
 
     // Validate userId before calling identify
-    if (!userId || userId === "me" || userId.trim().length < 3) {
-      AnalyticsLogger.warn("Invalid userId provided to GTM identify(), ignoring", { userId })
+    // Amplitude requires minimum 5 characters for userId
+    if (!userId || userId.trim().length < 5) {
+      AnalyticsLogger.warn("Invalid userId provided to GTM identify() - must be at least 5 characters", { userId })
       return
     }
 
@@ -380,8 +404,9 @@ class AnalyticsManager {
     }
 
     // Validate userId at the manager level
-    if (!userId || userId === "me" || userId.trim().length < 3) {
-      AnalyticsLogger.warn("Invalid userId provided to AnalyticsManager.identify(), ignoring", { userId })
+    // Amplitude requires minimum 5 characters for userId
+    if (!userId || userId.trim().length < 5) {
+      AnalyticsLogger.warn("Invalid userId provided to AnalyticsManager.identify() - must be at least 5 characters", { userId })
       return
     }
 
