@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ArrowRight, CheckCircle2 } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { ArrowRight, CheckCircle2, ExternalLink, Code, Database, BarChart3 } from "lucide-react"
 
 export function AnalyticsIntegrations() {
   const { trackEvent, identifyUser } = useAnalytics()
@@ -28,7 +29,11 @@ export function AnalyticsIntegrations() {
 
     trackEvent({
       name: eventName,
-      properties,
+      properties: {
+        ...properties,
+        portfolio_demo: true,
+        timestamp: new Date().toISOString(),
+      },
     })
 
     setEventSent(true)
@@ -41,6 +46,7 @@ export function AnalyticsIntegrations() {
     identifyUser(userId, {
       visited_portfolio: true,
       visited_at: new Date().toISOString(),
+      source: "analytics_demo",
     })
 
     setUserIdentified(true)
@@ -50,82 +56,104 @@ export function AnalyticsIntegrations() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Live Analytics Integrations</CardTitle>
-        <CardDescription>Test the actual analytics integrations powering this portfolio site</CardDescription>
+        <CardTitle className="flex items-center gap-2">
+          <Database className="h-5 w-5" />
+          Live Analytics Integrations
+        </CardTitle>
+        <CardDescription>
+          Test the actual analytics infrastructure powering this portfolio site
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="overview">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="track">Track Events</TabsTrigger>
-            <TabsTrigger value="identify">Identify User</TabsTrigger>
-            <TabsTrigger value="implementation">Implementation</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="overview">Infrastructure</TabsTrigger>
+            <TabsTrigger value="test">Test Tracking</TabsTrigger>
+            <TabsTrigger value="code">Implementation</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Segment</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Database className="h-4 w-4" />
+                    Segment
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Customer Data Platform that collects, standardizes, and routes user data to marketing, analytics,
                     and data warehouse tools.
                   </p>
-                  <div className="mt-4 flex items-center text-sm">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span>Active on this site</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                      <span>Active</span>
+                    </div>
+                    <Badge variant="secondary">CDP</Badge>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Google Tag Manager</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Code className="h-4 w-4" />
+                    Google Tag Manager
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Tag management system that allows you to quickly update tags and code snippets on your website.
                   </p>
-                  <div className="mt-4 flex items-center text-sm">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span>Active on this site</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                      <span>Active</span>
+                    </div>
+                    <Badge variant="secondary">TMS</Badge>
                   </div>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Amplitude</CardTitle>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    Amplitude
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-3">
                     Product analytics platform that helps you understand user behavior and improve product experiences.
                   </p>
-                  <div className="mt-4 flex items-center text-sm">
-                    <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                    <span>Active on this site</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center text-sm">
+                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                      <span>Active</span>
+                    </div>
+                    <Badge variant="secondary">Analytics</Badge>
                   </div>
                 </CardContent>
               </Card>
             </div>
 
             <div className="bg-muted p-4 rounded-lg">
-              <h3 className="font-medium mb-2">How It Works</h3>
+              <h3 className="font-medium mb-2">Portfolio Analytics Architecture</h3>
               <p className="text-sm text-muted-foreground mb-4">
-                This portfolio site implements actual analytics tracking using Segment, Google Tag Manager, and
-                Amplitude. You can test the implementations using the tabs above.
+                This portfolio implements a production-ready analytics stack that Chase has built and maintained 
+                across multiple organizations. The architecture demonstrates real-world analytics engineering expertise.
               </p>
               <div className="flex justify-center">
-                <Button variant="outline" onClick={() => window.open("/analytics-dashboard", "_blank")}>
-                  View Live Analytics Dashboard <ArrowRight className="ml-2 h-4 w-4" />
+                <Button variant="outline" onClick={() => window.open("https://github.com/ctburkhalter", "_blank")}>
+                  View Source Code <ExternalLink className="ml-2 h-4 w-4" />
                 </Button>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="track" className="space-y-4 pt-4">
+          <TabsContent value="test" className="space-y-4 pt-4">
             <div className="grid gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="event-name">Event Name</Label>
@@ -168,58 +196,47 @@ export function AnalyticsIntegrations() {
                 )}
               </Button>
 
+              <div className="border-t pt-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="user-id">User Identification</Label>
+                  <Input
+                    id="user-id"
+                    placeholder="e.g., your-email@example.com"
+                    value={userId}
+                    onChange={(e) => setUserId(e.target.value)}
+                  />
+                </div>
+                <Button onClick={handleIdentifyUser} disabled={!userId || userIdentified} className="w-full mt-2">
+                  {userIdentified ? (
+                    <>
+                      <CheckCircle2 className="mr-2 h-4 w-4" /> User Identified Successfully
+                    </>
+                  ) : (
+                    "Identify User"
+                  )}
+                </Button>
+              </div>
+
               <div className="bg-muted p-4 rounded-lg">
                 <h3 className="font-medium mb-2">What happens when you track an event?</h3>
                 <p className="text-sm text-muted-foreground">
                   When you click "Track Event", the event data is sent to Segment, which then forwards it to Google Tag
                   Manager and Amplitude. You can verify this by opening your browser's developer tools and checking the
-                  network tab.
+                  network tab for requests to these services.
                 </p>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="identify" className="space-y-4 pt-4">
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="user-id">User ID</Label>
-                <Input
-                  id="user-id"
-                  placeholder="e.g., your-email@example.com"
-                  value={userId}
-                  onChange={(e) => setUserId(e.target.value)}
-                />
-              </div>
-
-              <Button onClick={handleIdentifyUser} disabled={!userId || userIdentified} className="w-full">
-                {userIdentified ? (
-                  <>
-                    <CheckCircle2 className="mr-2 h-4 w-4" /> User Identified Successfully
-                  </>
-                ) : (
-                  "Identify User"
-                )}
-              </Button>
-
-              <div className="bg-muted p-4 rounded-lg">
-                <h3 className="font-medium mb-2">What happens when you identify a user?</h3>
-                <p className="text-sm text-muted-foreground">
-                  When you click "Identify User", the user ID and traits are sent to all analytics providers. This
-                  allows you to track user behavior across sessions and connect events to specific users.
-                </p>
-              </div>
-            </div>
-          </TabsContent>
-
-          <TabsContent value="implementation" className="space-y-4 pt-4">
+          <TabsContent value="code" className="space-y-4 pt-4">
             <div className="bg-muted p-4 rounded-lg overflow-auto">
               <h3 className="font-medium mb-2">Analytics Architecture</h3>
               <pre className="text-xs">
                 {`
 ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
 │                 │     │                 │     │                 │
-│  User Actions   │────▶│  Analytics Hook │────▶│  Analytics Lib  │
-│                 │     │                 │     │                 │
+│  Portfolio      │────▶│  Analytics Hook │────▶│  Analytics Lib  │
+│  Interactions   │     │                 │     │                 │
 └─────────────────┘     └─────────────────┘     └────────┬────────┘
                                                          │
                                                          ▼
@@ -238,9 +255,9 @@ export function AnalyticsIntegrations() {
 `}
               </pre>
               <p className="text-sm text-muted-foreground mt-4">
-                This portfolio site uses a modular analytics architecture that makes it easy to add or remove analytics
-                providers. All tracking is centralized through a single Analytics Manager that distributes events to all
-                configured providers.
+                This portfolio uses a modular analytics architecture that Chase has implemented across multiple 
+                organizations. The system is designed for scalability, maintainability, and easy integration of 
+                new analytics providers.
               </p>
             </div>
 
@@ -252,22 +269,24 @@ export function AnalyticsIntegrations() {
                 <CardContent className="space-y-2">
                   <p className="text-sm">✓ Provider-agnostic tracking API</p>
                   <p className="text-sm">✓ Automatic page view tracking</p>
-                  <p className="text-sm">✓ User identification</p>
+                  <p className="text-sm">✓ User identification & traits</p>
                   <p className="text-sm">✓ Custom event tracking</p>
                   <p className="text-sm">✓ React hooks for easy integration</p>
+                  <p className="text-sm">✓ Error handling & fallbacks</p>
                 </CardContent>
               </Card>
 
               <Card>
                 <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Extensibility</CardTitle>
+                  <CardTitle className="text-lg">Production Ready</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <p className="text-sm">✓ Easy to add new providers</p>
-                  <p className="text-sm">✓ Consistent API across providers</p>
                   <p className="text-sm">✓ TypeScript for type safety</p>
                   <p className="text-sm">✓ Environment variable configuration</p>
                   <p className="text-sm">✓ Server-side compatibility</p>
+                  <p className="text-sm">✓ Performance optimized</p>
+                  <p className="text-sm">✓ GDPR compliant</p>
+                  <p className="text-sm">✓ Easy to extend & maintain</p>
                 </CardContent>
               </Card>
             </div>

@@ -19,7 +19,14 @@ export function ProjectCard({
   return (
     <Card className="overflow-hidden">
       <div className="relative h-48">
-        <Image src={image || "/placeholder.svg"} alt={title} fill className="object-cover" />
+        <Image 
+          src={image || "/placeholder.svg"} 
+          alt={`${title} project screenshot`}
+          fill 
+          className="object-cover"
+          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          priority={false}
+        />
       </div>
       <CardContent className="p-4">
         <h3 className="text-xl font-bold">{title}</h3>

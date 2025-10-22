@@ -1,64 +1,169 @@
 "use client"
 
-import { useState } from "react"
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer } from "recharts"
-import { LineChart, Line } from "recharts"
+import { useState, useEffect } from "react"
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, ResponsiveContainer, LineChart, Line } from "recharts"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { AnalyticsIntegrations } from "@/components/analytics-integrations"
 import { useAnalytics } from "@/hooks/use-analytics"
+import { TrendingUp, Users, Eye, MousePointer, Clock, CheckCircle2, AlertCircle, Code, Copy, EyeIcon, Database, BarChart3 } from "lucide-react"
+import { AnalyticsDemoSkeleton } from "@/components/skeletons"
+import { useToast } from "@/components/toast"
 
-// Sample data for the analytics demo
-const pageViewData = [
-  { date: "2024-08", views: 1200, users: 800, sessions: 950 },
-  { date: "2024-09", views: 1900, users: 1200, sessions: 1400 },
-  { date: "2024-10", views: 1500, users: 1000, sessions: 1200 },
-  { date: "2024-11", views: 2200, users: 1500, sessions: 1800 },
-  { date: "2024-12", views: 2800, users: 1800, sessions: 2100 },
-  { date: "2025-01", views: 3100, users: 2000, sessions: 2400 },
+// Real portfolio analytics data based on Chase's experience
+const portfolioMetrics = {
+  totalProjects: 6,
+  yearsExperience: 5,
+  toolsMastered: 45,
+  companiesWorked: 3,
+  analyticsImplementations: 12,
+  costSavings: "$1.5M+"
+}
+
+// Real analytics implementations Chase has built
+const analyticsImplementations = [
+  {
+    name: "Amplitude Implementation",
+    company: "AJC",
+    description: "Led implementation replacing Google Analytics with Amplitude",
+    metrics: { users: "200k+ monthly active", events: "2+ million monthly", products: "7 sites & apps" },
+    impact: "Enabled stakeholder self-service analytics"
+  },
+  {
+    name: "Redshift → Snowflake Migration",
+    company: "AJC", 
+    description: "Spearheaded data warehouse migration",
+    metrics: { performance: "3-5x faster", cost: "40% reduction", integrity: "99%" },
+    impact: "Improved query performance and reduced costs"
+  },
+  {
+    name: "GTM/GA4 Migration",
+    company: "AJC",
+    description: "Led migration from Universal Analytics to GA4",
+    metrics: { variables: 55, tags: 29, triggers: 25 },
+    impact: "Improved data quality and advanced analytics"
+  },
+  {
+    name: "Superset Cost Optimization",
+    company: "Shortcut",
+    description: "Transitioned from proprietary tools to Apache Superset",
+    metrics: { savings: "$100K+", users: 30, dashboards: 22 },
+    impact: "Massive cost savings with improved capabilities"
+  }
 ]
 
-const conversionData = [
-  { source: "Direct", conversions: 120, rate: 3.2 },
-  { source: "Organic Search", conversions: 210, rate: 4.5 },
-  { source: "Paid Search", conversions: 180, rate: 5.1 },
-  { source: "Social", conversions: 90, rate: 2.8 },
-  { source: "Email", conversions: 150, rate: 6.2 },
-  { source: "Referral", conversions: 75, rate: 3.9 },
-]
-
-const productAnalyticsData = [
-  { feature: "Dashboard", dau: 1200, retention: 85, engagement: 4.2 },
-  { feature: "Reports", dau: 800, retention: 78, engagement: 3.8 },
-  { feature: "Integrations", dau: 600, retention: 92, engagement: 5.1 },
-  { feature: "Settings", dau: 400, retention: 65, engagement: 2.9 },
-  { feature: "Billing", dau: 200, retention: 88, engagement: 3.5 },
+// Live portfolio interaction tracking
+const portfolioInteractions = [
+  { action: "Project Card View", count: 0, icon: Eye },
+  { action: "Skill Badge Click", count: 0, icon: MousePointer },
+  { action: "Analytics Demo Interaction", count: 0, icon: TrendingUp },
+  { action: "Contact Form View", count: 0, icon: Users },
 ]
 
 export function AnalyticsDemo() {
   const { trackEvent } = useAnalytics()
-  const [activeTab, setActiveTab] = useState("traffic")
+  const { success, error: showError } = useToast()
+  const [activeTab, setActiveTab] = useState("overview")
   const [trackingEnabled, setTrackingEnabled] = useState(true)
-  const [eventCount, setEventCount] = useState(0)
+  const [liveInteractions, setLiveInteractions] = useState(portfolioInteractions)
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [lastPayload, setLastPayload] = useState<any>(null)
+  const [showPayloadPreview, setShowPayloadPreview] = useState(false)
+  const [isClient, setIsClient] = useState(false)
 
-  const handleTrackEvent = (eventName: string) => {
+  // Handle client-side hydration
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
+
+  // Show skeleton while hydrating
+  if (!isClient) {
+    return <AnalyticsDemoSkeleton />
+  }
+
+  // Track portfolio interactions
+  const handlePortfolioInteraction = (action: string) => {
     if (trackingEnabled) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Event tracked: ${eventName}`)
-      }
-      setEventCount((prev) => prev + 1)
-
-      // Actually track the event using our analytics hook
-      trackEvent({
-        name: eventName,
+      setIsLoading(true)
+      setError(null)
+      
+      const eventPayload = {
+        name: `portfolio_${action.toLowerCase().replace(/\s+/g, '_')}`,
         properties: {
           demo_section: true,
-          tracking_enabled: trackingEnabled,
+          timestamp: new Date().toISOString(),
+          user_agent: navigator.userAgent,
+          interaction_type: action,
+          portfolio_section: 'analytics_demo',
+        },
+      }
+
+      // Store the payload for preview
+      setLastPayload({
+        segment: {
+          event: eventPayload.name,
+          properties: eventPayload.properties,
+          timestamp: eventPayload.properties.timestamp,
+          context: {
+            userAgent: navigator.userAgent,
+            page: {
+              url: window.location.href,
+              title: document.title,
+              path: window.location.pathname,
+            },
+          },
+        },
+        gtm: {
+          event: eventPayload.name,
+          ...eventPayload.properties,
+          page_path: window.location.pathname,
+          page_title: document.title,
+          page_url: window.location.href,
+        },
+        amplitude: {
+          event_type: eventPayload.name,
+          event_properties: eventPayload.properties,
+          user_properties: {
+            portfolio_visitor: true,
+            demo_participant: true,
+          },
+          time: new Date().getTime(),
         },
       })
+      
+      try {
+        trackEvent(eventPayload)
+
+        // Update live interaction counts
+        setLiveInteractions(prev => 
+          prev.map(interaction => 
+            interaction.action === action 
+              ? { ...interaction, count: interaction.count + 1 }
+              : interaction
+          )
+        )
+        
+        // Show success toast
+        success("Event Tracked", `${action} interaction has been tracked successfully`)
+      } catch (err) {
+        const errorMessage = "Failed to track interaction. Please try again."
+        setError(errorMessage)
+        showError("Tracking Failed", errorMessage)
+        console.error("Analytics tracking error:", err)
+      } finally {
+        setIsLoading(false)
+      }
     }
+  }
+
+  // Track tab changes
+  const handleTabChange = (value: string) => {
+    setActiveTab(value)
+    handlePortfolioInteraction(`Analytics Demo Tab: ${value}`)
   }
 
   return (
@@ -66,395 +171,334 @@ export function AnalyticsDemo() {
       {/* Live Analytics Integrations */}
       <AnalyticsIntegrations />
 
-      {/* Original Analytics Demo */}
+      {/* Portfolio Analytics Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>Interactive Analytics Dashboard</CardTitle>
-          <CardDescription>Demo of web analytics tracking and visualization</CardDescription>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5" />
+            Portfolio Analytics Dashboard
+          </CardTitle>
+          <CardDescription>
+            Real analytics implementations from Chase's experience at AJC, Shortcut, and SteadyApp
+          </CardDescription>
         </CardHeader>
         <CardContent>
+          {/* Tracking Status */}
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center space-x-2">
               <div className={`h-3 w-3 rounded-full ${trackingEnabled ? "bg-green-500" : "bg-red-500"}`}></div>
               <span className="text-sm font-medium">
-                Analytics Tracking: {trackingEnabled ? "Enabled" : "Disabled"}
+                Live Tracking: {trackingEnabled ? "Active" : "Disabled"}
               </span>
             </div>
             <Button
               variant={trackingEnabled ? "outline" : "default"}
               onClick={() => {
                 setTrackingEnabled(!trackingEnabled)
-                trackEvent({
-                  name: `tracking_${!trackingEnabled ? "enabled" : "disabled"}`,
-                  properties: {
-                    demo_section: true,
-                    tracking_enabled: !trackingEnabled
-                  }
-                })
+                handlePortfolioInteraction(`Tracking ${!trackingEnabled ? "Enabled" : "Disabled"}`)
               }}
+              disabled={isLoading}
             >
               {trackingEnabled ? "Disable Tracking" : "Enable Tracking"}
             </Button>
           </div>
 
-          <Tabs
-            defaultValue="traffic"
-            onValueChange={(value) => {
-              setActiveTab(value)
-              handleTrackEvent(`tab_changed_to_${value}`)
-            }}
-          >
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="traffic">Traffic Overview</TabsTrigger>
-              <TabsTrigger value="product">Product Analytics</TabsTrigger>
-              <TabsTrigger value="conversions">Conversions</TabsTrigger>
-              <TabsTrigger value="events">Event Tracking</TabsTrigger>
+          {/* Error Display */}
+          {error && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-red-500" />
+              <span className="text-sm text-red-700">{error}</span>
+            </div>
+          )}
+
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">Portfolio Overview</TabsTrigger>
+              <TabsTrigger value="implementations">Real Implementations</TabsTrigger>
+              <TabsTrigger value="live-tracking">Live Tracking</TabsTrigger>
             </TabsList>
-            <TabsContent value="traffic" className="pt-4">
-              <ChartContainer
-                config={{
-                  views: {
-                    label: "Page Views",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  users: {
-                    label: "Users",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  sessions: {
-                    label: "Sessions",
-                    color: "hsl(var(--chart-3))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={pageViewData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Line type="monotone" dataKey="views" stroke="var(--color-views)" strokeWidth={2} />
-                    <Line type="monotone" dataKey="users" stroke="var(--color-users)" strokeWidth={2} />
-                    <Line type="monotone" dataKey="sessions" stroke="var(--color-sessions)" strokeWidth={2} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+
+            {/* Portfolio Overview Tab */}
+            <TabsContent value="overview" className="pt-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-blue-600">{portfolioMetrics.totalProjects}</div>
+                    <p className="text-sm text-muted-foreground">Featured Projects</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-green-600">{portfolioMetrics.yearsExperience}+</div>
+                    <p className="text-sm text-muted-foreground">Years Experience</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-purple-600">{portfolioMetrics.toolsMastered}</div>
+                    <p className="text-sm text-muted-foreground">Tools Mastered</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-orange-600">{portfolioMetrics.companiesWorked}</div>
+                    <p className="text-sm text-muted-foreground">Companies</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-red-600">{portfolioMetrics.analyticsImplementations}</div>
+                    <p className="text-sm text-muted-foreground">Analytics Implementations</p>
+                  </CardContent>
+                </Card>
+                <Card className="text-center">
+                  <CardContent className="pt-6">
+                    <div className="text-2xl font-bold text-emerald-600">{portfolioMetrics.costSavings}</div>
+                    <p className="text-sm text-muted-foreground">Cost Savings</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="bg-muted p-4 rounded-lg">
+                <h3 className="font-medium mb-2">Analytics Engineering Expertise</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Chase specializes in building scalable analytics infrastructure, implementing event tracking systems, 
+                  and creating self-service analytics platforms. His implementations have driven significant business impact 
+                  across multiple organizations.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary">Amplitude</Badge>
+                  <Badge variant="secondary">Segment</Badge>
+                  <Badge variant="secondary">Snowflake</Badge>
+                  <Badge variant="secondary">dbt</Badge>
+                  <Badge variant="secondary">GA4</Badge>
+                  <Badge variant="secondary">GTM</Badge>
+                  <Badge variant="secondary">Apache Superset</Badge>
+                  <Badge variant="secondary">Event Tracking</Badge>
+                </div>
+              </div>
             </TabsContent>
-            <TabsContent value="product" className="pt-4">
-              <ChartContainer
-                config={{
-                  dau: {
-                    label: "Daily Active Users",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  retention: {
-                    label: "7-Day Retention (%)",
-                    color: "hsl(var(--chart-2))",
-                  },
-                  engagement: {
-                    label: "Engagement Score",
-                    color: "hsl(var(--chart-3))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={productAnalyticsData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="feature" />
-                    <YAxis yAxisId="left" orientation="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="dau" fill="var(--color-dau)" />
-                    <Bar yAxisId="left" dataKey="retention" fill="var(--color-retention)" />
-                    <Line yAxisId="right" type="monotone" dataKey="engagement" stroke="var(--color-engagement)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
+
+            {/* Real Implementations Tab */}
+            <TabsContent value="implementations" className="pt-4">
+              <div className="space-y-4">
+                {analyticsImplementations.map((impl, index) => (
+                  <Card key={index}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg">{impl.name}</CardTitle>
+                        <Badge variant="outline">{impl.company}</Badge>
+                      </div>
+                      <CardDescription>{impl.description}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        {Object.entries(impl.metrics).map(([key, value]) => (
+                          <div key={key} className="text-center">
+                            <div className="text-lg font-semibold">{value}</div>
+                            <div className="text-xs text-muted-foreground capitalize">
+                              {key.replace(/([A-Z])/g, ' $1').trim()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          <span className="text-sm font-medium text-green-800">Impact:</span>
+                        </div>
+                        <p className="text-sm text-green-700 mt-1">{impl.impact}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </TabsContent>
-            <TabsContent value="conversions" className="pt-4">
-              <ChartContainer
-                config={{
-                  conversions: {
-                    label: "Conversions",
-                    color: "hsl(var(--chart-1))",
-                  },
-                  rate: {
-                    label: "Conversion Rate (%)",
-                    color: "hsl(var(--chart-2))",
-                  },
-                }}
-                className="h-[300px]"
-              >
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={conversionData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="source" />
-                    <YAxis yAxisId="left" orientation="left" stroke="var(--color-conversions)" />
-                    <YAxis yAxisId="right" orientation="right" stroke="var(--color-rate)" />
-                    <ChartTooltip content={<ChartTooltipContent />} />
-                    <Legend />
-                    <Bar yAxisId="left" dataKey="conversions" fill="var(--color-conversions)" />
-                    <Line yAxisId="right" type="monotone" dataKey="rate" stroke="var(--color-rate)" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </ChartContainer>
-            </TabsContent>
-            <TabsContent value="events" className="pt-4">
+
+            {/* Live Tracking Tab */}
+            <TabsContent value="live-tracking" className="pt-4">
               <div className="space-y-6">
-                <div className="text-center p-6 border rounded-lg">
-                  <div className="text-4xl font-bold mb-2">{eventCount}</div>
-                  <div className="text-sm text-muted-foreground">Events Tracked</div>
+                <div className="text-center p-6 border rounded-lg bg-gradient-to-r from-blue-50 to-purple-50">
+                  <h3 className="text-lg font-semibold mb-2">Live Portfolio Interactions</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Track real interactions with this portfolio site
+                  </p>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    {liveInteractions.map((interaction, index) => {
+                      const IconComponent = interaction.icon
+                      return (
+                        <div key={index} className="text-center">
+                          <IconComponent className="h-6 w-6 mx-auto mb-2 text-blue-600" />
+                          <div className="text-2xl font-bold">{interaction.count}</div>
+                          <div className="text-xs text-muted-foreground">{interaction.action}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-4">
-                  <Button onClick={() => handleTrackEvent("button_click")}>Track Button Click</Button>
-                  <Button variant="outline" onClick={() => handleTrackEvent("form_submission")}>
-                    Track Form Submission
+                  <Button 
+                    onClick={() => handlePortfolioInteraction("Project Card View")}
+                    disabled={isLoading || !trackingEnabled}
+                    className="w-full min-h-[44px] touch-manipulation"
+                    aria-label="Track project card view interaction"
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    Track Project View
                   </Button>
-                  <Button variant="secondary" onClick={() => handleTrackEvent("page_view")}>
-                    Track Page View
+                  <Button 
+                    variant="outline"
+                    onClick={() => handlePortfolioInteraction("Skill Badge Click")}
+                    disabled={isLoading || !trackingEnabled}
+                    className="w-full min-h-[44px] touch-manipulation"
+                    aria-label="Track skill badge click interaction"
+                  >
+                    <MousePointer className="mr-2 h-4 w-4" />
+                    Track Skill Click
                   </Button>
-                  <Button variant="destructive" onClick={() => handleTrackEvent("error_event")}>
-                    Track Error Event
+                  <Button 
+                    variant="secondary"
+                    onClick={() => handlePortfolioInteraction("Analytics Demo Interaction")}
+                    disabled={isLoading || !trackingEnabled}
+                    className="w-full min-h-[44px] touch-manipulation"
+                    aria-label="Track analytics demo interaction"
+                  >
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Track Demo Interaction
+                  </Button>
+                  <Button 
+                    variant="destructive"
+                    onClick={() => handlePortfolioInteraction("Contact Form View")}
+                    disabled={isLoading || !trackingEnabled}
+                    className="w-full min-h-[44px] touch-manipulation"
+                    aria-label="Track contact form view interaction"
+                  >
+                    <Users className="mr-2 h-4 w-4" />
+                    Track Contact View
                   </Button>
                 </div>
+
                 <div className="p-4 bg-muted rounded-lg">
-                  <h4 className="font-medium mb-2">Event Tracking Demo</h4>
+                  <h4 className="font-medium mb-2">How Live Tracking Works</h4>
                   <p className="text-sm text-muted-foreground">
-                    This demo simulates tracking events in a web application. When you click the buttons above, real
-                    events are sent to Segment, Google Tag Manager, and Amplitude. You can verify this by checking your
-                    browser's network tab.
+                    This portfolio implements real analytics tracking using Segment, Google Tag Manager, and Amplitude. 
+                    When you interact with the buttons above, actual events are sent to these platforms. You can verify 
+                    this by opening your browser's developer tools and checking the network tab.
                   </p>
                 </div>
-              </div>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Analytics Integration Examples</CardTitle>
-          <CardDescription>Code snippets for popular analytics integrations</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs defaultValue="amplitude">
-            <TabsList className="grid w-full grid-cols-5">
-              <TabsTrigger value="amplitude">Amplitude</TabsTrigger>
-              <TabsTrigger value="segment">Segment</TabsTrigger>
-              <TabsTrigger value="ga4">Google Analytics 4</TabsTrigger>
-              <TabsTrigger value="gtm">Google Tag Manager</TabsTrigger>
-              <TabsTrigger value="custom">Custom</TabsTrigger>
-            </TabsList>
-            <TabsContent value="amplitude" className="pt-4">
-              <div className="p-4 bg-muted rounded-lg overflow-auto">
-                <pre className="text-sm">
-                  {`// Amplitude Implementation
-import { Amplitude } from '@amplitude/analytics-browser';
+                {/* Payload Preview Section */}
+                {lastPayload ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h4 className="font-medium">Last Event Payload Preview</h4>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setShowPayloadPreview(!showPayloadPreview)}
+                        >
+                          <EyeIcon className="h-4 w-4 mr-2" />
+                          {showPayloadPreview ? "Hide" : "Show"} Payload
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON.stringify(lastPayload, null, 2))
+                            success("Copied to Clipboard", "JSON payload has been copied to your clipboard")
+                          }}
+                          aria-label="Copy JSON payload to clipboard"
+                        >
+                          <Copy className="h-4 w-4 mr-2" />
+                          Copy JSON
+                        </Button>
+                      </div>
+                    </div>
 
-// Initialize Amplitude
-const amplitude = Amplitude.getInstance();
-amplitude.init('YOUR_API_KEY');
+                    {showPayloadPreview && (
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Database className="h-4 w-4" />
+                                Segment
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
+                                {JSON.stringify(lastPayload.segment, null, 2)}
+                              </pre>
+                            </CardContent>
+                          </Card>
 
-// Set user properties
-amplitude.setUserId('user-123');
-amplitude.setUserProperties({
-  'Plan': 'Premium',
-  'Signup Date': '2024-01-15'
-});
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <Code className="h-4 w-4" />
+                                Google Tag Manager
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
+                                {JSON.stringify(lastPayload.gtm, null, 2)}
+                              </pre>
+                            </CardContent>
+                          </Card>
 
-// Track events with properties
-function trackFeatureUsage(feature) {
-  amplitude.logEvent('Feature Used', {
-    'Feature Name': feature.name,
-    'Feature Category': feature.category,
-    'User Segment': 'Power User',
-    'Session Duration': 1200
-  });
-}
+                          <Card>
+                            <CardHeader className="pb-2">
+                              <CardTitle className="text-sm flex items-center gap-2">
+                                <BarChart3 className="h-4 w-4" />
+                                Amplitude
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-40">
+                                {JSON.stringify(lastPayload.amplitude, null, 2)}
+                              </pre>
+                            </CardContent>
+                          </Card>
+                        </div>
 
-// Track revenue events
-function trackPurchase(purchase) {
-  amplitude.logRevenue({
-    price: purchase.amount,
-    productId: purchase.productId,
-    quantity: 1
-  });
-}`}
-                </pre>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="segment" className="pt-4">
-              <div className="p-4 bg-muted rounded-lg overflow-auto">
-                <pre className="text-sm">
-                  {`// Segment Implementation
-import { Analytics } from '@segment/analytics-node';
-
-// Initialize Segment
-const analytics = new Analytics({
-  writeKey: 'YOUR_SEGMENT_WRITE_KEY'
-});
-
-// Identify users
-analytics.identify({
-  userId: 'user-123',
-  traits: {
-    email: 'user@example.com',
-    plan: 'premium',
-    company: 'Acme Corp'
-  }
-});
-
-// Track events
-analytics.track({
-  userId: 'user-123',
-  event: 'Product Feature Used',
-  properties: {
-    feature_name: 'Advanced Analytics',
-    feature_category: 'Analytics',
-    plan_type: 'premium'
-  }
-});
-
-// Track page views
-analytics.page({
-  userId: 'user-123',
-  name: 'Dashboard',
-  properties: {
-    path: '/dashboard',
-    referrer: 'https://app.example.com/login'
-  }
-});`}
-                </pre>
-              </div>
-            </TabsContent>
-            <TabsContent value="ga4" className="pt-4">
-              <div className="p-4 bg-muted rounded-lg overflow-auto">
-                <pre className="text-sm">
-                  {`// Google Analytics 4 Implementation
-import { Analytics } from '@vercel/analytics/next';
-
-// In your root layout
-export default function RootLayout({ children }) {
-  return (
-    <html lang="en">
-      <body>
-        {children}
-        <Analytics />
-      </body>
-    </html>
-  );
-}
-
-// Track custom events
-import { track } from '@vercel/analytics';
-
-function handleClick() {
-  track('button_click', { location: 'hero', id: 'signup' });
-}`}
-                </pre>
-              </div>
-            </TabsContent>
-            <TabsContent value="gtm" className="pt-4">
-              <div className="p-4 bg-muted rounded-lg overflow-auto">
-                <pre className="text-sm">
-                  {`// Google Tag Manager Implementation
-
-// 1. Add GTM script to your head
-// In your document head or a component that renders in the head
-<script
-  dangerouslySetInnerHTML={{
-    __html: \`
-      (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-      new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-      j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-      'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-      })(window,document,'script','dataLayer','GTM-XXXXXXX');
-    \`
-  }}
-/>
-
-// 2. Add noscript fallback right after body open tag
-<noscript>
-  <iframe 
-    src="https://www.googletagmanager.com/ns.html?id=GTM-XXXXXXX"
-    height="0" 
-    width="0" 
-    style={{ display: 'none', visibility: 'hidden' }}
-  />
-</noscript>
-
-// 3. Push events to the data layer
-window.dataLayer = window.dataLayer || [];
-window.dataLayer.push({
-  event: 'button_click',
-  buttonId: 'signup',
-  buttonLocation: 'hero',
-  userType: 'new_visitor'
-});
-
-// 4. Push page view events
-window.dataLayer.push({
-  event: 'page_view',
-  page: {
-    title: document.title,
-    location: window.location.href,
-    path: window.location.pathname
-  }
-});`}
-                </pre>
-              </div>
-            </TabsContent>
-            <TabsContent value="custom" className="pt-4">
-              <div className="p-4 bg-muted rounded-lg overflow-auto">
-                <pre className="text-sm">
-                  {`// Custom Analytics Implementation
-// server-action.js
-'use server'
-
-import { sql } from '@vercel/postgres';
-
-export async function trackEvent(event) {
-  try {
-    await sql\`
-      INSERT INTO analytics_events (
-        event_name, 
-        event_properties, 
-        user_id, 
-        session_id, 
-        timestamp
-      ) VALUES (
-        \${event.name}, 
-        \${JSON.stringify(event.properties)}, 
-        \${event.userId}, 
-        \${event.sessionId}, 
-        NOW()
-      )
-    \`;
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to track event:', error);
-    return { success: false, error };
-  }
-}
-
-// client-side usage
-'use client'
-import { trackEvent } from './server-action';
-
-function handleClick() {
-  trackEvent({
-    name: 'button_click',
-    properties: { location: 'hero' },
-    userId: 'user-123',
-    sessionId: 'session-456'
-  });
-}`}
-                </pre>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                          <h5 className="font-medium text-blue-900 mb-2">Payload Details</h5>
+                          <div className="text-sm text-blue-800 space-y-1">
+                            <p><strong>Event Name:</strong> {lastPayload.segment.event}</p>
+                            <p><strong>Timestamp:</strong> {lastPayload.segment.timestamp}</p>
+                            <p><strong>User Agent:</strong> {lastPayload.segment.context.userAgent.substring(0, 50)}...</p>
+                            <p><strong>Page URL:</strong> {lastPayload.segment.context.page.url}</p>
+                            <div className="mt-2">
+                              <p className="font-medium mb-1">Custom Properties:</p>
+                              <div className="bg-white rounded p-2 text-xs">
+                                {Object.entries(lastPayload.segment.properties).map(([key, value]) => (
+                                  <div key={key} className="flex justify-between py-1 border-b border-gray-100 last:border-b-0">
+                                    <span className="font-mono text-blue-700">{key}:</span>
+                                    <span className="text-gray-600">
+                                      {typeof value === 'string' ? `"${value}"` : 
+                                       typeof value === 'boolean' ? value.toString() :
+                                       typeof value === 'number' ? value.toString() :
+                                       JSON.stringify(value)}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg text-center">
+                    <EyeIcon className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                    <p className="text-sm text-gray-600">
+                      No events tracked yet. Click one of the buttons above to see the payload preview.
+                    </p>
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
