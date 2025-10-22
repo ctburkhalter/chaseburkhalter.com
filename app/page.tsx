@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge"
 import { ProjectCard } from "@/components/project-card"
 import { SkillBadge } from "@/components/skill-badge"
 import { AboutSection } from "@/components/about-section"
-import { ProjectTracker, SkillTracker, ContactTracker } from "@/components/portfolio-tracker"
 import { ErrorBoundary } from "@/components/error-boundary"
 import { MobileNavigation } from "@/components/mobile-navigation"
 
@@ -92,7 +91,7 @@ export default function Home() {
       </header>
       <main id="main-content" className="flex-1">
         {/* Hero Section */}
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-muted">
+        <section id="hero" className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-gradient-to-b from-background to-muted">
           <div className="container px-4 md:px-6">
             <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
               <div className="flex flex-col justify-center space-y-4">
@@ -171,54 +170,42 @@ export default function Home() {
               </div>
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 py-12 md:grid-cols-2 lg:grid-cols-3">
-              <ProjectTracker projectName="Amplitude Implementation">
-                <ProjectCard
-                  title="Amplitude Implementation & Migration"
-                  description="Led the implementation of Amplitude at AJC, replacing Google Analytics and enabling stakeholder self-service analytics across digital properties. Established standardized event tracking and dashboards for key user journeys."
-                  tags={["Amplitude", "Product Analytics", "Event Tracking", "Migration"]}
-                  image="/amp_implementation_hero_card.png"
-                />
-              </ProjectTracker>
-              <ProjectTracker projectName="Redshift to Snowflake Migration">
-                <ProjectCard
-                  title="Redshift to Snowflake Migration"
-                  description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
-                  tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
-                  image="/redshift_snowflake_migration_hero_card.png"
-                />
-              </ProjectTracker>
-              <ProjectTracker projectName="GTM/GA4 Implementation">
-                <ProjectCard
-                  title="GTM/GA4 Implementation & Migration"
-                  description="Led the migration from Universal Analytics to GA4, implementing a comprehensive tracking strategy with Google Tag Manager to improve data quality and enable advanced analytics capabilities."
-                  tags={["GA4", "Google Tag Manager", "Analytics", "Migration"]}
-                  image="/gtm_ga4_migration_hero_card.png"
-                />
-              </ProjectTracker>
-              <ProjectTracker projectName="Superset Cost Optimization">
-                <ProjectCard
-                  title="$100K+ Annual Savings with Superset"
-                  description="Orchestrated the transition from proprietary visualization tools to Apache Superset at Shortcut, resulting in $100K+ annual cost savings while improving self-service analytics capabilities."
-                  tags={["Apache Superset", "Cost Optimization", "Data Visualization"]}
-                  image="/superset_savings_hero_card.png"
-                />
-              </ProjectTracker>
-              <ProjectTracker projectName="Cross-Functional Analytics Platform">
-                <ProjectCard
-                  title="Cross-Functional Analytics Platform"
-                  description="Built and maintained comprehensive analytics infrastructure supporting product, marketing, sales, and executive teams with unified reporting and self-service analytics capabilities."
-                  tags={["dbt", "Snowflake", "Segment", "Multi-team Support"]}
-                  image="/x_functional_analytics_platform_hero_card.png"
-                />
-              </ProjectTracker>
-              <ProjectTracker projectName="Event Tracking & Data Governance">
-                <ProjectCard
-                  title="Event Tracking & Data Governance"
-                  description="Established standardized event tracking processes and data governance frameworks across multiple organizations, improving data quality and enabling self-service analytics."
-                  tags={["Event Tracking", "Data Governance", "Documentation", "Avo"]}
-                  image="/event_tracking_data_gov_hero_card.png"
-                />
-              </ProjectTracker>
+              <ProjectCard
+                title="Amplitude Implementation & Migration"
+                description="Led the implementation of Amplitude at AJC, replacing Google Analytics and enabling stakeholder self-service analytics across digital properties. Established standardized event tracking and dashboards for key user journeys."
+                tags={["Amplitude", "Product Analytics", "Event Tracking", "Migration"]}
+                image="/amp_implementation_hero_card.png"
+              />
+              <ProjectCard
+                title="Redshift to Snowflake Migration"
+                description="Spearheaded the migration of AJC's data warehouse from Redshift to Snowflake, improving query performance by 3-5x and reducing infrastructure costs by 40% while maintaining 100% data integrity."
+                tags={["Snowflake", "Redshift", "dbt", "Data Migration"]}
+                image="/redshift_snowflake_migration_hero_card.png"
+              />
+              <ProjectCard
+                title="GTM/GA4 Implementation & Migration"
+                description="Led the migration from Universal Analytics to GA4, implementing a comprehensive tracking strategy with Google Tag Manager to improve data quality and enable advanced analytics capabilities."
+                tags={["GA4", "Google Tag Manager", "Analytics", "Migration"]}
+                image="/gtm_ga4_migration_hero_card.png"
+              />
+              <ProjectCard
+                title="$100K+ Annual Savings with Superset"
+                description="Orchestrated the transition from proprietary visualization tools to Apache Superset at Shortcut, resulting in $100K+ annual cost savings while improving self-service analytics capabilities."
+                tags={["Apache Superset", "Cost Optimization", "Data Visualization"]}
+                image="/superset_savings_hero_card.png"
+              />
+              <ProjectCard
+                title="Cross-Functional Analytics Platform"
+                description="Built and maintained comprehensive analytics infrastructure supporting product, marketing, sales, and executive teams with unified reporting and self-service analytics capabilities."
+                tags={["dbt", "Snowflake", "Segment", "Multi-team Support"]}
+                image="/x_functional_analytics_platform_hero_card.png"
+              />
+              <ProjectCard
+                title="Event Tracking & Data Governance"
+                description="Established standardized event tracking processes and data governance frameworks across multiple organizations, improving data quality and enabling self-service analytics."
+                tags={["Event Tracking", "Data Governance", "Documentation", "Avo"]}
+                image="/event_tracking_data_gov_hero_card.png"
+              />
             </div>
           </div>
         </section>
@@ -260,67 +247,67 @@ export default function Home() {
                 <div>
                   <h3 className="text-xl font-bold mb-4">Programming & Scripting</h3>
                   <div className="flex flex-wrap gap-2">
-                    <SkillTracker skillName="SQL"><SkillBadge name="SQL" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Python"><SkillBadge name="Python" level={90} /></SkillTracker>
-                    <SkillTracker skillName="dbt"><SkillBadge name="dbt" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Jinja"><SkillBadge name="Jinja" level={85} /></SkillTracker>
-                    <SkillTracker skillName="LookML"><SkillBadge name="LookML" level={85} /></SkillTracker>
-                    <SkillTracker skillName="JavaScript"><SkillBadge name="JavaScript" level={80} /></SkillTracker>
-                    <SkillTracker skillName="Clojure"><SkillBadge name="Clojure" level={75} /></SkillTracker>
-                    <SkillTracker skillName="CSS"><SkillBadge name="CSS" level={80} /></SkillTracker>
-                    <SkillTracker skillName="GitHub/VCS"><SkillBadge name="GitHub/VCS" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Jupyter"><SkillBadge name="Jupyter" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Next.js"><SkillBadge name="Next.js" level={80} /></SkillTracker>
-                    <SkillTracker skillName="Payload CMS"><SkillBadge name="Payload CMS" level={75} /></SkillTracker>
+                    <SkillBadge name="SQL" level={95} />
+                    <SkillBadge name="Python" level={90} />
+                    <SkillBadge name="dbt" level={95} />
+                    <SkillBadge name="Jinja" level={85} />
+                    <SkillBadge name="LookML" level={85} />
+                    <SkillBadge name="JavaScript" level={80} />
+                    <SkillBadge name="Clojure" level={75} />
+                    <SkillBadge name="CSS" level={80} />
+                    <SkillBadge name="GitHub/VCS" level={90} />
+                    <SkillBadge name="Jupyter" level={85} />
+                    <SkillBadge name="Next.js" level={80} />
+                    <SkillBadge name="Payload CMS" level={75} />
                   </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold mb-4">Data Analytics & Visualization</h3>
                   <div className="flex flex-wrap gap-2">
-                    <SkillTracker skillName="Amplitude"><SkillBadge name="Amplitude" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Tableau"><SkillBadge name="Tableau" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Looker"><SkillBadge name="Looker" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Apache Superset"><SkillBadge name="Apache Superset" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Google Analytics"><SkillBadge name="Google Analytics" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Mixpanel"><SkillBadge name="Mixpanel" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Hashboard"><SkillBadge name="Hashboard" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Hex"><SkillBadge name="Hex" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Power BI"><SkillBadge name="Power BI" level={80} /></SkillTracker>
-                    <SkillTracker skillName="Chartbeat"><SkillBadge name="Chartbeat" level={75} /></SkillTracker>
+                    <SkillBadge name="Amplitude" level={95} />
+                    <SkillBadge name="Tableau" level={90} />
+                    <SkillBadge name="Looker" level={85} />
+                    <SkillBadge name="Apache Superset" level={90} />
+                    <SkillBadge name="Google Analytics" level={90} />
+                    <SkillBadge name="Mixpanel" level={85} />
+                    <SkillBadge name="Hashboard" level={85} />
+                    <SkillBadge name="Hex" level={85} />
+                    <SkillBadge name="Power BI" level={80} />
+                    <SkillBadge name="Chartbeat" level={75} />
                   </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold mb-4">Data Engineering & Infrastructure</h3>
                   <div className="flex flex-wrap gap-2">
-                    <SkillTracker skillName="Snowflake"><SkillBadge name="Snowflake" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Segment"><SkillBadge name="Segment" level={95} /></SkillTracker>
-                    <SkillTracker skillName="BigQuery"><SkillBadge name="BigQuery" level={90} /></SkillTracker>
-                    <SkillTracker skillName="AWS"><SkillBadge name="AWS" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Redshift"><SkillBadge name="Redshift" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Fivetran"><SkillBadge name="Fivetran" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Hightouch"><SkillBadge name="Hightouch" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Google Cloud"><SkillBadge name="Google Cloud" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Datafold"><SkillBadge name="Datafold" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Docker"><SkillBadge name="Docker" level={80} /></SkillTracker>
-                    <SkillTracker skillName="S3"><SkillBadge name="S3" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Select"><SkillBadge name="Select" level={80} /></SkillTracker>
+                    <SkillBadge name="Snowflake" level={95} />
+                    <SkillBadge name="Segment" level={95} />
+                    <SkillBadge name="BigQuery" level={90} />
+                    <SkillBadge name="AWS" level={85} />
+                    <SkillBadge name="Redshift" level={90} />
+                    <SkillBadge name="Fivetran" level={90} />
+                    <SkillBadge name="Hightouch" level={85} />
+                    <SkillBadge name="Google Cloud" level={85} />
+                    <SkillBadge name="Datafold" level={85} />
+                    <SkillBadge name="Docker" level={80} />
+                    <SkillBadge name="S3" level={85} />
+                    <SkillBadge name="Select" level={80} />
                   </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-bold mb-4">Analytics Engineering & Instrumentation</h3>
                   <div className="flex flex-wrap gap-2">
-                    <SkillTracker skillName="Amplitude"><SkillBadge name="Amplitude" level={95} /></SkillTracker>
-                    <SkillTracker skillName="dbt"><SkillBadge name="dbt" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Event Tracking"><SkillBadge name="Event Tracking" level={95} /></SkillTracker>
-                    <SkillTracker skillName="A/B Testing"><SkillBadge name="A/B Testing" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Cohort Analysis"><SkillBadge name="Cohort Analysis" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Segmentation Analysis"><SkillBadge name="Segmentation Analysis" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Time-series Analysis"><SkillBadge name="Time-series Analysis" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Regression Analysis"><SkillBadge name="Regression Analysis" level={85} /></SkillTracker>
-                    <SkillTracker skillName="Data Governance"><SkillBadge name="Data Governance" level={95} /></SkillTracker>
-                    <SkillTracker skillName="Product Analytics"><SkillBadge name="Product Analytics" level={95} /></SkillTracker>
-                    <SkillTracker skillName="GA4"><SkillBadge name="GA4" level={90} /></SkillTracker>
-                    <SkillTracker skillName="Google Tag Manager"><SkillBadge name="Google Tag Manager" level={85} /></SkillTracker>
+                    <SkillBadge name="Amplitude" level={95} />
+                    <SkillBadge name="dbt" level={95} />
+                    <SkillBadge name="Event Tracking" level={95} />
+                    <SkillBadge name="A/B Testing" level={90} />
+                    <SkillBadge name="Cohort Analysis" level={90} />
+                    <SkillBadge name="Segmentation Analysis" level={90} />
+                    <SkillBadge name="Time-series Analysis" level={85} />
+                    <SkillBadge name="Regression Analysis" level={85} />
+                    <SkillBadge name="Data Governance" level={95} />
+                    <SkillBadge name="Product Analytics" level={95} />
+                    <SkillBadge name="GA4" level={90} />
+                    <SkillBadge name="Google Tag Manager" level={85} />
                   </div>
                 </div>
                 <div>
@@ -383,7 +370,7 @@ export default function Home() {
         </section>
 
         {/* Contact Section */}
-        <ContactTracker>
+        
           <section id="contact" className="w-full py-12 md:py-24 lg:py-32 bg-muted">
             <div className="container px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -443,7 +430,7 @@ export default function Home() {
               </div>
             </div>
           </section>
-        </ContactTracker>
+        
       </main>
       <footer className="w-full border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-between gap-4 md:h-16 md:flex-row">

@@ -1,26 +1,19 @@
-// This file contains all analytics integrations for the portfolio site
+// Simplified analytics system with Segment and GTM only
+// Single initialization, no duplicate events
 
 // Polyfill for global to prevent "global is not defined" error in the browser
 if (typeof window !== "undefined" && !window.global) {
   window.global = window
 }
 
-// Segment and GTM credentials are expected to be provided via environment variables
+// Environment variables
 const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY ?? ""
 const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID ?? ""
 
-// Types for our analytics events
+// Types
 export type AnalyticsEvent = {
   name: string
   properties?: Record<string, any>
-}
-
-export type PortfolioEvent = AnalyticsEvent & {
-  properties: {
-    portfolio_demo: boolean
-    timestamp: string
-    [key: string]: any
-  }
 }
 
 export type PageViewEvent = {
@@ -30,228 +23,175 @@ export type PageViewEvent = {
   properties?: Record<string, any>
 }
 
-// Analytics provider interface
-export interface AnalyticsProvider {
-  initialize(): void
-  trackEvent(event: AnalyticsEvent): void
-  trackPageView(pageView: PageViewEvent): void
-  identify(userId: string, traits?: Record<string, any>): void
-}
-
-// Enhanced error handling and logging
+// Development logging
 class AnalyticsLogger {
-  private static log(level: 'info' | 'warn' | 'error', message: string, data?: any) {
-    if (process.env.NODE_ENV === 'development') {
-      const timestamp = new Date().toISOString()
-      const logMessage = `[Analytics ${level.toUpperCase()}] ${timestamp}: ${message}`
-      
-      switch (level) {
-        case 'info':
-          console.log(logMessage, data || '')
-          break
-        case 'warn':
-          console.warn(logMessage, data || '')
-          break
-        case 'error':
-          console.error(logMessage, data || '')
-          break
-      }
+  private static shouldLog = process.env.NODE_ENV === 'development'
+
+  static info(message: string, data?: any) {
+    if (this.shouldLog) {
+      console.log(`[Analytics] ${message}`, data || '')
     }
   }
 
-  static info(message: string, data?: any) {
-    this.log('info', message, data)
-  }
-
   static warn(message: string, data?: any) {
-    this.log('warn', message, data)
+    if (this.shouldLog) {
+      console.warn(`[Analytics] ${message}`, data || '')
+    }
   }
 
   static error(message: string, data?: any) {
-    this.log('error', message, data)
+    if (this.shouldLog) {
+      console.error(`[Analytics] ${message}`, data || '')
+    }
   }
 }
 
 // Segment Analytics Provider
-class SegmentProvider implements AnalyticsProvider {
+class SegmentProvider {
   private isInitialized = false
-  private initializationAttempted = false
 
   initialize(): void {
-    if (this.isInitialized || typeof window === "undefined") return
-    
-    if (this.initializationAttempted) {
-      AnalyticsLogger.warn("Segment initialization already attempted")
+    if (this.isInitialized || typeof window === "undefined") {
       return
     }
 
-    this.initializationAttempted = true
-
     if (!SEGMENT_WRITE_KEY) {
-      AnalyticsLogger.warn("Segment write key not provided - skipping initialization")
+      AnalyticsLogger.warn("Segment write key not provided")
       return
     }
 
     try {
       // Load Segment snippet
-      (() => {
-        var analytics = (window.analytics = window.analytics || [])
-        if (!analytics.initialize) {
-          if (analytics.invoked) {
-            AnalyticsLogger.warn("Segment snippet included twice")
-          } else {
-            analytics.invoked = true
-            analytics.methods = [
-              "trackSubmit",
-              "trackClick",
-              "trackLink",
-              "trackForm",
-              "pageview",
-              "identify",
-              "reset",
-              "group",
-              "track",
-              "ready",
-              "alias",
-              "debug",
-              "page",
-              "once",
-              "off",
-              "on",
-              "addSourceMiddleware",
-              "addIntegrationMiddleware",
-              "setAnonymousId",
-              "addDestinationMiddleware",
-            ]
-            analytics.factory = (e: any) => () => {
-              var t = Array.prototype.slice.call(arguments)
-              t.unshift(e)
-              analytics.push(t)
-              return analytics
-            }
-            for (var e = 0; e < analytics.methods.length; e++) {
-              var key = analytics.methods[e]
-              analytics[key] = analytics.factory(key)
-            }
-            analytics.load = (key: string, e?: any) => {
-              var t = document.createElement("script")
-              t.type = "text/javascript"
-              t.async = !0
-              t.src = "https://cdn.segment.com/analytics.js/v1/" + key + "/analytics.min.js"
-              var n = document.getElementsByTagName("script")[0]
-              n.parentNode?.insertBefore(t, n)
-              analytics._loadOptions = e
-            }
-            analytics._writeKey = SEGMENT_WRITE_KEY
-            analytics.SNIPPET_VERSION = "4.15.3"
-            analytics.load(SEGMENT_WRITE_KEY)
-          }
+      const analytics = (window.analytics = window.analytics || [])
+      if (!analytics.initialize && !analytics.invoked) {
+        analytics.invoked = true
+        analytics.methods = [
+          "trackSubmit", "trackClick", "trackLink", "trackForm",
+          "pageview", "identify", "reset", "group", "track",
+          "ready", "alias", "debug", "page", "once", "off", "on",
+          "addSourceMiddleware", "addIntegrationMiddleware",
+          "setAnonymousId", "addDestinationMiddleware"
+        ]
+
+        analytics.factory = (method: any) => (...args: any[]) => {
+          const params = Array.prototype.slice.call(args)
+          params.unshift(method)
+          analytics.push(params)
+          return analytics
         }
-      })()
+
+        for (let i = 0; i < analytics.methods.length; i++) {
+          const key = analytics.methods[i]
+          analytics[key] = analytics.factory(key)
+        }
+
+        analytics.load = (key: string) => {
+          const script = document.createElement("script")
+          script.type = "text/javascript"
+          script.async = true
+          script.src = `https://cdn.segment.com/analytics.js/v1/${key}/analytics.min.js`
+          const first = document.getElementsByTagName("script")[0]
+          first.parentNode?.insertBefore(script, first)
+        }
+
+        analytics._writeKey = SEGMENT_WRITE_KEY
+        analytics.SNIPPET_VERSION = "4.15.3"
+        analytics.load(SEGMENT_WRITE_KEY)
+      }
 
       this.isInitialized = true
-      AnalyticsLogger.info("Segment initialized successfully")
+      AnalyticsLogger.info("Segment initialized")
     } catch (error) {
       AnalyticsLogger.error("Failed to initialize Segment", error)
     }
   }
 
   trackEvent(event: AnalyticsEvent): void {
-    if (typeof window === "undefined" || !window.analytics) {
-      AnalyticsLogger.warn("Segment not available for event tracking", event)
+    if (typeof window === "undefined" || !window.analytics?.track) {
       return
     }
-    
+
     try {
       window.analytics.track(event.name, {
         ...event.properties,
         timestamp: new Date().toISOString(),
-        source: 'portfolio',
+        source: 'portfolio'
       })
       AnalyticsLogger.info("Segment event tracked", event)
     } catch (error) {
-      AnalyticsLogger.error("Failed to track Segment event", { event, error })
+      AnalyticsLogger.error("Failed to track Segment event", error)
     }
   }
 
   trackPageView(pageView: PageViewEvent): void {
-    if (typeof window === "undefined" || !window.analytics) {
-      AnalyticsLogger.warn("Segment not available for page view tracking", pageView)
+    if (typeof window === "undefined" || !window.analytics?.page) {
       return
     }
-    
+
     try {
       window.analytics.page(pageView.title, {
         path: pageView.path,
-        url: typeof window !== "undefined" ? window.location.href : "",
+        url: window.location.href,
         referrer: pageView.referrer,
         timestamp: new Date().toISOString(),
         source: 'portfolio',
-        ...pageView.properties,
+        ...pageView.properties
       })
       AnalyticsLogger.info("Segment page view tracked", pageView)
     } catch (error) {
-      AnalyticsLogger.error("Failed to track Segment page view", { pageView, error })
+      AnalyticsLogger.error("Failed to track Segment page view", error)
     }
   }
 
   identify(userId: string, traits?: Record<string, any>): void {
-    if (typeof window === "undefined" || !window.analytics) {
-      AnalyticsLogger.warn("Segment not available for user identification", { userId, traits })
+    if (typeof window === "undefined" || !window.analytics?.identify) {
       return
     }
-    
+
     try {
       window.analytics.identify(userId, {
         ...traits,
         identified_at: new Date().toISOString(),
-        source: 'portfolio',
+        source: 'portfolio'
       })
       AnalyticsLogger.info("Segment user identified", { userId, traits })
     } catch (error) {
-      AnalyticsLogger.error("Failed to identify Segment user", { userId, traits, error })
+      AnalyticsLogger.error("Failed to identify Segment user", error)
     }
   }
 }
 
 // Google Tag Manager Provider
-class GTMProvider implements AnalyticsProvider {
+class GTMProvider {
   private isInitialized = false
-  private initializationAttempted = false
 
   initialize(): void {
-    if (this.isInitialized || typeof window === "undefined") return
-    
-    if (this.initializationAttempted) {
-      AnalyticsLogger.warn("GTM initialization already attempted")
+    if (this.isInitialized || typeof window === "undefined") {
       return
     }
 
-    this.initializationAttempted = true
-
     if (!GTM_CONTAINER_ID) {
-      AnalyticsLogger.warn("GTM container ID not provided - skipping initialization")
+      AnalyticsLogger.warn("GTM container ID not provided")
       return
     }
 
     try {
       // Initialize data layer
       window.dataLayer = window.dataLayer || []
+      window.dataLayer.push({
+        'gtm.start': new Date().getTime(),
+        event: 'gtm.js'
+      })
 
       // Load GTM script
-      ;(<T extends Record<string, any>>(w: T, d: Document, s: string, l: string, i: string) => {
-        ;(w as any)[l] = (w as any)[l] || []
-        ;(w as any)[l].push({ 'gtm.start': new Date().getTime(), event: 'gtm.js' })
-        const f = d.getElementsByTagName(s)[0],
-          j = d.createElement(s) as HTMLScriptElement,
-          dl = l !== 'dataLayer' ? '&l=' + l : ''
-        j.async = true
-        j.src = 'https://www.googletagmanager.com/gtm.js?id=' + i + dl
-        f.parentNode?.insertBefore(j, f)
-      })(window, document, 'script', 'dataLayer', GTM_CONTAINER_ID)
+      const script = document.createElement('script')
+      script.async = true
+      script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`
+      const firstScript = document.getElementsByTagName('script')[0]
+      firstScript.parentNode?.insertBefore(script, firstScript)
 
       this.isInitialized = true
-      AnalyticsLogger.info("GTM initialized successfully")
+      AnalyticsLogger.info("GTM initialized")
     } catch (error) {
       AnalyticsLogger.error("Failed to initialize GTM", error)
     }
@@ -259,29 +199,27 @@ class GTMProvider implements AnalyticsProvider {
 
   trackEvent(event: AnalyticsEvent): void {
     if (typeof window === "undefined" || !window.dataLayer) {
-      AnalyticsLogger.warn("GTM not available for event tracking", event)
       return
     }
-    
+
     try {
       window.dataLayer.push({
         event: event.name,
         timestamp: new Date().toISOString(),
         source: 'portfolio',
-        ...event.properties,
+        ...event.properties
       })
       AnalyticsLogger.info("GTM event tracked", event)
     } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM event", { event, error })
+      AnalyticsLogger.error("Failed to track GTM event", error)
     }
   }
 
   trackPageView(pageView: PageViewEvent): void {
     if (typeof window === "undefined" || !window.dataLayer) {
-      AnalyticsLogger.warn("GTM not available for page view tracking", pageView)
       return
     }
-    
+
     try {
       window.dataLayer.push({
         event: "page_view",
@@ -290,193 +228,103 @@ class GTMProvider implements AnalyticsProvider {
         page_referrer: pageView.referrer,
         timestamp: new Date().toISOString(),
         source: 'portfolio',
-        ...pageView.properties,
+        ...pageView.properties
       })
       AnalyticsLogger.info("GTM page view tracked", pageView)
     } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM page view", { pageView, error })
+      AnalyticsLogger.error("Failed to track GTM page view", error)
     }
   }
 
   identify(userId: string, traits?: Record<string, any>): void {
     if (typeof window === "undefined" || !window.dataLayer) {
-      AnalyticsLogger.warn("GTM not available for user identification", { userId, traits })
       return
     }
-    
+
     try {
       window.dataLayer.push({
         event: "user_identify",
         user_id: userId,
         user_traits: traits,
         identified_at: new Date().toISOString(),
-        source: 'portfolio',
+        source: 'portfolio'
       })
       AnalyticsLogger.info("GTM user identified", { userId, traits })
     } catch (error) {
-      AnalyticsLogger.error("Failed to identify GTM user", { userId, traits, error })
+      AnalyticsLogger.error("Failed to identify GTM user", error)
     }
   }
 }
 
-// Main Analytics Manager
+// Main Analytics Manager (Singleton)
 class AnalyticsManager {
-  private providers: AnalyticsProvider[] = []
+  private segment: SegmentProvider
+  private gtm: GTMProvider
   private isInitialized = false
-  private initializationAttempted = false
+  private lastPageView: { path: string; timestamp: number } | null = null
 
   constructor() {
-    // We'll initialize providers on demand to avoid issues with SSR
+    this.segment = new SegmentProvider()
+    this.gtm = new GTMProvider()
   }
 
   initialize(): void {
-    if (this.isInitialized) return
-
-    if (this.initializationAttempted) {
-      AnalyticsLogger.warn("Analytics Manager initialization already attempted")
+    if (this.isInitialized || typeof window === "undefined") {
       return
     }
 
-    this.initializationAttempted = true
+    AnalyticsLogger.info("Initializing analytics...")
 
-    // Only initialize in browser environment
-    if (typeof window === "undefined") {
-      AnalyticsLogger.info("Analytics Manager: Skipping initialization in SSR environment")
-      return
-    }
+    this.segment.initialize()
+    this.gtm.initialize()
 
-    try {
-      // Add providers
-      if (this.providers.length === 0) {
-        this.providers.push(new SegmentProvider())
-        this.providers.push(new GTMProvider())
-        AnalyticsLogger.info("Analytics providers added", { count: this.providers.length })
-      }
-
-      // Initialize all providers
-      this.providers.forEach((provider) => {
-        try {
-          provider.initialize()
-        } catch (error) {
-          AnalyticsLogger.error("Failed to initialize provider", error)
-        }
-      })
-      
-      this.isInitialized = true
-      AnalyticsLogger.info("Analytics Manager initialized successfully")
-
-      // Track initial page view if in browser
-      if (typeof window !== "undefined") {
-        this.trackPageView({
-          path: window.location.pathname,
-          title: document.title,
-          referrer: document.referrer,
-          properties: {
-            initial_load: true,
-            portfolio_section: 'analytics_demo',
-          },
-        })
-      }
-    } catch (error) {
-      AnalyticsLogger.error("Failed to initialize Analytics Manager", error)
-    }
+    this.isInitialized = true
+    AnalyticsLogger.info("Analytics initialized successfully")
   }
 
   trackEvent(event: AnalyticsEvent): void {
-    if (!this.isInitialized && typeof window !== "undefined") {
+    if (!this.isInitialized) {
       this.initialize()
     }
-    
-    AnalyticsLogger.info("Tracking event across providers", event)
-    this.providers.forEach((provider) => {
-      try {
-        provider.trackEvent(event)
-      } catch (error) {
-        AnalyticsLogger.error("Provider failed to track event", { provider: provider.constructor.name, event, error })
-      }
-    })
+
+    this.segment.trackEvent(event)
+    this.gtm.trackEvent(event)
   }
 
   trackPageView(pageView: PageViewEvent): void {
-    if (!this.isInitialized && typeof window !== "undefined") {
+    if (!this.isInitialized) {
       this.initialize()
     }
-    
-    AnalyticsLogger.info("Tracking page view across providers", pageView)
-    this.providers.forEach((provider) => {
-      try {
-        provider.trackPageView(pageView)
-      } catch (error) {
-        AnalyticsLogger.error("Provider failed to track page view", { provider: provider.constructor.name, pageView, error })
-      }
-    })
+
+    // Deduplication: prevent identical page views within 1 second
+    const now = Date.now()
+    if (this.lastPageView &&
+        this.lastPageView.path === pageView.path &&
+        (now - this.lastPageView.timestamp) < 1000) {
+      AnalyticsLogger.warn("Duplicate page view prevented", {
+        path: pageView.path,
+        timeSinceLastView: now - this.lastPageView.timestamp
+      })
+      return
+    }
+
+    this.lastPageView = { path: pageView.path, timestamp: now }
+
+    this.segment.trackPageView(pageView)
+    this.gtm.trackPageView(pageView)
   }
 
   identify(userId: string, traits?: Record<string, any>): void {
-    if (!this.isInitialized && typeof window !== "undefined") {
+    if (!this.isInitialized) {
       this.initialize()
     }
-    
-    AnalyticsLogger.info("Identifying user across providers", { userId, traits })
-    this.providers.forEach((provider) => {
-      try {
-        provider.identify(userId, traits)
-      } catch (error) {
-        AnalyticsLogger.error("Provider failed to identify user", { provider: provider.constructor.name, userId, traits, error })
-      }
-    })
-  }
 
-  // Portfolio-specific tracking methods
-  trackPortfolioInteraction(interaction: string, properties?: Record<string, any>) {
-    const startTime = performance.now()
-    
-    this.trackEvent({
-      name: `portfolio_${interaction.toLowerCase().replace(/\s+/g, '_')}`,
-      properties: {
-        ...properties,
-        interaction_type: interaction,
-        portfolio_section: 'analytics_demo',
-        timestamp: new Date().toISOString(),
-        performance_start: startTime,
-      },
-    })
-    
-    // Track performance metrics
-    const endTime = performance.now()
-    this.trackEvent({
-      name: 'portfolio_interaction_performance',
-      properties: {
-        interaction_type: interaction,
-        duration_ms: endTime - startTime,
-        timestamp: new Date().toISOString(),
-      },
-    })
-  }
-
-  trackProjectView(projectName: string) {
-    this.trackPortfolioInteraction('project_view', {
-      project_name: projectName,
-      section: 'projects',
-    })
-  }
-
-  trackSkillClick(skillName: string) {
-    this.trackPortfolioInteraction('skill_click', {
-      skill_name: skillName,
-      section: 'skills',
-    })
-  }
-
-  trackContactInteraction(interaction: string) {
-    this.trackPortfolioInteraction('contact_interaction', {
-      contact_action: interaction,
-      section: 'contact',
-    })
+    this.segment.identify(userId, traits)
+    this.gtm.identify(userId, traits)
   }
 }
 
-// Create singleton instance
+// Export singleton instance
 export const analytics = new AnalyticsManager()
 
 // Type definitions for window
@@ -486,17 +334,4 @@ declare global {
     dataLayer: any[]
     global: any
   }
-  
-  // Add type definitions for GTM dataLayer
-  interface DataLayerObject {
-    [key: string]: any;
-    'gtm.start'?: number;
-    event?: string;
-  }
-  
-  interface DataLayer extends Array<DataLayerObject> {
-    push: (...args: DataLayerObject[]) => number;
-  }
-  
-  var dataLayer: DataLayer;
 }
