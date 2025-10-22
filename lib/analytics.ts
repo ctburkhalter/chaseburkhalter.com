@@ -193,6 +193,13 @@ class SegmentProvider {
       return
     }
 
+    // Validate userId before calling identify
+    // This prevents invalid userIds from being stored in Segment
+    if (!userId || userId === "me" || userId.trim().length < 3) {
+      AnalyticsLogger.warn("Invalid userId provided to identify(), ignoring", { userId })
+      return
+    }
+
     this.whenReady(() => {
       try {
         window.analytics.identify(userId, {
@@ -288,6 +295,12 @@ class GTMProvider {
       return
     }
 
+    // Validate userId before calling identify
+    if (!userId || userId === "me" || userId.trim().length < 3) {
+      AnalyticsLogger.warn("Invalid userId provided to GTM identify(), ignoring", { userId })
+      return
+    }
+
     try {
       window.dataLayer.push({
         event: "user_identify",
@@ -364,6 +377,12 @@ class AnalyticsManager {
   identify(userId: string, traits?: Record<string, any>): void {
     if (!this.isInitialized) {
       this.initialize()
+    }
+
+    // Validate userId at the manager level
+    if (!userId || userId === "me" || userId.trim().length < 3) {
+      AnalyticsLogger.warn("Invalid userId provided to AnalyticsManager.identify(), ignoring", { userId })
+      return
     }
 
     this.segment.identify(userId, traits)
