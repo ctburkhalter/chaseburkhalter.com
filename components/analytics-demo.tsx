@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { AnalyticsIntegrations } from "@/components/analytics-integrations"
-import { useAnalytics } from "@/hooks/use-analytics"
+import { useTrackEvent } from "@/hooks/use-analytics"
 import { TrendingUp, Users, Eye, MousePointer, Clock, CheckCircle2, AlertCircle, Code, Copy, EyeIcon, Database, BarChart3 } from "lucide-react"
 import { AnalyticsDemoSkeleton } from "@/components/skeletons"
 import { useToast } from "@/components/toast"
@@ -64,7 +64,7 @@ const portfolioInteractions = [
 ]
 
 export function AnalyticsDemo() {
-  const { trackEvent } = useAnalytics()
+  const { trackEvent } = useTrackEvent()
   const { success, error: showError } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
   const [trackingEnabled, setTrackingEnabled] = useState(true)

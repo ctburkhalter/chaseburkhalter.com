@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { useAnalytics } from "@/hooks/use-analytics"
+import { useTrackEvent } from "@/hooks/use-analytics"
 
 interface PortfolioTrackerProps {
   section: string
@@ -11,14 +11,14 @@ interface PortfolioTrackerProps {
   interactionType?: string
 }
 
-export function PortfolioTracker({ 
-  section, 
-  children, 
+export function PortfolioTracker({
+  section,
+  children,
   trackOnMount = false,
   trackOnInteraction = false,
   interactionType = "view"
 }: PortfolioTrackerProps) {
-  const { trackEvent } = useAnalytics()
+  const { trackEvent } = useTrackEvent()
 
   useEffect(() => {
     if (trackOnMount) {

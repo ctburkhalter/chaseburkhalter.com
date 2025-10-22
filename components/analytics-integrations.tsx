@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useAnalytics } from "@/hooks/use-analytics"
+import { useTrackEvent } from "@/hooks/use-analytics"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { ArrowRight, CheckCircle2, ExternalLink, Code, Database, BarChart3 } from "lucide-react"
 
 export function AnalyticsIntegrations() {
-  const { trackEvent, identifyUser } = useAnalytics()
+  const { trackEvent, identifyUser } = useTrackEvent()
   const [userId, setUserId] = useState("")
   const [eventName, setEventName] = useState("")
   const [eventProperty, setEventProperty] = useState("")

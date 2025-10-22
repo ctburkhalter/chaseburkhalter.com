@@ -6,8 +6,9 @@ import { useEffect } from "react"
 import { useAnalytics } from "@/hooks/use-analytics"
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
-  // Initialize analytics
-  useAnalytics()
+  // Initialize analytics and handle page view tracking
+  // This is the ONLY component that should track page views to prevent duplicates
+  useAnalytics({ trackPageViews: true })
 
   // Add a global error boundary for analytics
   useEffect(() => {

@@ -365,18 +365,8 @@ class AnalyticsManager {
       this.isInitialized = true
       AnalyticsLogger.info("Analytics Manager initialized successfully")
 
-      // Track initial page view if in browser
-      if (typeof window !== "undefined") {
-        this.trackPageView({
-          path: window.location.pathname,
-          title: document.title,
-          referrer: document.referrer,
-          properties: {
-            initial_load: true,
-            portfolio_section: 'analytics_demo',
-          },
-        })
-      }
+      // Note: Page view tracking is handled by the AnalyticsProvider component
+      // to prevent duplicate events from multiple hook instances
     } catch (error) {
       AnalyticsLogger.error("Failed to initialize Analytics Manager", error)
     }
