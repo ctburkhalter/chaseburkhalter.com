@@ -49,6 +49,8 @@ class AnalyticsLogger {
 // Segment Analytics Provider
 class SegmentProvider {
   private isInitialized = false
+  private isReady = false
+  private readyCallbacks: (() => void)[] = []
 
   initialize(): void {
     if (this.isInitialized || typeof window === "undefined") {
@@ -97,6 +99,17 @@ class SegmentProvider {
         analytics._writeKey = SEGMENT_WRITE_KEY
         analytics.SNIPPET_VERSION = "4.15.3"
         analytics.load(SEGMENT_WRITE_KEY)
+
+        // Wait for Segment to be ready with anonymousId
+        analytics.ready(() => {
+          this.isReady = true
+          const anonymousId = window.analytics?.user?.()?.anonymousId?.()
+          AnalyticsLogger.info("Segment ready with anonymousId", { anonymousId })
+
+          // Execute any queued callbacks
+          this.readyCallbacks.forEach(cb => cb())
+          this.readyCallbacks = []
+        })
       }
 
       this.isInitialized = true
@@ -106,21 +119,31 @@ class SegmentProvider {
     }
   }
 
+  private whenReady(callback: () => void): void {
+    if (this.isReady) {
+      callback()
+    } else {
+      this.readyCallbacks.push(callback)
+    }
+  }
+
   trackEvent(event: AnalyticsEvent): void {
     if (typeof window === "undefined" || !window.analytics?.track) {
       return
     }
 
-    try {
-      window.analytics.track(event.name, {
-        ...event.properties,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio'
-      })
-      AnalyticsLogger.info("Segment event tracked", event)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track Segment event", error)
-    }
+    this.whenReady(() => {
+      try {
+        window.analytics.track(event.name, {
+          ...event.properties,
+          timestamp: new Date().toISOString(),
+          source: 'portfolio'
+        })
+        AnalyticsLogger.info("Segment event tracked", event)
+      } catch (error) {
+        AnalyticsLogger.error("Failed to track Segment event", error)
+      }
+    })
   }
 
   trackPageView(pageView: PageViewEvent): void {
@@ -128,19 +151,21 @@ class SegmentProvider {
       return
     }
 
-    try {
-      window.analytics.page(pageView.title, {
-        path: pageView.path,
-        url: window.location.href,
-        referrer: pageView.referrer,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio',
-        ...pageView.properties
-      })
-      AnalyticsLogger.info("Segment page view tracked", pageView)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track Segment page view", error)
-    }
+    this.whenReady(() => {
+      try {
+        window.analytics.page(pageView.title, {
+          path: pageView.path,
+          url: window.location.href,
+          referrer: pageView.referrer,
+          timestamp: new Date().toISOString(),
+          source: 'portfolio',
+          ...pageView.properties
+        })
+        AnalyticsLogger.info("Segment page view tracked", pageView)
+      } catch (error) {
+        AnalyticsLogger.error("Failed to track Segment page view", error)
+      }
+    })
   }
 
   identify(userId: string, traits?: Record<string, any>): void {
@@ -148,16 +173,18 @@ class SegmentProvider {
       return
     }
 
-    try {
-      window.analytics.identify(userId, {
-        ...traits,
-        identified_at: new Date().toISOString(),
-        source: 'portfolio'
-      })
-      AnalyticsLogger.info("Segment user identified", { userId, traits })
-    } catch (error) {
-      AnalyticsLogger.error("Failed to identify Segment user", error)
-    }
+    this.whenReady(() => {
+      try {
+        window.analytics.identify(userId, {
+          ...traits,
+          identified_at: new Date().toISOString(),
+          source: 'portfolio'
+        })
+        AnalyticsLogger.info("Segment user identified", { userId, traits })
+      } catch (error) {
+        AnalyticsLogger.error("Failed to identify Segment user", error)
+      }
+    })
   }
 }
 
