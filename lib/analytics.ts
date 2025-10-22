@@ -261,6 +261,7 @@ class AnalyticsManager {
   private segment: SegmentProvider
   private gtm: GTMProvider
   private isInitialized = false
+  private lastPageView: { path: string; timestamp: number } | null = null
 
   constructor() {
     this.segment = new SegmentProvider()
@@ -294,6 +295,20 @@ class AnalyticsManager {
     if (!this.isInitialized) {
       this.initialize()
     }
+
+    // Deduplication: prevent identical page views within 1 second
+    const now = Date.now()
+    if (this.lastPageView &&
+        this.lastPageView.path === pageView.path &&
+        (now - this.lastPageView.timestamp) < 1000) {
+      AnalyticsLogger.warn("Duplicate page view prevented", {
+        path: pageView.path,
+        timeSinceLastView: now - this.lastPageView.timestamp
+      })
+      return
+    }
+
+    this.lastPageView = { path: pageView.path, timestamp: now }
 
     this.segment.trackPageView(pageView)
     this.gtm.trackPageView(pageView)

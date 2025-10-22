@@ -38,9 +38,20 @@ export function useAnalytics() {
       return
     }
 
+    // Mark as tracked IMMEDIATELY to prevent race conditions
+    pageViewTracked = true
+
     // Wait for analytics to be ready
     const trackInitialPageView = () => {
+      // Double-check we haven't already tracked (in case of multiple mounts)
+      if (typeof window !== 'undefined' && (window as any).__pageViewTracked) {
+        return
+      }
+
       try {
+        // Mark globally on window to survive React StrictMode unmount/remount
+        (window as any).__pageViewTracked = true
+
         analytics.trackPageView({
           path: window.location.pathname,
           title: document.title,
@@ -51,7 +62,6 @@ export function useAnalytics() {
             hash: window.location.hash
           }
         })
-        pageViewTracked = true
       } catch (error) {
         if (process.env.NODE_ENV === 'development') {
           console.error("Failed to track initial page view:", error)
@@ -61,7 +71,10 @@ export function useAnalytics() {
 
     // Small delay to ensure analytics scripts are loaded
     const timer = setTimeout(trackInitialPageView, 500)
-    return () => clearTimeout(timer)
+    return () => {
+      // Don't clear the flag on unmount (keep it tracked)
+      clearTimeout(timer)
+    }
   }, [initializedRef.current])
 
   // Track custom event
