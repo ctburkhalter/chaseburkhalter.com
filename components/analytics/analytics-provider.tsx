@@ -16,10 +16,10 @@ const SECTION_IDS = [
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   // Initialize analytics and track initial page view
-  useAnalytics()
+  const { trackEvent } = useAnalytics()
 
   // Set up section tracking with Intersection Observer
-  const { trackSectionClick } = useSectionTracking(SECTION_IDS)
+  const { trackSectionClick } = useSectionTracking(SECTION_IDS, trackEvent)
 
   // Add click tracking to navigation links
   useEffect(() => {

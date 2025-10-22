@@ -103,11 +103,12 @@ export function useAnalytics() {
 /**
  * Hook for tracking section views using Intersection Observer
  * Tracks when sections scroll into viewport
+ * @param sectionIds - Array of section IDs to track
+ * @param trackEvent - Event tracking function from useAnalytics()
  */
-export function useSectionTracking(sectionIds: string[]) {
+export function useSectionTracking(sectionIds: string[], trackEvent: (event: AnalyticsEvent) => void) {
   const trackedSections = useRef(new Set<string>())
   const observerRef = useRef<IntersectionObserver | null>(null)
-  const { trackEvent } = useAnalytics()
 
   useEffect(() => {
     if (!globalInitialized || typeof window === "undefined") {
