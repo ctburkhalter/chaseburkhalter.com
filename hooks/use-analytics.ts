@@ -79,10 +79,7 @@ export function useAnalytics() {
 
   // Track custom event
   const trackEvent = useCallback((event: AnalyticsEvent) => {
-    if (!globalInitialized) {
-      return
-    }
-
+    // Always try to track - the analytics manager will handle queueing if not ready
     try {
       analytics.trackEvent(event)
     } catch (error) {
@@ -94,10 +91,7 @@ export function useAnalytics() {
 
   // Identify user
   const identifyUser = useCallback((userId: string, traits?: Record<string, any>) => {
-    if (!globalInitialized) {
-      return
-    }
-
+    // Always try to identify - the analytics manager will handle queueing if not ready
     try {
       analytics.identify(userId, traits)
     } catch (error) {
@@ -124,11 +118,11 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
   const observerRef = useRef<IntersectionObserver | null>(null)
 
   useEffect(() => {
-    if (!globalInitialized || typeof window === "undefined") {
+    if (typeof window === "undefined") {
       return
     }
 
-    // Create intersection observer
+    // Create intersection observer (events will be queued if analytics not ready)
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -177,10 +171,7 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
 
   // Track section click (navigation)
   const trackSectionClick = useCallback((sectionId: string, clickSource: string = "navigation") => {
-    if (!globalInitialized) {
-      return
-    }
-
+    // Events will be queued if analytics not ready
     trackEvent({
       name: "section_clicked",
       properties: {
