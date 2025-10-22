@@ -104,7 +104,16 @@ class SegmentProvider {
         analytics.ready(() => {
           this.isReady = true
           const anonymousId = window.analytics?.user?.()?.anonymousId?.()
-          AnalyticsLogger.info("Segment ready with anonymousId", { anonymousId })
+          const currentUserId = window.analytics?.user?.()?.id?.()
+          AnalyticsLogger.info("Segment ready", { anonymousId, currentUserId })
+
+          // Check if there's an invalid userId stored and reset if needed
+          // This clears any previously stored invalid userIds like "me"
+          if (currentUserId && (currentUserId === "me" || currentUserId.length < 5)) {
+            AnalyticsLogger.warn("Found invalid stored userId, resetting identity", { currentUserId })
+            window.analytics.reset()
+            AnalyticsLogger.info("Identity reset complete, will use anonymousId only")
+          }
 
           // Add middleware to filter out invalid userId values and ensure Amplitude gets proper IDs
           // This prevents "me" or other invalid userIds from being sent to destinations
