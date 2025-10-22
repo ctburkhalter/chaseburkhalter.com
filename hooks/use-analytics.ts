@@ -1,22 +1,20 @@
 "use client"
 
 import { useEffect, useCallback, useRef } from "react"
-import { usePathname, useSearchParams } from "next/navigation"
 import { analytics, type AnalyticsEvent } from "@/lib/analytics"
 
-// Global tracking state to prevent duplicate page views across multiple hook instances
+// Global state to ensure single initialization and no duplicate events
 let globalInitialized = false
-let lastTrackedPath = ""
-let lastTrackedSearch = ""
-let trackingInProgress = false
+let pageViewTracked = false
 
-export function useAnalytics(options?: { trackPageViews?: boolean }) {
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
+/**
+ * Main analytics hook - handles initialization and provides event tracking
+ * Should only be used by the AnalyticsProvider component
+ */
+export function useAnalytics() {
   const initializedRef = useRef(false)
-  const shouldTrackPageViews = options?.trackPageViews ?? true
 
-  // Initialize analytics (only once globally)
+  // Initialize analytics ONCE globally
   useEffect(() => {
     if (globalInitialized) {
       initializedRef.current = true
@@ -34,81 +32,66 @@ export function useAnalytics(options?: { trackPageViews?: boolean }) {
     }
   }, [])
 
-  // Track page views (with deduplication)
+  // Track initial page view ONCE
   useEffect(() => {
-    if (!pathname || !initializedRef.current || !shouldTrackPageViews) return
-
-    const searchString = searchParams ? searchParams.toString() : ""
-    const currentPath = `${pathname}?${searchString}`
-
-    // Prevent duplicate tracking of the same path
-    if (currentPath === `${lastTrackedPath}?${lastTrackedSearch}` || trackingInProgress) {
+    if (!initializedRef.current || pageViewTracked) {
       return
     }
 
-    trackingInProgress = true
-    lastTrackedPath = pathname
-    lastTrackedSearch = searchString
+    // Wait for analytics to be ready
+    const trackInitialPageView = () => {
+      try {
+        analytics.trackPageView({
+          path: window.location.pathname,
+          title: document.title,
+          referrer: document.referrer,
+          properties: {
+            initial_load: true,
+            url: window.location.href,
+            hash: window.location.hash
+          }
+        })
+        pageViewTracked = true
+      } catch (error) {
+        if (process.env.NODE_ENV === 'development') {
+          console.error("Failed to track initial page view:", error)
+        }
+      }
+    }
+
+    // Small delay to ensure analytics scripts are loaded
+    const timer = setTimeout(trackInitialPageView, 500)
+    return () => clearTimeout(timer)
+  }, [initializedRef.current])
+
+  // Track custom event
+  const trackEvent = useCallback((event: AnalyticsEvent) => {
+    if (!globalInitialized) {
+      return
+    }
 
     try {
-      analytics.trackPageView({
-        path: pathname,
-        title: document.title,
-        referrer: document.referrer,
-        properties: {
-          search_params: searchParams ? Object.fromEntries(searchParams.entries()) : {},
-        },
-      })
+      analytics.trackEvent(event)
     } catch (error) {
       if (process.env.NODE_ENV === 'development') {
-        console.error("Failed to track page view:", error)
-      }
-    } finally {
-      // Reset tracking flag after a short delay to allow for legitimate re-tracking
-      setTimeout(() => {
-        trackingInProgress = false
-      }, 100)
-    }
-  }, [pathname, searchParams, shouldTrackPageViews])
-
-  // Track event helper with retry logic
-  const trackEvent = useCallback((event: AnalyticsEvent, retries = 3) => {
-    const attemptTrack = (attempt: number) => {
-      try {
-        analytics.trackEvent(event)
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`Failed to track event (attempt ${attempt}):`, error)
-        }
-        
-        if (attempt < retries) {
-          // Exponential backoff
-          setTimeout(() => attemptTrack(attempt + 1), Math.pow(2, attempt) * 1000)
-        }
+        console.error("Failed to track event:", error)
       }
     }
-    
-    attemptTrack(1)
   }, [])
 
-  // Identify user helper with retry logic
-  const identifyUser = useCallback((userId: string, traits?: Record<string, any>, retries = 3) => {
-    const attemptIdentify = (attempt: number) => {
-      try {
-        analytics.identify(userId, traits)
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`Failed to identify user (attempt ${attempt}):`, error)
-        }
-        
-        if (attempt < retries) {
-          // Exponential backoff
-          setTimeout(() => attemptIdentify(attempt + 1), Math.pow(2, attempt) * 1000)
-        }
+  // Identify user
+  const identifyUser = useCallback((userId: string, traits?: Record<string, any>) => {
+    if (!globalInitialized) {
+      return
+    }
+
+    try {
+      analytics.identify(userId, traits)
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') {
+        console.error("Failed to identify user:", error)
       }
     }
-    
-    attemptIdentify(1)
   }, [])
 
   return {
@@ -118,73 +101,97 @@ export function useAnalytics(options?: { trackPageViews?: boolean }) {
 }
 
 /**
- * Lightweight hook for tracking events only (no page view tracking)
- * Use this in components that only need to track user interactions
- * This prevents unnecessary page view tracking and improves performance
+ * Hook for tracking section views using Intersection Observer
+ * Tracks when sections scroll into viewport
  */
-export function useTrackEvent() {
-  const initializedRef = useRef(false)
+export function useSectionTracking(sectionIds: string[]) {
+  const trackedSections = useRef(new Set<string>())
+  const observerRef = useRef<IntersectionObserver | null>(null)
+  const { trackEvent } = useAnalytics()
 
-  // Ensure analytics is initialized
   useEffect(() => {
-    if (globalInitialized) {
-      initializedRef.current = true
+    if (!globalInitialized || typeof window === "undefined") {
       return
     }
 
-    try {
-      analytics.initialize()
-      globalInitialized = true
-      initializedRef.current = true
-    } catch (error) {
-      if (process.env.NODE_ENV === 'development') {
-        console.error("Failed to initialize analytics:", error)
+    // Create intersection observer
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && entry.intersectionRatio >= 0.5) {
+            const sectionId = entry.target.id
+
+            // Only track each section view once per session
+            if (!trackedSections.current.has(sectionId)) {
+              trackedSections.current.add(sectionId)
+
+              trackEvent({
+                name: "section_viewed",
+                properties: {
+                  section_id: sectionId,
+                  section_name: sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                  timestamp: new Date().toISOString(),
+                  url: window.location.href,
+                  interaction_type: "scroll"
+                }
+              })
+            }
+          }
+        })
+      },
+      {
+        threshold: 0.5, // Trigger when 50% of section is visible
+        rootMargin: "0px"
+      }
+    )
+
+    // Observe all sections
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id)
+      if (element && observerRef.current) {
+        observerRef.current.observe(element)
+      }
+    })
+
+    // Cleanup
+    return () => {
+      if (observerRef.current) {
+        observerRef.current.disconnect()
       }
     }
-  }, [])
+  }, [sectionIds, trackEvent])
 
-  // Track event helper with retry logic
-  const trackEvent = useCallback((event: AnalyticsEvent, retries = 3) => {
-    const attemptTrack = (attempt: number) => {
-      try {
-        analytics.trackEvent(event)
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`Failed to track event (attempt ${attempt}):`, error)
-        }
-
-        if (attempt < retries) {
-          // Exponential backoff
-          setTimeout(() => attemptTrack(attempt + 1), Math.pow(2, attempt) * 1000)
-        }
-      }
+  // Track section click (navigation)
+  const trackSectionClick = useCallback((sectionId: string, clickSource: string = "navigation") => {
+    if (!globalInitialized) {
+      return
     }
 
-    attemptTrack(1)
-  }, [])
-
-  // Identify user helper with retry logic
-  const identifyUser = useCallback((userId: string, traits?: Record<string, any>, retries = 3) => {
-    const attemptIdentify = (attempt: number) => {
-      try {
-        analytics.identify(userId, traits)
-      } catch (error) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error(`Failed to identify user (attempt ${attempt}):`, error)
-        }
-
-        if (attempt < retries) {
-          // Exponential backoff
-          setTimeout(() => attemptIdentify(attempt + 1), Math.pow(2, attempt) * 1000)
-        }
+    trackEvent({
+      name: "section_clicked",
+      properties: {
+        section_id: sectionId,
+        section_name: sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        click_source: clickSource,
+        timestamp: new Date().toISOString(),
+        url: window.location.href
       }
-    }
+    })
+  }, [trackEvent])
 
-    attemptIdentify(1)
-  }, [])
+  return {
+    trackSectionClick
+  }
+}
+
+/**
+ * Simple hook for tracking events only (for demo components)
+ */
+export function useTrackEvent() {
+  const { trackEvent, identifyUser } = useAnalytics()
 
   return {
     trackEvent,
-    identifyUser,
+    identifyUser
   }
 }
