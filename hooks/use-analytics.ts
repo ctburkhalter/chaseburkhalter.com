@@ -151,16 +151,36 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
       }
     )
 
-    // Observe all sections
-    sectionIds.forEach((id) => {
-      const element = document.getElementById(id)
-      if (element && observerRef.current) {
-        observerRef.current.observe(element)
+    // Delay observing sections to ensure DOM is fully rendered
+    // This handles the case where sections might not be in the DOM yet during hydration
+    const setupObserver = () => {
+      let observedCount = 0
+
+      sectionIds.forEach((id) => {
+        const element = document.getElementById(id)
+        if (element && observerRef.current) {
+          observerRef.current.observe(element)
+          observedCount++
+        } else if (process.env.NODE_ENV === 'development') {
+          console.warn(`[Analytics] Section with id "${id}" not found in DOM`)
+        }
+      })
+
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`[Analytics] Section tracking initialized - observing ${observedCount} of ${sectionIds.length} sections`)
       }
+    }
+
+    // Use requestAnimationFrame to wait for the next paint, ensuring DOM is ready
+    const rafId = requestAnimationFrame(() => {
+      // Additional small delay to ensure all sections are rendered
+      const timeoutId = setTimeout(setupObserver, 100)
+      return timeoutId
     })
 
     // Cleanup
     return () => {
+      cancelAnimationFrame(rafId)
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
