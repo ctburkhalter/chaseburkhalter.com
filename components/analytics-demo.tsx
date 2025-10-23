@@ -11,8 +11,7 @@ import { AnalyticsIntegrations } from "@/components/analytics-integrations"
 import { useTrackEvent } from "@/hooks/use-analytics"
 import {
   createPortfolioInteractionEvent,
-  INTERACTION_ACTIONS,
-  ANALYTICS_EVENTS,
+  isValidInteractionAction,
 } from "@/lib/analytics-events"
 import { TrendingUp, Users, Eye, MousePointer, Clock, CheckCircle2, AlertCircle, Code, Copy, EyeIcon, Database, BarChart3 } from "lucide-react"
 import { AnalyticsDemoSkeleton } from "@/components/skeletons"
@@ -60,6 +59,20 @@ const analyticsImplementations = [
   }
 ]
 
+const sanitizeInteractionAction = (action: string) => {
+  const normalized = action
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  if (normalized && isValidInteractionAction(normalized)) {
+    return normalized
+  }
+
+  return normalized || 'custom_interaction'
+}
+
 // Live portfolio interaction tracking
 const portfolioInteractions = [
   { action: "Project Card View", count: 0, icon: Eye },
@@ -97,7 +110,7 @@ export function AnalyticsDemo() {
       setError(null)
 
       // Convert action to snake_case for the action property
-      const actionKey = action.toLowerCase().replace(/\s+/g, '_')
+      const actionKey = sanitizeInteractionAction(action)
 
       const eventPayload = createPortfolioInteractionEvent(actionKey, action, {
         demo_section: true,
@@ -414,9 +427,22 @@ export function AnalyticsDemo() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            navigator.clipboard.writeText(JSON.stringify(lastPayload, null, 2))
-                            success("Copied to Clipboard", "JSON payload has been copied to your clipboard")
+                          onClick={async () => {
+                            try {
+                              const clipboard = typeof navigator !== 'undefined' ? navigator.clipboard : undefined
+
+                              if (!clipboard?.writeText) {
+                                throw new Error("Clipboard API unavailable")
+                              }
+
+                              await clipboard.writeText(JSON.stringify(lastPayload, null, 2))
+                              success("Copied to Clipboard", "JSON payload has been copied to your clipboard")
+                            } catch (clipboardError) {
+                              showError("Copy Failed", "Unable to access the clipboard. Please copy the payload manually.")
+                              if (process.env.NODE_ENV === 'development') {
+                                console.error("Clipboard copy failed", clipboardError)
+                              }
+                            }
                           }}
                           aria-label="Copy JSON payload to clipboard"
                         >

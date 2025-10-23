@@ -118,9 +118,10 @@ export function useAnalytics() {
  * @param sectionIds - Array of section IDs to track
  * @param trackEvent - Event tracking function from useAnalytics()
  */
-export function useSectionTracking(sectionIds: string[], trackEvent: (event: AnalyticsEvent) => void) {
+export function useSectionTracking(sectionIds: Array<SectionId | string>, trackEvent: (event: AnalyticsEvent) => void) {
   const trackedSections = useRef(new Set<string>())
   const observerRef = useRef<IntersectionObserver | null>(null)
+  const setupTimeoutRef = useRef<number | null>(null)
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -169,26 +170,32 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Analytics] Section tracking initialized - observing ${observedCount} of ${sectionIds.length} sections`)
       }
+
+      setupTimeoutRef.current = null
     }
 
     // Use requestAnimationFrame to wait for the next paint, ensuring DOM is ready
     const rafId = requestAnimationFrame(() => {
       // Additional small delay to ensure all sections are rendered
-      const timeoutId = setTimeout(setupObserver, 100)
-      return timeoutId
+      setupTimeoutRef.current = window.setTimeout(setupObserver, 100)
     })
 
     // Cleanup
     return () => {
       cancelAnimationFrame(rafId)
+      if (setupTimeoutRef.current !== null) {
+        clearTimeout(setupTimeoutRef.current)
+        setupTimeoutRef.current = null
+      }
       if (observerRef.current) {
         observerRef.current.disconnect()
+        observerRef.current = null
       }
     }
   }, [sectionIds, trackEvent])
 
   // Track section click (navigation)
-  const trackSectionClick = useCallback((sectionId: string, clickSource: string = "navigation") => {
+  const trackSectionClick = useCallback((sectionId: SectionId | string, clickSource: string = "navigation") => {
     // Events will be queued if analytics not ready
     const sectionName = sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
     const event = createSectionClickedEvent(sectionId, sectionName, clickSource)

@@ -3,16 +3,26 @@
 import { useState } from "react"
 import { useTrackEvent } from "@/hooks/use-analytics"
 import { createCustomEvent } from "@/lib/analytics-events"
+import { useToast } from "@/components/toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Badge } from "@/components/ui/badge"
-import { ArrowRight, CheckCircle2, ExternalLink, Code, Database, BarChart3 } from "lucide-react"
+import { CheckCircle2, ExternalLink, Code, Database, BarChart3 } from "lucide-react"
+
+const sanitizeEventName = (name: string) =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
 
 export function AnalyticsIntegrations() {
   const { trackEvent, identifyUser } = useTrackEvent()
+  const { warning, error: showError } = useToast()
   const [userId, setUserId] = useState("")
   const [eventName, setEventName] = useState("")
   const [eventProperty, setEventProperty] = useState("")
@@ -20,15 +30,36 @@ export function AnalyticsIntegrations() {
   const [eventSent, setEventSent] = useState(false)
   const [userIdentified, setUserIdentified] = useState(false)
 
+  const isSegmentActive = Boolean(process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY)
+  const isGtmActive = Boolean(process.env.NEXT_PUBLIC_GTM_CONTAINER_ID)
+  const isAmplitudeActive = isSegmentActive
+
+  const getStatusIndicator = (isActive: boolean) =>
+    `h-2 w-2 rounded-full ${isActive ? "bg-green-500" : "bg-red-500"} mr-2`
+
+  const getStatusLabel = (isActive: boolean) => (isActive ? "Active" : "Inactive")
+
   const handleTrackEvent = () => {
     if (!eventName) return
+
+    const normalizedEventName = sanitizeEventName(eventName)
+
+    if (!normalizedEventName) {
+      showError("Invalid Event Name", "Event names must include at least one alphanumeric character.")
+      return
+    }
+
+    if (normalizedEventName !== eventName) {
+      setEventName(normalizedEventName)
+      warning("Event Name Normalized", `Converted to ${normalizedEventName} to follow snake_case conventions.`)
+    }
 
     const properties: Record<string, any> = {}
     if (eventProperty && eventValue) {
       properties[eventProperty] = eventValue
     }
 
-    const event = createCustomEvent(eventName, properties)
+    const event = createCustomEvent(normalizedEventName, properties)
     trackEvent(event)
 
     setEventSent(true)
@@ -83,8 +114,8 @@ export function AnalyticsIntegrations() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                      <span>Active</span>
+                      <div className={getStatusIndicator(isSegmentActive)}></div>
+                      <span>{getStatusLabel(isSegmentActive)}</span>
                     </div>
                     <Badge variant="secondary">CDP</Badge>
                   </div>
@@ -104,8 +135,8 @@ export function AnalyticsIntegrations() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                      <span>Active</span>
+                      <div className={getStatusIndicator(isGtmActive)}></div>
+                      <span>{getStatusLabel(isGtmActive)}</span>
                     </div>
                     <Badge variant="secondary">TMS</Badge>
                   </div>
@@ -125,10 +156,10 @@ export function AnalyticsIntegrations() {
                   </p>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center text-sm">
-                      <div className="h-2 w-2 rounded-full bg-green-500 mr-2"></div>
-                      <span>Active</span>
+                      <div className={getStatusIndicator(isAmplitudeActive)}></div>
+                      <span>{getStatusLabel(isAmplitudeActive)}</span>
                     </div>
-                    <Badge variant="secondary">Analytics</Badge>
+                    <Badge variant="secondary">Product Analytics</Badge>
                   </div>
                 </CardContent>
               </Card>
