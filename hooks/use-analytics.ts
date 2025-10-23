@@ -2,6 +2,11 @@
 
 import { useEffect, useCallback, useRef } from "react"
 import { analytics, type AnalyticsEvent } from "@/lib/analytics"
+import {
+  createSectionViewedEvent,
+  createSectionClickedEvent,
+  type SectionId,
+} from "@/lib/analytics-events"
 
 // Global state to ensure single initialization and no duplicate events
 let globalInitialized = false
@@ -133,16 +138,9 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
             if (!trackedSections.current.has(sectionId)) {
               trackedSections.current.add(sectionId)
 
-              trackEvent({
-                name: "section_viewed",
-                properties: {
-                  section_id: sectionId,
-                  section_name: sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                  timestamp: new Date().toISOString(),
-                  url: window.location.href,
-                  interaction_type: "scroll"
-                }
-              })
+              const sectionName = sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+              const event = createSectionViewedEvent(sectionId, sectionName)
+              trackEvent(event)
             }
           }
         })
@@ -172,16 +170,9 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
   // Track section click (navigation)
   const trackSectionClick = useCallback((sectionId: string, clickSource: string = "navigation") => {
     // Events will be queued if analytics not ready
-    trackEvent({
-      name: "section_clicked",
-      properties: {
-        section_id: sectionId,
-        section_name: sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-        click_source: clickSource,
-        timestamp: new Date().toISOString(),
-        url: window.location.href
-      }
-    })
+    const sectionName = sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
+    const event = createSectionClickedEvent(sectionId, sectionName, clickSource)
+    trackEvent(event)
   }, [trackEvent])
 
   return {

@@ -9,6 +9,11 @@ import { Badge } from "@/components/ui/badge"
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart"
 import { AnalyticsIntegrations } from "@/components/analytics-integrations"
 import { useTrackEvent } from "@/hooks/use-analytics"
+import {
+  createPortfolioInteractionEvent,
+  INTERACTION_ACTIONS,
+  ANALYTICS_EVENTS,
+} from "@/lib/analytics-events"
 import { TrendingUp, Users, Eye, MousePointer, Clock, CheckCircle2, AlertCircle, Code, Copy, EyeIcon, Database, BarChart3 } from "lucide-react"
 import { AnalyticsDemoSkeleton } from "@/components/skeletons"
 import { useToast } from "@/components/toast"
@@ -90,24 +95,24 @@ export function AnalyticsDemo() {
     if (trackingEnabled) {
       setIsLoading(true)
       setError(null)
-      
-      const eventPayload = {
-        name: `portfolio_${action.toLowerCase().replace(/\s+/g, '_')}`,
-        properties: {
-          demo_section: true,
-          timestamp: new Date().toISOString(),
-          user_agent: navigator.userAgent,
-          interaction_type: action,
-          portfolio_section: 'analytics_demo',
-        },
-      }
+
+      // Convert action to snake_case for the action property
+      const actionKey = action.toLowerCase().replace(/\s+/g, '_')
+
+      const eventPayload = createPortfolioInteractionEvent(actionKey, action, {
+        demo_section: true,
+        portfolio_section: 'analytics_demo',
+      })
 
       // Store the payload for preview
       setLastPayload({
         segment: {
           event: eventPayload.name,
-          properties: eventPayload.properties,
-          timestamp: eventPayload.properties.timestamp,
+          properties: {
+            ...eventPayload.properties,
+            timestamp: new Date().toISOString(),
+          },
+          timestamp: new Date().toISOString(),
           context: {
             userAgent: navigator.userAgent,
             page: {
@@ -120,13 +125,17 @@ export function AnalyticsDemo() {
         gtm: {
           event: eventPayload.name,
           ...eventPayload.properties,
+          timestamp: new Date().toISOString(),
           page_path: window.location.pathname,
           page_title: document.title,
           page_url: window.location.href,
         },
         amplitude: {
           event_type: eventPayload.name,
-          event_properties: eventPayload.properties,
+          event_properties: {
+            ...eventPayload.properties,
+            timestamp: new Date().toISOString(),
+          },
           user_properties: {
             portfolio_visitor: true,
             demo_participant: true,

@@ -27,11 +27,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo)
-    
+
     // Track error to analytics if available
     if (typeof window !== "undefined" && window.analytics) {
       try {
-        window.analytics.track("Error Boundary Triggered", {
+        window.analytics.track("error_occurred", {
+          error_type: "boundary",
           error_message: error.message,
           error_stack: error.stack,
           component_stack: errorInfo.componentStack,
@@ -95,11 +96,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
 export function useErrorHandler() {
   return (error: Error, errorInfo?: { componentStack?: string }) => {
     console.error("Error caught by useErrorHandler:", error, errorInfo)
-    
+
     // Track error to analytics if available
     if (typeof window !== "undefined" && window.analytics) {
       try {
-        window.analytics.track("Component Error", {
+        window.analytics.track("error_occurred", {
+          error_type: "component",
           error_message: error.message,
           error_stack: error.stack,
           component_stack: errorInfo?.componentStack,
