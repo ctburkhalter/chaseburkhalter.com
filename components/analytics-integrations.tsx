@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useTrackEvent } from "@/hooks/use-analytics"
+import { createCustomEvent } from "@/lib/analytics-events"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -27,14 +28,8 @@ export function AnalyticsIntegrations() {
       properties[eventProperty] = eventValue
     }
 
-    trackEvent({
-      name: eventName,
-      properties: {
-        ...properties,
-        portfolio_demo: true,
-        timestamp: new Date().toISOString(),
-      },
-    })
+    const event = createCustomEvent(eventName, properties)
+    trackEvent(event)
 
     setEventSent(true)
     setTimeout(() => setEventSent(false), 3000)
