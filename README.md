@@ -1,15 +1,15 @@
 # chaseburkhalter.com
 
-This repository contains the source code for my personal portfolio built with Next.js and Tailwind CSS. It showcases real-world analytics projects and interactive demos with a production-ready analytics implementation.
+This repository contains the source code for my personal portfolio built with Next.js and Tailwind CSS. It showcases real-world analytics projects with a production-ready analytics implementation.
 
 ## Features
 
 - **Modern Tech Stack**: Next.js 15, React, TypeScript, Tailwind CSS
 - **Production Analytics**: Segment, Google Tag Manager, and Amplitude integration
 - **Type-Safe Event Tracking**: Centralized event registry with TypeScript
-- **Interactive Demos**: Live analytics demonstrations
 - **Responsive Design**: Mobile-first, accessible UI
 - **Performance Optimized**: Intersection Observer-based tracking
+- **Privacy-Aware Loading**: Respects Do Not Track and Global Privacy Control browser signals
 
 ## Analytics Implementation
 
@@ -27,7 +27,9 @@ This portfolio features a sophisticated, production-ready analytics system that 
 - Comprehensive tracking plan with full documentation
 - User ID validation and sanitization
 - Automatic deduplication of events
-- Error tracking via React error boundaries
+- Analytics script loading through `next/script`
+- Error tracking for analytics-related browser errors
+- Do Not Track and Global Privacy Control checks before loading third-party analytics scripts
 
 ### Documentation
 - **[TRACKING_PLAN.md](./TRACKING_PLAN.md)** - Complete event specifications and usage guidelines
@@ -36,20 +38,16 @@ This portfolio features a sophisticated, production-ready analytics system that 
 
 ## Development
 
-Install dependencies (using pnpm or npm):
+Install dependencies:
 
 ```bash
 pnpm install
-# or
-npm install --legacy-peer-deps
 ```
 
 Run the development server:
 
 ```bash
 pnpm dev
-# or
-npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the site.
@@ -58,8 +56,6 @@ Build for production:
 
 ```bash
 pnpm build
-# or
-npm run build
 ```
 
 ### Environment Variables
@@ -73,6 +69,8 @@ NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-XXXXXXX
 
 See `.env.example` for the complete list of required variables.
 
+`.env.local` is intentionally ignored by git. Configure the same `NEXT_PUBLIC_*` values in Vercel or your deployment environment.
+
 ## Project Structure
 
 ```
@@ -81,9 +79,10 @@ See `.env.example` for the complete list of required variables.
 │   └── page.tsx               # Main portfolio page
 ├── components/                 # React components
 │   ├── analytics/             # Analytics components
-│   ├── analytics-demo.tsx     # Interactive analytics demo
-│   └── error-boundary.tsx     # Error tracking
+│   ├── mobile-navigation.tsx  # Mobile navigation sheet
+│   └── project-card.tsx       # Project display cards
 ├── lib/                       # Core utilities
+│   ├── analytics-consent.ts   # Browser privacy signal checks
 │   ├── analytics.ts           # Analytics platform integrations
 │   └── analytics-events.ts    # Event registry & types
 ├── hooks/                     # React hooks

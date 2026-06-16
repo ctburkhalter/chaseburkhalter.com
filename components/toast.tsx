@@ -1,6 +1,7 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import type { ReactNode } from "react"
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react"
 import { CheckCircle2, AlertCircle, Info, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -16,6 +17,18 @@ interface ToastProps {
   toast: Toast
   onRemove: (id: string) => void
 }
+
+type AddToast = (toast: Omit<Toast, "id">) => void
+
+interface ToastContextValue {
+  toast: AddToast
+  success: (title: string, description?: string) => void
+  error: (title: string, description?: string) => void
+  info: (title: string, description?: string) => void
+  warning: (title: string, description?: string) => void
+}
+
+const ToastContext = createContext<ToastContextValue | null>(null)
 
 function ToastComponent({ toast, onRemove }: ToastProps) {
   const [isVisible, setIsVisible] = useState(false)
@@ -64,7 +77,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   return (
     <div
       className={cn(
-        "fixed top-4 right-4 z-50 max-w-sm w-full bg-white border rounded-lg shadow-lg p-4 transition-all duration-300",
+        "w-full bg-white border rounded-lg shadow-lg p-4 transition-all duration-300",
         getBackgroundColor(),
         isVisible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"
       )}
@@ -100,55 +113,78 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   )
 }
 
-export function ToastContainer() {
-  const [toasts, setToasts] = useState<Toast[]>([])
-
-  const addToast = (toast: Omit<Toast, "id">) => {
-    const id = Math.random().toString(36).substr(2, 9)
-    setToasts(prev => [...prev, { ...toast, id }])
-  }
-
-  const removeToast = (id: string) => {
-    setToasts(prev => prev.filter(toast => toast.id !== id))
-  }
-
-  // Expose addToast globally for easy access
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      (window as any).addToast = addToast
-    }
-  }, [])
-
+function ToastViewport({
+  toasts,
+  onRemove,
+}: {
+  toasts: Toast[]
+  onRemove: (id: string) => void
+}) {
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed top-4 right-4 z-50 w-full max-w-sm space-y-2">
       {toasts.map(toast => (
         <ToastComponent
           key={toast.id}
           toast={toast}
-          onRemove={removeToast}
+          onRemove={onRemove}
         />
       ))}
     </div>
   )
 }
 
+export function ToastProvider({ children }: { children: ReactNode }) {
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const addToast = useCallback<AddToast>((toast) => {
+    const id = crypto.randomUUID()
+    setToasts(prev => [...prev, { ...toast, id }])
+  }, [])
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(toast => toast.id !== id))
+  }, [])
+
+  const value = useMemo<ToastContextValue>(() => ({
+    toast: addToast,
+    success: (title, description) => addToast({ title, description, type: "success" }),
+    error: (title, description) => addToast({ title, description, type: "error" }),
+    info: (title, description) => addToast({ title, description, type: "info" }),
+    warning: (title, description) => addToast({ title, description, type: "warning" }),
+  }), [addToast])
+
+  return (
+    <ToastContext.Provider value={value}>
+      {children}
+      <ToastViewport toasts={toasts} onRemove={removeToast} />
+    </ToastContext.Provider>
+  )
+}
+
+export function ToastContainer({ children }: { children?: ReactNode }) {
+  return <ToastProvider>{children}</ToastProvider>
+}
+
 // Hook for using toasts
 export function useToast() {
-  const addToast = (toast: Omit<Toast, "id">) => {
-    if (typeof window !== "undefined" && (window as any).addToast) {
-      (window as any).addToast(toast)
+  const context = useContext(ToastContext)
+
+  if (!context) {
+    const noopToast: AddToast = () => {
+      if (process.env.NODE_ENV === "development") {
+        console.warn("useToast() was called outside ToastProvider")
+      }
+    }
+    const noopMessage = () => noopToast({ type: "info" })
+
+    return {
+      toast: noopToast,
+      success: noopMessage,
+      error: noopMessage,
+      info: noopMessage,
+      warning: noopMessage,
     }
   }
 
-  return {
-    toast: addToast,
-    success: (title: string, description?: string) => 
-      addToast({ title, description, type: "success" }),
-    error: (title: string, description?: string) => 
-      addToast({ title, description, type: "error" }),
-    info: (title: string, description?: string) => 
-      addToast({ title, description, type: "info" }),
-    warning: (title: string, description?: string) => 
-      addToast({ title, description, type: "warning" }),
-  }
+  return context
 }

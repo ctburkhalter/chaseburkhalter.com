@@ -1,16 +1,18 @@
-export function GTMNoScript({ containerId }: { containerId?: string }) {
-  const gtmId = containerId || process.env.NEXT_PUBLIC_GTM_CONTAINER_ID || ""
+interface GTMNoScriptProps {
+  containerId?: string
+}
 
-  // Don't render if no GTM ID is configured
-  if (!gtmId) return null
+export function GTMNoScript({ containerId }: GTMNoScriptProps) {
+  if (!containerId) return null
 
   return (
     <noscript>
       <iframe
-        src={`https://www.googletagmanager.com/ns.html?id=${gtmId}`}
+        src={`https://www.googletagmanager.com/ns.html?id=${containerId}`}
         height="0"
         width="0"
         style={{ display: "none", visibility: "hidden" }}
+        title="Google Tag Manager"
       />
     </noscript>
   )

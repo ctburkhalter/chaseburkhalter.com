@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AlertCircle } from 'lucide-react'
 
@@ -42,11 +43,8 @@ export default function Error({
           >
             Try again
           </Button>
-          <Button
-            onClick={() => (window.location.href = '/')}
-            variant="outline"
-          >
-            Go home
+          <Button asChild variant="outline">
+            <Link href="/">Go home</Link>
           </Button>
         </div>
       </div>

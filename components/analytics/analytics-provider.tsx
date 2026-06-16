@@ -7,7 +7,7 @@ import { useAnalytics, useSectionTracking } from "@/hooks/use-analytics"
 // Define all trackable sections on the site
 const SECTION_IDS = [
   "hero",
-  "about",
+  "experience",
   "projects",
   "skills",
   "demos",
