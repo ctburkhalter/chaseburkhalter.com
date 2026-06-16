@@ -4,27 +4,29 @@ import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { AnalyticsScripts } from "@/components/analytics/analytics-scripts"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
-import { GTMNoScript } from "@/components/analytics/gtm-noscript"
-import { ToastContainer } from "@/components/toast"
 
 import "./globals.css"
 
 const inter = Inter({
   subsets: ["latin"],
-  display: 'swap',
+  display: "swap",
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://chaseburkhalter.com"),
   title: "Chase Burkhalter | Senior Data & Analytics Engineer",
   description:
-    "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance. 5+ years experience with modern data stack tooling.",
-  keywords: ["Data Analytics", "Analytics Engineer", "Product Analytics", "Event Tracking", "Data Governance", "Snowflake", "dbt", "Amplitude", "Segment", "GA4", "GTM", "Apache Superset"],
+    "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance. 6+ years experience with modern data stack tooling.",
+  keywords: ["Data Analytics", "Analytics Engineer", "Product Analytics", "Event Tracking", "Data Governance", "Snowflake", "dbt", "Amplitude", "Segment", "GA4", "Apache Superset"],
   authors: [{ name: "Chase Burkhalter", url: "https://chaseburkhalter.com" }],
   creator: "Chase Burkhalter",
   publisher: "Chase Burkhalter",
+  applicationName: "Chase Burkhalter Portfolio",
+  category: "Portfolio",
   alternates: {
-    canonical: "https://chaseburkhalter.com",
+    canonical: "/",
   },
   robots: {
     index: true,
@@ -43,11 +45,11 @@ export const metadata: Metadata = {
     url: "https://chaseburkhalter.com",
     title: "Chase Burkhalter | Senior Data & Analytics Engineer",
     description:
-      "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance. 5+ years experience with modern data stack tooling.",
+      "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance. 6+ years experience with modern data stack tooling.",
     siteName: "Chase Burkhalter Portfolio",
     images: [
       {
-        url: "https://chaseburkhalter.com/og-image.svg",
+        url: "/opengraph-image",
         width: 1200,
         height: 630,
         alt: "Chase Burkhalter - Senior Data & Analytics Engineer",
@@ -59,10 +61,9 @@ export const metadata: Metadata = {
     title: "Chase Burkhalter | Senior Data & Analytics Engineer",
     description:
       "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance.",
-    images: ["https://chaseburkhalter.com/og-image.svg"],
+    images: ["/opengraph-image"],
     creator: "@chaseburkhalter",
   },
-  metadataBase: new URL("https://chaseburkhalter.com"),
 }
 
 export default function RootLayout({
@@ -85,7 +86,8 @@ export default function RootLayout({
                 email: "chase@chaseburkhalter.com",
                 telephone: "+1-334-333-4308",
                 jobTitle: "Senior Data & Analytics Engineer",
-                description: "Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance with 5+ years of experience.",
+                description: "Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance with 6+ years of experience.",
+                image: "https://chaseburkhalter.com/opengraph-image",
                 address: {
                   "@type": "PostalAddress",
                   addressLocality: "Dothan",
@@ -93,7 +95,7 @@ export default function RootLayout({
                   addressCountry: "US"
                 },
                 sameAs: [
-                  "https://www.linkedin.com/in/chase-burkhalter/",
+                  "https://www.linkedin.com/in/chaseburkhalter/",
                   "https://github.com/ctburkhalter"
                 ],
                 knowsAbout: [
@@ -108,7 +110,6 @@ export default function RootLayout({
                   "Data Engineering",
                   "Apache Superset",
                   "GA4",
-                  "Google Tag Manager"
                 ],
                 hasOccupation: {
                   "@type": "Occupation",
@@ -145,11 +146,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <AnalyticsScripts />
             <AnalyticsProvider>
-              {/* GTM noscript tag for when JavaScript is disabled */}
-              <GTMNoScript />
               {children}
-              <ToastContainer />
             </AnalyticsProvider>
           </ThemeProvider>
         </Suspense>

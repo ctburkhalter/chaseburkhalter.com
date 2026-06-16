@@ -2,18 +2,18 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Menu, X, BarChart3 } from "lucide-react"
+import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ResumeDownloadLink } from "@/components/resume-download-link"
 
 export function MobileNavigation() {
   const [isOpen, setIsOpen] = useState(false)
 
   const navigationItems = [
-    { href: "#about", label: "About" },
+    { href: "#experience", label: "Experience" },
     { href: "#projects", label: "Projects" },
     { href: "#skills", label: "Skills" },
-    { href: "#demos", label: "Analytics Demos" },
     { href: "#contact", label: "Contact" },
   ]
 
@@ -36,7 +36,7 @@ export function MobileNavigation() {
       <SheetContent side="right" className="w-[300px] sm:w-[400px]">
         <SheetHeader>
           <SheetTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+            <span className="text-primary font-bold">CB</span>
             Chase Burkhalter
           </SheetTitle>
         </SheetHeader>
@@ -52,15 +52,19 @@ export function MobileNavigation() {
               {item.label}
             </Link>
           ))}
-          <div className="pt-4 border-t">
+          <div className="pt-4 border-t space-y-2">
             <Button asChild className="w-full">
-              <Link 
-                href="#contact" 
+              <Link
+                href="#contact"
                 onClick={handleLinkClick}
-                aria-label="Get in touch with Chase Burkhalter"
               >
                 Get in Touch
               </Link>
+            </Button>
+            <Button variant="outline" asChild className="w-full">
+              <ResumeDownloadLink source="nav" onClick={handleLinkClick}>
+                Download Resume
+              </ResumeDownloadLink>
             </Button>
           </div>
         </nav>

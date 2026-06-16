@@ -7,7 +7,7 @@ import { useAnalytics, useSectionTracking } from "@/hooks/use-analytics"
 // Define all trackable sections on the site
 const SECTION_IDS = [
   "hero",
-  "about",
+  "experience",
   "projects",
   "skills",
   "demos",
@@ -53,7 +53,7 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
     window.onerror = function (message, source, lineno, colno, error) {
       // Log analytics errors but don't let them break the app
-      if (source?.includes("analytics") || source?.includes("segment") || source?.includes("gtm")) {
+      if (source?.includes("analytics") || source?.includes("segment")) {
         if (process.env.NODE_ENV === 'development') {
           console.error("Analytics error caught:", { message, source, lineno, colno, error })
         }

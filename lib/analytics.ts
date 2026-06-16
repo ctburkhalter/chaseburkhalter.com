@@ -1,5 +1,7 @@
-// Simplified analytics system with Segment and GTM only
-// Single initialization, no duplicate events
+// Analytics system — Segment only, single initialization, no duplicate events
+
+import { canLoadAnalytics } from "@/lib/analytics-consent"
+import { getEventContext } from "@/lib/analytics-events"
 
 // Polyfill for global to prevent "global is not defined" error in the browser
 if (typeof window !== "undefined" && !window.global) {
@@ -8,38 +10,78 @@ if (typeof window !== "undefined" && !window.global) {
 
 // Environment variables
 const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY ?? ""
-const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID ?? ""
+const SEGMENT_METHODS = [
+  "trackSubmit", "trackClick", "trackLink", "trackForm",
+  "pageview", "identify", "reset", "group", "track",
+  "ready", "alias", "debug", "page", "once", "off", "on",
+  "addSourceMiddleware", "addIntegrationMiddleware",
+  "setAnonymousId", "addDestinationMiddleware"
+]
+
+export type AnalyticsProperties = object
+type SegmentQueuedCall = [string, ...unknown[]]
+type SegmentIntegrationSettings = Record<string, Record<string, unknown>>
+type SegmentPayloadObject = {
+  userId?: string | null
+  anonymousId?: string
+  type?: string
+  integrations?: SegmentIntegrationSettings
+}
+type SegmentMiddlewareArgs = {
+  payload: {
+    obj?: SegmentPayloadObject
+  }
+  next: (payload: SegmentMiddlewareArgs["payload"]) => void
+}
+type SegmentAnalytics = SegmentQueuedCall[] & {
+  [key: string]: unknown
+  invoked?: boolean
+  methods?: string[]
+  factory?: (method: string) => (...args: unknown[]) => SegmentAnalytics
+  _writeKey?: string
+  SNIPPET_VERSION?: string
+  ready?: (callback: () => void) => void
+  track?: (eventName: string, properties?: AnalyticsProperties) => void
+  page?: (pageName: string, properties?: AnalyticsProperties) => void
+  identify?: (userId: string, traits?: AnalyticsProperties) => void
+  reset?: () => void
+  user?: () => {
+    anonymousId?: () => string
+    id?: () => string
+  }
+  addSourceMiddleware?: (middleware: (args: SegmentMiddlewareArgs) => void) => void
+}
 
 // Types
 export type AnalyticsEvent = {
   name: string
-  properties?: Record<string, any>
+  properties?: AnalyticsProperties
 }
 
 export type PageViewEvent = {
   path: string
   title: string
   referrer?: string
-  properties?: Record<string, any>
+  properties?: AnalyticsProperties
 }
 
 // Development logging
 class AnalyticsLogger {
   private static shouldLog = process.env.NODE_ENV === 'development'
 
-  static info(message: string, data?: any) {
+  static info(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.log(`[Analytics] ${message}`, data || '')
     }
   }
 
-  static warn(message: string, data?: any) {
+  static warn(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.warn(`[Analytics] ${message}`, data || '')
     }
   }
 
-  static error(message: string, data?: any) {
+  static error(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.error(`[Analytics] ${message}`, data || '')
     }
@@ -50,6 +92,7 @@ class AnalyticsLogger {
 class SegmentProvider {
   private isInitialized = false
   private isReady = false
+  private middlewareInstalled = false
   private readyCallbacks: (() => void)[] = []
 
   initialize(): void {
@@ -63,21 +106,16 @@ class SegmentProvider {
     }
 
     try {
-      // Load Segment snippet
-      const analytics = (window.analytics = window.analytics || [])
-      if (!analytics.initialize && !analytics.invoked) {
+      // Create Segment's queue/stub. The real library is loaded via next/script.
+      const analytics = (window.analytics || []) as SegmentAnalytics
+      window.analytics = analytics
+      const isQueuedAnalytics = Array.isArray(analytics)
+      if (!analytics.invoked && isQueuedAnalytics) {
         analytics.invoked = true
-        analytics.methods = [
-          "trackSubmit", "trackClick", "trackLink", "trackForm",
-          "pageview", "identify", "reset", "group", "track",
-          "ready", "alias", "debug", "page", "once", "off", "on",
-          "addSourceMiddleware", "addIntegrationMiddleware",
-          "setAnonymousId", "addDestinationMiddleware"
-        ]
+        analytics.methods = SEGMENT_METHODS
 
-        analytics.factory = (method: any) => (...args: any[]) => {
-          const params = Array.prototype.slice.call(args)
-          params.unshift(method)
+        analytics.factory = (method: string) => (...args: unknown[]) => {
+          const params: SegmentQueuedCall = [method, ...args]
           analytics.push(params)
           return analytics
         }
@@ -87,20 +125,12 @@ class SegmentProvider {
           analytics[key] = analytics.factory(key)
         }
 
-        analytics.load = (key: string) => {
-          const script = document.createElement("script")
-          script.type = "text/javascript"
-          script.async = true
-          script.src = `https://cdn.segment.com/analytics.js/v1/${key}/analytics.min.js`
-          const first = document.getElementsByTagName("script")[0]
-          first.parentNode?.insertBefore(script, first)
-        }
-
         analytics._writeKey = SEGMENT_WRITE_KEY
         analytics.SNIPPET_VERSION = "4.15.3"
-        analytics.load(SEGMENT_WRITE_KEY)
+      }
 
-        // Wait for Segment to be ready with anonymousId
+      // Wait for Segment to be ready with anonymousId
+      if (typeof analytics.ready === "function") {
         analytics.ready(() => {
           this.isReady = true
           const anonymousId = window.analytics?.user?.()?.anonymousId?.()
@@ -111,56 +141,63 @@ class SegmentProvider {
           // This clears any previously stored invalid userIds like "me"
           if (currentUserId && (currentUserId === "me" || currentUserId.length < 5)) {
             AnalyticsLogger.warn("Found invalid stored userId, resetting identity", { currentUserId })
-            window.analytics.reset()
+            window.analytics.reset?.()
             AnalyticsLogger.info("Identity reset complete, will use anonymousId only")
           }
 
           // Add middleware to filter out invalid userId values and ensure Amplitude gets proper IDs
           // This prevents "me" or other invalid userIds from being sent to destinations
-          window.analytics.addSourceMiddleware(({ payload, next }: any) => {
-            // Check if userId exists and is invalid
-            if (payload.obj?.userId) {
-              const userId = payload.obj.userId
+          if (!this.middlewareInstalled && typeof window.analytics.addSourceMiddleware === "function") {
+            window.analytics.addSourceMiddleware(({ payload, next }: SegmentMiddlewareArgs) => {
+              // Check if userId exists and is invalid
+              if (payload.obj?.userId) {
+                const userId = payload.obj.userId
 
-              // Filter out invalid userIds (like "me", empty strings, etc.)
-              // Amplitude requires minimum 5 characters for userId
-              if (userId === "me" || userId === "" || userId === null || userId === undefined || userId.length < 5) {
-                AnalyticsLogger.info("Filtering out invalid userId", { userId, eventType: payload.obj.type })
-                // Remove userId from the payload
-                delete payload.obj.userId
-              }
-            }
-
-            // Ensure Amplitude receives deviceId from anonymousId when userId is not present
-            // Amplitude requires either userId OR deviceId - we use anonymousId as deviceId
-            if (!payload.obj?.userId && payload.obj?.anonymousId) {
-              // Configure Amplitude-specific integration settings
-              if (!payload.obj.integrations) {
-                payload.obj.integrations = {}
-              }
-              if (!payload.obj.integrations['Actions Amplitude']) {
-                payload.obj.integrations['Actions Amplitude'] = {}
+                // Filter out invalid userIds (like "me", empty strings, etc.)
+                // Amplitude requires minimum 5 characters for userId
+                if (userId === "me" || userId === "" || userId === null || userId === undefined || userId.length < 5) {
+                  AnalyticsLogger.info("Filtering out invalid userId", { userId, eventType: payload.obj.type })
+                  // Remove userId from the payload
+                  delete payload.obj.userId
+                }
               }
 
-              // Ensure anonymousId is used as deviceId for Amplitude
-              // This is critical when userId is not set
-              payload.obj.integrations['Actions Amplitude'].device_id = payload.obj.anonymousId
+              // Ensure Amplitude receives deviceId from anonymousId when userId is not present
+              // Amplitude requires either userId OR deviceId - we use anonymousId as deviceId
+              if (!payload.obj?.userId && payload.obj?.anonymousId) {
+                // Configure Amplitude-specific integration settings
+                if (!payload.obj.integrations) {
+                  payload.obj.integrations = {}
+                }
+                if (!payload.obj.integrations['Actions Amplitude']) {
+                  payload.obj.integrations['Actions Amplitude'] = {}
+                }
 
-              AnalyticsLogger.info("Mapped anonymousId to Amplitude deviceId", {
-                anonymousId: payload.obj.anonymousId,
-                eventType: payload.obj.type
-              })
-            }
+                // Ensure anonymousId is used as deviceId for Amplitude
+                // This is critical when userId is not set
+                payload.obj.integrations['Actions Amplitude'].device_id = payload.obj.anonymousId
 
-            next(payload)
-          })
+                AnalyticsLogger.info("Mapped anonymousId to Amplitude deviceId", {
+                  anonymousId: payload.obj.anonymousId,
+                  eventType: payload.obj.type
+                })
+              }
 
-          AnalyticsLogger.info("Segment middleware installed to filter invalid userIds and map anonymousId to Amplitude deviceId")
+              next(payload)
+            })
+
+            this.middlewareInstalled = true
+            AnalyticsLogger.info("Segment middleware installed to filter invalid userIds and map anonymousId to Amplitude deviceId")
+          }
 
           // Execute any queued callbacks
           this.readyCallbacks.forEach(cb => cb())
           this.readyCallbacks = []
         })
+      } else {
+        this.isReady = true
+        this.readyCallbacks.forEach(cb => cb())
+        this.readyCallbacks = []
       }
 
       this.isInitialized = true
@@ -182,14 +219,18 @@ class SegmentProvider {
     if (typeof window === "undefined" || !window.analytics?.track) {
       return
     }
+    const track = window.analytics.track
 
     this.whenReady(() => {
       try {
-        window.analytics.track(event.name, {
+        track(event.name, {
           ...event.properties,
           timestamp: new Date().toISOString(),
           source: 'portfolio'
         })
+        window.dispatchEvent(new CustomEvent('analytics:event', {
+          detail: { name: event.name, properties: event.properties, timestamp: Date.now() }
+        }))
         AnalyticsLogger.info("Segment event tracked", event)
       } catch (error) {
         AnalyticsLogger.error("Failed to track Segment event", error)
@@ -201,10 +242,11 @@ class SegmentProvider {
     if (typeof window === "undefined" || !window.analytics?.page) {
       return
     }
+    const page = window.analytics.page
 
     this.whenReady(() => {
       try {
-        window.analytics.page(pageView.title, {
+        page(pageView.title, {
           path: pageView.path,
           url: window.location.href,
           referrer: pageView.referrer,
@@ -212,6 +254,9 @@ class SegmentProvider {
           source: 'portfolio',
           ...pageView.properties
         })
+        window.dispatchEvent(new CustomEvent('analytics:event', {
+          detail: { name: 'page_view', properties: { path: pageView.path, title: pageView.title }, timestamp: Date.now() }
+        }))
         AnalyticsLogger.info("Segment page view tracked", pageView)
       } catch (error) {
         AnalyticsLogger.error("Failed to track Segment page view", error)
@@ -219,10 +264,11 @@ class SegmentProvider {
     })
   }
 
-  identify(userId: string, traits?: Record<string, any>): void {
+  identify(userId: string, traits?: AnalyticsProperties): void {
     if (typeof window === "undefined" || !window.analytics?.identify) {
       return
     }
+    const identify = window.analytics.identify
 
     // Validate userId before calling identify
     // This prevents invalid userIds from being stored in Segment
@@ -234,7 +280,7 @@ class SegmentProvider {
 
     this.whenReady(() => {
       try {
-        window.analytics.identify(userId, {
+        identify(userId, {
           ...traits,
           identified_at: new Date().toISOString(),
           source: 'portfolio'
@@ -247,144 +293,61 @@ class SegmentProvider {
   }
 }
 
-// Google Tag Manager Provider
-class GTMProvider {
-  private isInitialized = false
-
-  initialize(): void {
-    if (this.isInitialized || typeof window === "undefined") {
-      return
-    }
-
-    if (!GTM_CONTAINER_ID) {
-      AnalyticsLogger.warn("GTM container ID not provided")
-      return
-    }
-
-    try {
-      // Initialize data layer
-      window.dataLayer = window.dataLayer || []
-      window.dataLayer.push({
-        'gtm.start': new Date().getTime(),
-        event: 'gtm.js'
-      })
-
-      // Load GTM script
-      const script = document.createElement('script')
-      script.async = true
-      script.src = `https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`
-      const firstScript = document.getElementsByTagName('script')[0]
-      firstScript.parentNode?.insertBefore(script, firstScript)
-
-      this.isInitialized = true
-      AnalyticsLogger.info("GTM initialized")
-    } catch (error) {
-      AnalyticsLogger.error("Failed to initialize GTM", error)
-    }
-  }
-
-  trackEvent(event: AnalyticsEvent): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: event.name,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio',
-        ...event.properties
-      })
-      AnalyticsLogger.info("GTM event tracked", event)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM event", error)
-    }
-  }
-
-  trackPageView(pageView: PageViewEvent): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: "page_view",
-        page_path: pageView.path,
-        page_title: pageView.title,
-        page_referrer: pageView.referrer,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio',
-        ...pageView.properties
-      })
-      AnalyticsLogger.info("GTM page view tracked", pageView)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM page view", error)
-    }
-  }
-
-  identify(userId: string, traits?: Record<string, any>): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    // Validate userId before calling identify
-    // Amplitude requires minimum 5 characters for userId
-    if (!userId || userId.trim().length < 5) {
-      AnalyticsLogger.warn("Invalid userId provided to GTM identify() - must be at least 5 characters", { userId })
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: "user_identify",
-        user_id: userId,
-        user_traits: traits,
-        identified_at: new Date().toISOString(),
-        source: 'portfolio'
-      })
-      AnalyticsLogger.info("GTM user identified", { userId, traits })
-    } catch (error) {
-      AnalyticsLogger.error("Failed to identify GTM user", error)
-    }
-  }
-}
-
 // Main Analytics Manager (Singleton)
 class AnalyticsManager {
   private segment: SegmentProvider
-  private gtm: GTMProvider
   private isInitialized = false
+  private isDisabled = false
   private lastPageView: { path: string; timestamp: number } | null = null
 
   constructor() {
     this.segment = new SegmentProvider()
-    this.gtm = new GTMProvider()
   }
 
   initialize(): void {
     if (this.isInitialized || typeof window === "undefined") {
+      return
+    }
+
+    if (!canLoadAnalytics()) {
+      this.isDisabled = true
+      this.isInitialized = true
+      AnalyticsLogger.info("Analytics disabled by browser privacy signal")
       return
     }
 
     AnalyticsLogger.info("Initializing analytics...")
 
     this.segment.initialize()
-    this.gtm.initialize()
 
     this.isInitialized = true
     AnalyticsLogger.info("Analytics initialized successfully")
   }
 
   trackEvent(event: AnalyticsEvent): void {
+    if (this.isDisabled || !canLoadAnalytics()) {
+      this.isDisabled = true
+      return
+    }
+
     if (!this.isInitialized) {
       this.initialize()
     }
 
-    this.segment.trackEvent(event)
-    this.gtm.trackEvent(event)
+    const enriched: AnalyticsEvent = {
+      ...event,
+      properties: { ...getEventContext(), ...event.properties },
+    }
+
+    this.segment.trackEvent(enriched)
   }
 
   trackPageView(pageView: PageViewEvent): void {
+    if (this.isDisabled || !canLoadAnalytics()) {
+      this.isDisabled = true
+      return
+    }
+
     if (!this.isInitialized) {
       this.initialize()
     }
@@ -403,11 +366,20 @@ class AnalyticsManager {
 
     this.lastPageView = { path: pageView.path, timestamp: now }
 
-    this.segment.trackPageView(pageView)
-    this.gtm.trackPageView(pageView)
+    const enriched: PageViewEvent = {
+      ...pageView,
+      properties: { ...getEventContext(), ...pageView.properties },
+    }
+
+    this.segment.trackPageView(enriched)
   }
 
-  identify(userId: string, traits?: Record<string, any>): void {
+  identify(userId: string, traits?: AnalyticsProperties): void {
+    if (this.isDisabled || !canLoadAnalytics()) {
+      this.isDisabled = true
+      return
+    }
+
     if (!this.isInitialized) {
       this.initialize()
     }
@@ -420,7 +392,6 @@ class AnalyticsManager {
     }
 
     this.segment.identify(userId, traits)
-    this.gtm.identify(userId, traits)
   }
 }
 
@@ -430,8 +401,7 @@ export const analytics = new AnalyticsManager()
 // Type definitions for window
 declare global {
   interface Window {
-    analytics: any
-    dataLayer: any[]
-    global: any
+    analytics: SegmentAnalytics
+    global: Window
   }
 }

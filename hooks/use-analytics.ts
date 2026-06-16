@@ -1,11 +1,10 @@
 "use client"
 
 import { useEffect, useCallback, useRef } from "react"
-import { analytics, type AnalyticsEvent } from "@/lib/analytics"
+import { analytics, type AnalyticsEvent, type AnalyticsProperties } from "@/lib/analytics"
 import {
   createSectionViewedEvent,
   createSectionClickedEvent,
-  type SectionId,
 } from "@/lib/analytics-events"
 
 // Global state to ensure single initialization and no duplicate events
@@ -49,13 +48,13 @@ export function useAnalytics() {
     // Wait for analytics to be ready
     const trackInitialPageView = () => {
       // Double-check we haven't already tracked (in case of multiple mounts)
-      if (typeof window !== 'undefined' && (window as any).__pageViewTracked) {
+      if (typeof window !== 'undefined' && window.__pageViewTracked) {
         return
       }
 
       try {
         // Mark globally on window to survive React StrictMode unmount/remount
-        (window as any).__pageViewTracked = true
+        window.__pageViewTracked = true
 
         analytics.trackPageView({
           path: window.location.pathname,
@@ -80,9 +79,9 @@ export function useAnalytics() {
       // Don't clear the flag on unmount (keep it tracked)
       clearTimeout(timer)
     }
-  }, [initializedRef.current])
+  }, [])
 
-  // Track custom event
+  // Track a manual event
   const trackEvent = useCallback((event: AnalyticsEvent) => {
     // Always try to track - the analytics manager will handle queueing if not ready
     try {
@@ -95,7 +94,7 @@ export function useAnalytics() {
   }, [])
 
   // Identify user
-  const identifyUser = useCallback((userId: string, traits?: Record<string, any>) => {
+  const identifyUser = useCallback((userId: string, traits?: AnalyticsProperties) => {
     // Always try to identify - the analytics manager will handle queueing if not ready
     try {
       analytics.identify(userId, traits)
@@ -172,15 +171,15 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
     }
 
     // Use requestAnimationFrame to wait for the next paint, ensuring DOM is ready
+    let timeoutId: ReturnType<typeof setTimeout> | null = null
     const rafId = requestAnimationFrame(() => {
-      // Additional small delay to ensure all sections are rendered
-      const timeoutId = setTimeout(setupObserver, 100)
-      return timeoutId
+      timeoutId = setTimeout(setupObserver, 100)
     })
 
     // Cleanup
     return () => {
       cancelAnimationFrame(rafId)
+      if (timeoutId !== null) clearTimeout(timeoutId)
       if (observerRef.current) {
         observerRef.current.disconnect()
       }
@@ -200,14 +199,8 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
   }
 }
 
-/**
- * Simple hook for tracking events only (for demo components)
- */
-export function useTrackEvent() {
-  const { trackEvent, identifyUser } = useAnalytics()
-
-  return {
-    trackEvent,
-    identifyUser
+declare global {
+  interface Window {
+    __pageViewTracked?: boolean
   }
 }

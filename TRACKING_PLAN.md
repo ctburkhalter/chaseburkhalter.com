@@ -2,58 +2,106 @@
 
 ## Overview
 
-This document defines the standardized event tracking specification for the portfolio website. All events are tracked across three platforms:
-- **Segment** (Customer Data Platform)
-- **Google Tag Manager** (Tag Management System)
-- **Amplitude** (Product Analytics - via Segment)
+This document defines the event tracking specification for `chaseburkhalter.com`.
+
+Events are routed through:
+
+- **Segment** — customer data platform for collection and routing
+- **Amplitude** — analytics destination via Segment
+
+Analytics loading is privacy-aware: browser Do Not Track and Global Privacy Control signals prevent third-party scripts from loading and make all tracking calls no-ops.
 
 ## Naming Conventions
 
 ### Event Names
-- **Format**: `snake_case` (all lowercase with underscores)
-- **Structure**: `{category}_{action}` or `{category}_{object}_{action}`
-- **Examples**: `page_view`, `section_viewed`, `error_occurred`
+
+- Format: `snake_case`
+- Examples: `page_view`, `section_viewed`, `resume_downloaded`
 
 ### Property Names
-- **Format**: `snake_case` (all lowercase with underscores)
-- **Examples**: `section_id`, `error_message`, `user_agent`
 
-### Reserved Properties
-The following properties are automatically added to all events:
-- `timestamp` (ISO 8601 format)
-- `source` (always "portfolio")
+- Format: `snake_case`
+- Examples: `section_id`, `click_source`, `utm_source`
+
+## Automatic Context Properties
+
+Every event — regardless of type — is automatically enriched by `AnalyticsManager` before it reaches Segment. No manual effort is needed in event creators or components.
+
+### Reserved Properties (added by `lib/analytics.ts`)
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `timestamp` | string | ISO 8601 timestamp, added by the Segment provider |
+| `source` | string | Always `"portfolio"` |
+
+### Device Context (added by `getEventContext()` in `lib/analytics-events.ts`)
+
+| Property | Type | Description | Example |
+|----------|------|-------------|---------|
+| `user_agent` | string | Full browser user agent string | `"Mozilla/5.0 (Macintosh...)"` |
+| `browser_language` | string | `navigator.language` | `"en-US"` |
+| `screen_width` | number | Physical screen width in px | `1920` |
+| `screen_height` | number | Physical screen height in px | `1080` |
+| `viewport_width` | number | Browser viewport width in px | `1440` |
+| `viewport_height` | number | Browser viewport height in px | `900` |
+| `device_pixel_ratio` | number | Device pixel ratio | `2` |
+| `timezone` | string | IANA timezone | `"America/Chicago"` |
+| `connection_type` | string | Effective connection type (if supported) | `"4g"` |
+| `page_url` | string | Full current URL | `"https://chaseburkhalter.com/"` |
+| `page_path` | string | URL pathname | `"/"` |
+| `page_referrer` | string | HTTP referrer (if present) | `"https://linkedin.com"` |
+
+### UTM / Marketing Attribution
+
+UTM parameters are captured from the landing URL on first load and persisted to `sessionStorage` under the key `portfolio:utm`. This ensures attribution survives SPA navigations that would otherwise strip query strings. All subsequent events in the session carry the original UTM values.
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `utm_source` | string | Traffic source | `"linkedin"` |
+| `utm_medium` | string | Marketing medium | `"social"` |
+| `utm_campaign` | string | Campaign name | `"job_search_2026"` |
+| `utm_term` | string | Paid search term | `"analytics engineer"` |
+| `utm_content` | string | Ad content variant | `"resume_cta"` |
+
+UTM properties are only present when the corresponding parameter exists in the URL.
 
 ## Event Catalog
 
-### 1. Page Events
+### `page_view`
 
-#### `page_view`
-**Description**: Tracks initial page load (fires once per session)
+**Description**: Tracks the initial portfolio page load.
 
-**When to Fire**: On initial application mount, after analytics initialization
+**When to fire**: Automatically after analytics initializes.
 
-**Properties**:
+**Frequency**: Once per session. Manager-level deduplication drops identical page views within one second.
+
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
 | `path` | string | Yes | URL pathname | `"/"` |
-| `title` | string | Yes | Document title | `"Chase Burkhalter - Portfolio"` |
+| `title` | string | Yes | Document title | `"Chase Burkhalter \| Senior Analytics Engineer"` |
 | `url` | string | Yes | Full URL | `"https://chaseburkhalter.com/"` |
-| `referrer` | string | No | HTTP referrer | `"https://google.com"` |
-| `hash` | string | No | URL hash | `"#projects"` |
-| `initial_load` | boolean | Yes | Always true for this event | `true` |
+| `referrer` | string | No | HTTP referrer | `"https://linkedin.com"` |
+| `hash` | string | No | URL hash | `""` |
+| `initial_load` | boolean | Yes | Initial page-load marker | `true` |
 
-**Example Payload**:
+Example payload (device context and UTM properties omitted for brevity):
+
 ```json
 {
   "event": "page_view",
   "properties": {
     "path": "/",
-    "title": "Chase Burkhalter - Portfolio",
+    "title": "Chase Burkhalter | Senior Analytics Engineer",
     "url": "https://chaseburkhalter.com/",
-    "referrer": "https://google.com",
+    "referrer": "https://linkedin.com",
     "hash": "",
     "initial_load": true,
-    "timestamp": "2025-01-15T10:30:00.000Z",
+    "utm_source": "linkedin",
+    "utm_medium": "social",
+    "browser_language": "en-US",
+    "viewport_width": 1440,
+    "timezone": "America/Chicago",
+    "timestamp": "2026-06-16T10:00:00.000Z",
     "source": "portfolio"
   }
 }
@@ -61,24 +109,32 @@ The following properties are automatically added to all events:
 
 ---
 
-### 2. Section Events
+### `section_viewed`
 
-#### `section_viewed`
-**Description**: Tracks when a page section becomes visible (50%+ in viewport)
+**Description**: Tracks when a portfolio section becomes visible.
 
-**When to Fire**: When user scrolls and section reaches 50% visibility threshold
+**When to fire**: Automatically when an observed section reaches at least 50% viewport visibility.
 
-**Frequency**: Once per section per session
+**Frequency**: Once per section per session (tracked in a `Set` inside `useSectionTracking`).
 
-**Properties**:
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
-| `section_id` | string | Yes | DOM ID of section | `"projects"` |
-| `section_name` | string | Yes | Human-readable section name | `"Projects"` |
-| `interaction_type` | string | Yes | Always "scroll" | `"scroll"` |
+| `section_id` | string | Yes | DOM `id` of the section | `"projects"` |
+| `section_name` | string | Yes | Human-readable name | `"Projects"` |
+| `interaction_type` | string | Yes | Always `"scroll"` | `"scroll"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
 
-**Example Payload**:
+Tracked sections (defined in `components/analytics/analytics-provider.tsx`):
+
+- `hero`
+- `experience`
+- `projects`
+- `skills`
+- `demos`
+- `contact`
+
+Example payload:
+
 ```json
 {
   "event": "section_viewed",
@@ -87,45 +143,38 @@ The following properties are automatically added to all events:
     "section_name": "Projects",
     "interaction_type": "scroll",
     "url": "https://chaseburkhalter.com/",
-    "timestamp": "2025-01-15T10:31:00.000Z",
+    "timestamp": "2026-06-16T10:01:00.000Z",
     "source": "portfolio"
   }
 }
 ```
 
-**Tracked Sections**:
-- `hero` - Hero Section
-- `about` - About Section
-- `projects` - Projects Section
-- `skills` - Skills Section
-- `demos` - Analytics Demos Section
-- `contact` - Contact Section
-
 ---
 
-#### `section_clicked`
-**Description**: Tracks clicks on navigation links to sections
+### `section_clicked`
 
-**When to Fire**: When user clicks navigation link to scroll to section
+**Description**: Tracks clicks on internal section navigation links.
 
-**Properties**:
+**When to fire**: When a user clicks an `a[href^="#"]` link targeting a tracked section.
+
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
-| `section_id` | string | Yes | Target section ID | `"projects"` |
-| `section_name` | string | Yes | Human-readable section name | `"Projects"` |
-| `click_source` | string | Yes | Where click originated | `"navigation"` |
+| `section_id` | string | Yes | Target section DOM `id` | `"contact"` |
+| `section_name` | string | Yes | Human-readable name | `"Contact"` |
+| `click_source` | string | Yes | Click origin | `"navigation"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
 
-**Example Payload**:
+Example payload:
+
 ```json
 {
   "event": "section_clicked",
   "properties": {
-    "section_id": "projects",
-    "section_name": "Projects",
+    "section_id": "contact",
+    "section_name": "Contact",
     "click_source": "navigation",
     "url": "https://chaseburkhalter.com/",
-    "timestamp": "2025-01-15T10:32:00.000Z",
+    "timestamp": "2026-06-16T10:02:00.000Z",
     "source": "portfolio"
   }
 }
@@ -133,86 +182,36 @@ The following properties are automatically added to all events:
 
 ---
 
-### 3. User Identification Events
+### `resume_downloaded`
 
-#### `user_identified`
-**Description**: Associates a user ID with the current session
+**Description**: Tracks when a visitor opens the resume PDF.
 
-**When to Fire**: When user submits identification form or is authenticated
+**When to fire**: On click of any resume download link. Fired by `components/resume-download-link.tsx` before the browser opens the PDF.
 
-**Properties**:
+**Sources**: Three entry points, each tagged with a distinct `download_source` value.
+
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
-| `user_id` | string | Yes | User identifier (min 5 chars) | `"user@example.com"` |
-| `visited_portfolio` | boolean | No | User visited portfolio | `true` |
-| `visited_at` | string | No | Visit timestamp | `"2025-01-15T10:30:00.000Z"` |
-| `source` | string | No | Identification source | `"analytics_demo"` |
+| `download_source` | string | Yes | Where the download was triggered | `"hero"`, `"nav"`, `"contact"` |
+| `file_name` | string | Yes | PDF filename | `"Chase_Burkhalter_Resume_2026.pdf"` |
+| `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
 
-**Validation Rules**:
-- `user_id` must be at least 5 characters (Amplitude requirement)
-- Invalid IDs like `"me"`, empty strings, or `null` are automatically filtered
+Example payload:
 
-**Example Segment Call**:
-```javascript
-analytics.identify("user@example.com", {
-  visited_portfolio: true,
-  visited_at: "2025-01-15T10:30:00.000Z",
-  source: "analytics_demo"
-})
-```
-
-**GTM Event**:
 ```json
 {
-  "event": "user_identify",
-  "user_id": "user@example.com",
-  "user_traits": {
-    "visited_portfolio": true,
-    "visited_at": "2025-01-15T10:30:00.000Z",
-    "source": "analytics_demo"
-  },
-  "identified_at": "2025-01-15T10:30:00.000Z",
-  "source": "portfolio"
-}
-```
-
----
-
-### 4. Interaction Events
-
-#### `portfolio_interaction`
-**Description**: Generic portfolio interaction event with action type
-
-**When to Fire**: User interacts with demo buttons or portfolio elements
-
-**Properties**:
-| Property | Type | Required | Description | Example |
-|----------|------|----------|-------------|---------|
-| `action` | string | Yes | Action performed | `"project_card_view"` |
-| `interaction_type` | string | Yes | Type of interaction | `"Project Card View"` |
-| `portfolio_section` | string | No | Section where interaction occurred | `"analytics_demo"` |
-| `demo_section` | boolean | No | Whether interaction was in demo | `true` |
-
-**Valid Actions**:
-- `project_card_view` - User viewed project card
-- `skill_badge_click` - User clicked skill badge
-- `analytics_demo_interaction` - User interacted with analytics demo
-- `contact_form_view` - User viewed contact form
-- `tracking_enabled` - User enabled tracking
-- `tracking_disabled` - User disabled tracking
-- `analytics_demo_tab_{tab_name}` - User switched demo tabs
-
-**Example Payload**:
-```json
-{
-  "event": "portfolio_interaction",
+  "event": "resume_downloaded",
   "properties": {
-    "action": "project_card_view",
-    "interaction_type": "Project Card View",
-    "portfolio_section": "analytics_demo",
-    "demo_section": true,
-    "user_agent": "Mozilla/5.0...",
-    "timestamp": "2025-01-15T10:33:00.000Z",
+    "download_source": "hero",
+    "file_name": "Chase_Burkhalter_Resume_2026.pdf",
+    "url": "https://chaseburkhalter.com/",
+    "utm_source": "linkedin",
+    "utm_medium": "social",
+    "browser_language": "en-US",
+    "viewport_width": 390,
+    "device_pixel_ratio": 3,
+    "timezone": "America/New_York",
+    "timestamp": "2026-06-16T10:03:00.000Z",
     "source": "portfolio"
   }
 }
@@ -220,318 +219,123 @@ analytics.identify("user@example.com", {
 
 ---
 
-### 5. Error Events
+### `user_identified`
 
-#### `error_occurred`
-**Description**: Tracks application errors caught by error boundaries
+**Description**: Associates a valid user ID with the current analytics session.
 
-**When to Fire**: When React error boundary catches an error
+**Current status**: Supported by `analytics.identify()` in `lib/analytics.ts`. The current portfolio UI does not collect user IDs — this event exists for future use.
 
-**Properties**:
-| Property | Type | Required | Description | Example |
-|----------|------|----------|-------------|---------|
-| `error_type` | string | Yes | Type of error | `"boundary"` or `"component"` |
-| `error_message` | string | Yes | Error message | `"Cannot read property..."` |
-| `error_stack` | string | No | Error stack trace | `"Error: Cannot read..."` |
-| `component_stack` | string | No | React component stack | `"at Button..."` |
+Validation rules:
 
-**Error Types**:
-- `boundary` - Error caught by ErrorBoundary component
-- `component` - Error caught by useErrorHandler hook
+- `user_id` must be at least 5 characters
+- Values like `"me"`, empty strings, or `null` are rejected at the manager level
+- Segment middleware removes invalid IDs before delivery to any destination
 
-**Example Payload**:
-```json
-{
-  "event": "error_occurred",
-  "properties": {
-    "error_type": "boundary",
-    "error_message": "Cannot read property 'map' of undefined",
-    "error_stack": "Error: Cannot read property 'map' of undefined\n  at Component...",
-    "component_stack": "at AnalyticsDemo\n  at ErrorBoundary",
-    "timestamp": "2025-01-15T10:35:00.000Z",
-    "source": "portfolio"
-  }
-}
-```
-
----
-
-### 6. Custom Events
-
-#### `custom_event`
-**Description**: User-defined events from analytics demo interface
-
-**When to Fire**: When user submits custom event via analytics demo form
-
-**Properties**:
-| Property | Type | Required | Description | Example |
-|----------|------|----------|-------------|---------|
-| `portfolio_demo` | boolean | Yes | Always true | `true` |
-| `custom_properties` | object | No | User-defined properties | `{"key": "value"}` |
-
-**Example Payload**:
-```json
-{
-  "event": "custom_event_name",
-  "properties": {
-    "portfolio_demo": true,
-    "custom_property": "custom_value",
-    "timestamp": "2025-01-15T10:36:00.000Z",
-    "source": "portfolio"
-  }
-}
-```
-
----
-
-## Platform-Specific Implementation Details
+## Platform Implementation
 
 ### Segment
 
-**SDK**: Analytics.js (loaded from CDN)
+Segment is loaded in `components/analytics/analytics-scripts.tsx` via `next/script`.
 
-**Initialization**:
-```javascript
-// Load snippet and initialize with write key
-analytics.load(SEGMENT_WRITE_KEY)
-```
-
-**Event Format**:
-```javascript
+```ts
 window.analytics.track(eventName, properties)
 window.analytics.page(pageName, properties)
 window.analytics.identify(userId, traits)
 ```
 
-**Special Features**:
-- **Middleware**: Filters invalid user IDs (< 5 characters)
-- **Amplitude Integration**: Maps `anonymousId` to Amplitude's `device_id`
-- **User ID Validation**: Prevents "me" and other invalid IDs from being sent
+Special handling:
 
----
-
-### Google Tag Manager
-
-**SDK**: gtm.js
-
-**Initialization**:
-```javascript
-window.dataLayer = window.dataLayer || []
-// Load GTM script with container ID
-```
-
-**Event Format**:
-```javascript
-window.dataLayer.push({
-  event: eventName,
-  ...properties
-})
-```
-
-**Special Handling**:
-- Page views use `page_view` event name
-- User identification uses `user_identify` event with `user_id` and `user_traits` properties
-- All properties are flattened into the event object
-
----
+- Queue/stub is created before the Segment script loads so events never drop
+- Middleware filters invalid user IDs before delivery
+- `anonymousId` is mapped to Amplitude `device_id` when no valid `userId` exists
 
 ### Amplitude
 
-**Integration**: Via Segment destination (not direct SDK)
+Amplitude receives events through the Segment destination. The Amplitude SDK is not loaded directly.
 
-**Special Requirements**:
-- User ID must be minimum 5 characters
-- Requires either `userId` OR `deviceId` (mapped from `anonymousId`)
-- Invalid user IDs are automatically filtered by Segment middleware
+Requirements enforced by the app:
 
-**Event Flow**:
-```
-trackEvent() → Segment → Amplitude Destination
-```
+- User IDs must be at least 5 characters
+- Events without a user ID receive an Amplitude `device_id` derived from `anonymousId`
 
 ---
 
-## Implementation Guidelines
+## Privacy & Compliance
 
-### 1. Using the Tracking System
+Analytics scripts are not loaded and all tracking calls no-op when any of the following browser signals are set:
 
-**Track an Event**:
-```typescript
-import { useTrackEvent } from '@/hooks/use-analytics'
+- `navigator.doNotTrack === "1"`
+- `window.doNotTrack === "1"`
+- `navigator.globalPrivacyControl === true`
 
-const { trackEvent } = useTrackEvent()
+Implemented in `lib/analytics-consent.ts`. This is a conservative browser-signal opt-out, not a full consent management platform.
 
-trackEvent({
-  name: 'section_viewed',
-  properties: {
-    section_id: 'projects',
-    section_name: 'Projects',
-    interaction_type: 'scroll',
-    url: window.location.href
-  }
-})
-```
+PII guidance:
 
-**Identify a User**:
-```typescript
-import { useTrackEvent } from '@/hooks/use-analytics'
-
-const { identifyUser } = useTrackEvent()
-
-identifyUser('user@example.com', {
-  visited_portfolio: true,
-  visited_at: new Date().toISOString(),
-  source: 'analytics_demo'
-})
-```
-
-### 2. Event Naming Best Practices
-
-✅ **DO**:
-- Use `snake_case` for all event names
-- Be descriptive but concise
-- Use consistent action verbs: `viewed`, `clicked`, `enabled`, `disabled`
-- Group related events with common prefixes
-
-❌ **DON'T**:
-- Use spaces or special characters
-- Use camelCase or PascalCase
-- Create overly specific events (combine with properties instead)
-- Include timestamps or user IDs in event names
-
-### 3. Property Best Practices
-
-✅ **DO**:
-- Use `snake_case` for property names
-- Include context properties (`section_id`, `url`, etc.)
-- Use consistent data types across events
-- Document all possible values for enum-like properties
-
-❌ **DON'T**:
-- Include PII (personally identifiable information) without consent
-- Use nested objects (keep properties flat)
-- Use inconsistent naming across events
-- Include redundant data that's already in context
-
-### 4. Deduplication Strategy
-
-The system implements triple-layer deduplication for page views:
-
-1. **Module-level flag**: `pageViewTracked` prevents multiple effect runs
-2. **Window-level flag**: `window.__pageViewTracked` survives React StrictMode
-3. **Manager-level check**: Time-based deduplication (1-second window)
-
-**For Section Views**:
-- Tracked only once per session using `Set` in `useSectionTracking`
-- Requires 50% visibility threshold before tracking
+- Do not collect user IDs unless intentionally needed
+- Prefer pseudonymous identifiers over email addresses
+- Do not send sensitive personal data in event properties
 
 ---
 
-## Data Privacy & Compliance
+## Adding New Events
 
-### GDPR Compliance
-- No automatic tracking until user consent (if implemented)
-- User can disable tracking via demo interface
-- User IDs are validated and sanitized before sending
-
-### Data Retention
-- Analytics data retention managed by individual platforms:
-  - Segment: Configurable per destination
-  - GTM: Depends on connected analytics properties
-  - Amplitude: Configurable in project settings
-
-### PII Handling
-- No automatic PII collection
-- User IDs should be pseudonymous (email hashes, internal IDs)
-- Avoid tracking sensitive personal data in properties
+1. Add the event name constant to the appropriate group in `lib/analytics-events.ts`
+2. Add property interface extending `BaseEventProperties`
+3. Add the event to `ANALYTICS_EVENTS`
+4. Write a creator function (`createXxxEvent`)
+5. Add to this tracking plan
+6. Validate in Segment Debugger and Amplitude
 
 ---
 
 ## Testing & Validation
 
-### Development Testing
+Development:
 
-1. **Enable Development Logging**:
-```javascript
-// In analytics.ts
-const shouldLog = process.env.NODE_ENV === 'development'
-```
+- `[Analytics]` prefixed logs appear in the browser console
+- Segment sends requests to `api.segment.io`
+- No analytics scripts load when DNT or GPC is enabled
 
-2. **Check Browser Console**:
-- Look for `[Analytics]` prefixed logs
-- Verify event names and properties
-- Check for any errors or warnings
+Production:
 
-3. **Network Tab**:
-- Segment: Look for POST to `api.segment.io/v1/track`
-- GTM: Look for POST to `www.google-analytics.com/collect`
-
-### Production Validation
-
-1. **Segment Debugger**: View real-time events in Segment dashboard
-2. **GTM Preview Mode**: Test tag firing in preview mode
-3. **Amplitude Dashboard**: Verify events appear in real-time stream
+- Segment Debugger shows all event types with enriched properties
+- Amplitude events arrive through the Segment destination
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+**Events not firing:**
 
-**Events not firing**:
-- Check environment variables are set (`NEXT_PUBLIC_SEGMENT_WRITE_KEY`, `NEXT_PUBLIC_GTM_CONTAINER_ID`)
-- Verify analytics is initialized before tracking
-- Check browser console for errors
+- Confirm `NEXT_PUBLIC_SEGMENT_WRITE_KEY` is set
+- Check whether DNT or GPC is enabled in the browser
+- Verify `AnalyticsProvider` is mounted in `app/layout.tsx`
 
-**Duplicate events**:
-- Check deduplication flags are working
-- Verify component isn't mounting multiple times
-- Check React StrictMode behavior in development
+**Duplicate events:**
 
-**Invalid user IDs**:
-- Ensure user ID is at least 5 characters
-- Avoid using test values like "me" or "test"
-- Check middleware is filtering invalid IDs
+- Check `pageViewTracked`, `window.__pageViewTracked`, and the manager-level dedupe in `lib/analytics.ts`
+- Verify only one `AnalyticsProvider` is mounted
+- React StrictMode remounts effects in development — this is expected
 
-**Events not in Amplitude**:
-- Verify Amplitude destination is connected in Segment
-- Check middleware is mapping `anonymousId` to `device_id`
-- Ensure user ID validation isn't filtering legitimate IDs
+**Events missing in Amplitude:**
 
----
+- Verify the Amplitude destination is connected in Segment
+- Confirm `anonymousId` is being mapped to `device_id` via Segment middleware
 
-## Maintenance
+**UTM properties missing:**
 
-### Adding New Events
 
-1. Define event in this tracking plan
-2. Add event constant to events registry (if created)
-3. Add TypeScript type definition
-4. Implement tracking call with documented properties
-5. Test in development and validate in production
-6. Update this documentation
-
-### Deprecating Events
-
-1. Mark event as deprecated in this document
-2. Add deprecation warning in code
-3. Monitor usage and communicate to team
-4. Remove after grace period
-5. Update documentation
+- Confirm the landing URL included UTM params
+- Check `sessionStorage` for the `portfolio:utm` key — it should hold the captured values
 
 ---
 
 ## Version History
 
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0.0 | 2025-01-15 | Initial tracking plan created | System |
-
----
-
-## Contact & Questions
-
-For questions about this tracking plan or analytics implementation:
-- Review `ANALYTICS_SYSTEM.md` for technical architecture
-- Check code comments in `/lib/analytics.ts`
-- Review implementation examples in `/hooks/use-analytics.ts`
+| Version | Date | Changes |
+|---------|------|---------|
+| 3.1.0 | 2026-06-16 | Removed GTM — events route Segment → Amplitude directly |
+| 3.0.0 | 2026-06-16 | Added `resume_downloaded` event; added automatic device context and UTM enrichment on all events; removed `portfolio_interaction` and `error_occurred` (no longer implemented); updated implementation examples |
+| 2.0.0 | 2026-06-15 | Updated for `next/script` loading, browser privacy-signal handling |
+| 1.0.0 | 2025-01-15 | Initial tracking plan |
