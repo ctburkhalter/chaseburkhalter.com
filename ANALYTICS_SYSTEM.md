@@ -2,83 +2,159 @@
 
 ## Overview
 
-This portfolio uses a small production analytics layer that routes events to:
+This portfolio uses a production analytics layer that routes events through:
 
-- **Segment** for collection and downstream routing
-- **Google Tag Manager** for tag orchestration
-- **Amplitude** through the Segment destination
+- **Segment** — collection and downstream routing
+- **Google Tag Manager** — tag orchestration
+- **Amplitude** — analytics destination via Segment
 
-The current implementation focuses on automatic portfolio instrumentation: one initial page view, section visibility, section navigation clicks, and optional manual events through shared helpers.
+The system instruments automatic portfolio events (page view, section visibility, section navigation, resume downloads) and enriches every event with device context and UTM marketing attribution.
 
-For event specifications, see [TRACKING_PLAN.md](./TRACKING_PLAN.md).
+For full event specifications, see [TRACKING_PLAN.md](./TRACKING_PLAN.md).
+
+---
 
 ## Runtime Flow
 
 ### Script Loading
 
-Analytics scripts are loaded in `components/analytics/analytics-scripts.tsx` with `next/script`.
-
 ```
 RootLayout
-  -> AnalyticsScripts
-      -> checks browser privacy signals
-      -> loads Segment queue + analytics.js when configured
-      -> loads GTM dataLayer queue + gtm.js when configured
+  → AnalyticsScripts (components/analytics/analytics-scripts.tsx)
+      → checks browser privacy signals (lib/analytics-consent.ts)
+      → if allowed: injects Segment queue + analytics.js via next/script
+      → if allowed: injects GTM dataLayer queue + gtm.js via next/script
+  → GTMNoScript (components/analytics/gtm-noscript.tsx)
+      → renders <noscript> iframe fallback for GTM
 ```
 
 Scripts are only injected when:
 
-- `NEXT_PUBLIC_SEGMENT_WRITE_KEY` or `NEXT_PUBLIC_GTM_CONTAINER_ID` is configured
-- Browser-level privacy signals do not opt the visitor out
-
-There is intentionally no GTM `<noscript>` iframe fallback. The portfolio favors honoring browser privacy signals over collecting analytics from JavaScript-disabled sessions.
+- The corresponding environment variable is configured
+- No browser-level privacy signal (DNT, GPC) opts the visitor out
 
 ### Initialization
 
 ```
 AnalyticsProvider mounts
-  -> useAnalytics()
-      -> analytics.initialize()
-      -> SegmentProvider initializes queue/middleware
-      -> GTMProvider initializes dataLayer
-      -> initial page_view fires once
+  → useAnalytics() (hooks/use-analytics.ts)
+      → analytics.initialize() (lib/analytics.ts)
+          → SegmentProvider: creates queue/stub, installs middleware
+          → GTMProvider: initializes dataLayer
+      → page_view fires once (deduped against window.__pageViewTracked)
+```
+
+### Event Enrichment
+
+Every event passes through `AnalyticsManager.trackEvent()` or `trackPageView()` before reaching Segment or GTM. At that point:
+
+```
+Event created by creator function (lib/analytics-events.ts)
+  → AnalyticsManager.trackEvent()
+      → getEventContext() merges:
+          - device/browser properties (UA, screen, viewport, timezone, etc.)
+          - page_url, page_path, page_referrer
+          - UTM params from sessionStorage (captured on landing)
+      → enriched event sent to SegmentProvider and GTMProvider
+      → CustomEvent('analytics:event') dispatched on window
+          → LiveEventsTab in AnalyticsShowcase picks this up for real-time display
 ```
 
 ### Section Tracking
 
 ```
 User scrolls
-  -> IntersectionObserver detects 50% visibility
-      -> section_viewed fires once per section per session
+  → IntersectionObserver (50% threshold) detects section
+      → section_viewed fires once per section per session
 ```
 
 ### Navigation Tracking
 
 ```
 User clicks an internal hash link
-  -> document click handler detects a tracked section href
-      -> section_clicked fires with click_source = "navigation"
+  → document click handler (analytics-provider.tsx)
+      → section_clicked fires with click_source = "navigation"
 ```
+
+### Resume Download Tracking
+
+```
+User clicks a resume link
+  → ResumeDownloadLink.onClick (components/resume-download-link.tsx)
+      → resume_downloaded fires with source = "nav" | "hero" | "contact"
+      → browser opens PDF
+```
+
+---
+
+## Event Context Enrichment
+
+`getEventContext()` in `lib/analytics-events.ts` is called on every event at the manager level. It returns:
+
+**Device & browser:**
+`user_agent`, `browser_language`, `screen_width`, `screen_height`, `viewport_width`, `viewport_height`, `device_pixel_ratio`, `timezone`, `connection_type` (when available via `navigator.connection`)
+
+**Page:**
+`page_url`, `page_path`, `page_referrer`
+
+**UTM attribution:**
+`utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`
+
+UTM values are captured from the landing URL into `sessionStorage` (`portfolio:utm` key) on first load so they persist across SPA navigations.
+
+---
 
 ## Privacy Controls
 
-Analytics respects browser-level privacy signals in `lib/analytics-consent.ts`:
+`lib/analytics-consent.ts` checks three browser signals before any script is loaded or tracking call is made:
 
 - `navigator.doNotTrack === "1"`
 - `window.doNotTrack === "1"`
 - `navigator.globalPrivacyControl === true`
 
-When any of these are enabled:
+When any signal is active:
 
 - Segment and GTM scripts are not injected
-- `analytics.initialize()` marks analytics as disabled
-- `trackEvent`, `trackPageView`, and `identify` no-op
+- `analytics.initialize()` marks the manager as disabled
+- `trackEvent`, `trackPageView`, and `identify` return without sending data
 
-This is not a full consent-management platform; it is a conservative browser-signal opt-out guard.
+This is a conservative browser-signal opt-out, not a full consent management platform.
+
+---
+
+## Live Analytics Showcase
+
+`components/analytics-showcase.tsx` renders the "Live Analytics on This Site" section. It works by listening to `analytics:event` CustomEvents dispatched on `window` after each successful Segment call:
+
+```ts
+window.addEventListener('analytics:event', handler)
+```
+
+This keeps the showcase component fully decoupled from the analytics layer — no direct imports, no shared state.
+
+The showcase has two tabs:
+
+- **Live Events** — real-time event stream with expandable property inspector
+- **Tracking Plan** — static table of event specs + pipeline diagram
+
+---
+
+## Active Events
+
+| Event | Trigger | Key Properties |
+|-------|---------|----------------|
+| `page_view` | App init | `path`, `title`, `referrer`, `initial_load` |
+| `section_viewed` | 50% viewport intersection | `section_id`, `section_name`, `interaction_type` |
+| `section_clicked` | Internal nav link click | `section_id`, `section_name`, `click_source` |
+| `resume_downloaded` | Resume link click | `source`, `file_name` |
+
+All events additionally carry the automatic context properties listed above.
+
+---
 
 ## Tracked Sections
 
-The active section list lives in `components/analytics/analytics-provider.tsx`:
+Defined in `components/analytics/analytics-provider.tsx`:
 
 1. `hero`
 2. `experience`
@@ -87,98 +163,76 @@ The active section list lives in `components/analytics/analytics-provider.tsx`:
 5. `demos`
 6. `contact`
 
-The `demos` section is now a static analytics proof-point section, not an interactive demo component.
-
-## Active Events
-
-### `page_view`
-
-Fires once after the app initializes analytics.
-
-Key properties: `path`, `title`, `referrer`, `url`, `hash`, `initial_load`, `timestamp`, `source`
-
-### `section_viewed`
-
-Fires once per tracked section when at least 50% of that section is visible.
-
-Key properties: `section_id`, `section_name`, `interaction_type`, `url`, `timestamp`, `source`
-
-### `section_clicked`
-
-Fires when a tracked internal navigation link is clicked.
-
-Key properties: `section_id`, `section_name`, `click_source`, `url`, `timestamp`, `source`
-
-### `portfolio_interaction`
-
-Available through `createPortfolioInteractionEvent()` for future manual interactions.
-
-Key properties: `action`, `interaction_type`, `portfolio_section`, `user_agent`, `timestamp`, `source`
-
-### `error_occurred`
-
-Available through `createErrorEvent()` for future component-level error tracking. The current app does not mount a React error boundary tracker; `AnalyticsProvider` only catches analytics-script errors so third-party script failures do not break the app.
-
-### `user_identified`
-
-Available through `analytics.identify()` / `useTrackEvent().identifyUser()` when a valid user identifier is intentionally supplied. The current portfolio UI does not collect user IDs.
+---
 
 ## Deduplication
 
-The system prevents duplicate automatic events with:
+| Guard | Location | What it prevents |
+|-------|----------|-----------------|
+| `globalInitialized` module flag | `hooks/use-analytics.ts` | Multiple `analytics.initialize()` calls |
+| `pageViewTracked` module flag | `hooks/use-analytics.ts` | Multiple page view attempts |
+| `window.__pageViewTracked` | `hooks/use-analytics.ts` | React StrictMode remount race |
+| Manager-level 1s dedupe | `lib/analytics.ts` | Identical page views < 1s apart |
+| `Set<string>` of viewed sections | `hooks/use-analytics.ts` | Duplicate `section_viewed` per session |
+| One `AnalyticsProvider` | `app/layout.tsx` | Multiple providers |
 
-- module-level initialization state in `hooks/use-analytics.ts`
-- module-level `pageViewTracked`
-- `window.__pageViewTracked` to survive React StrictMode remounts
-- manager-level one-second page-view dedupe in `lib/analytics.ts`
-- a `Set` of viewed sections inside `useSectionTracking`
-- one `AnalyticsProvider` in the root layout
+---
 
 ## File Structure
 
 ```
 app/
-  layout.tsx                         # Root layout, AnalyticsScripts, AnalyticsProvider
+  layout.tsx                           # Root layout — mounts AnalyticsScripts, GTMNoScript, AnalyticsProvider
+  page.tsx                             # Main portfolio page
 components/
   analytics/
-    analytics-provider.tsx           # Provider, section tracking, navigation click tracking
-    analytics-scripts.tsx            # next/script Segment and GTM loaders
+    analytics-provider.tsx             # Section tracking, navigation click tracking
+    analytics-scripts.tsx              # next/script Segment and GTM loaders
+    gtm-noscript.tsx                   # GTM <noscript> iframe fallback
+  analytics-showcase.tsx               # Live event stream + tracking plan tab UI
+  resume-download-link.tsx             # Client component — fires resume_downloaded on click
 hooks/
-  use-analytics.ts                   # Initialization, page view, section hooks
+  use-analytics.ts                     # Initialization, page view, section tracking hooks
 lib/
-  analytics.ts                       # Segment/GTM providers and manager
-  analytics-consent.ts               # Do Not Track / Global Privacy Control checks
-  analytics-events.ts                # Event constants, types, helper builders
-TRACKING_PLAN.md                     # Event specifications
-ANALYTICS_SYSTEM.md                  # This architecture document
+  analytics.ts                         # SegmentProvider, GTMProvider, AnalyticsManager
+  analytics-consent.ts                 # DNT / GPC browser signal checks
+  analytics-events.ts                  # Event constants, types, creators, getEventContext()
+middleware.ts                          # Edge Runtime — security response headers
+TRACKING_PLAN.md                       # Event specifications
+ANALYTICS_SYSTEM.md                    # This document
 ```
+
+---
 
 ## Platform Notes
 
 ### Segment
 
-- `analytics.js` is loaded through `next/script`
-- the queue/stub is created before event calls
-- middleware filters invalid user IDs such as `"me"` or IDs shorter than five characters
-- middleware maps `anonymousId` to Amplitude `device_id` when no valid `userId` is present
+- `analytics.js` loaded via `next/script` with `strategy="afterInteractive"`
+- Queue/stub created before the script loads so no events are dropped
+- Source middleware installed on `analytics.ready()`:
+  - Filters user IDs shorter than 5 characters or equal to `"me"`
+  - Maps `anonymousId` to Amplitude `device_id` when no valid `userId` exists
 
 ### Google Tag Manager
 
-- `gtm.js` is loaded through `next/script`
-- `window.dataLayer` receives page, section, interaction, and identify events
-- `window.__portfolioGtmInitialized` prevents duplicate GTM start events
+- `gtm.js` loaded via `next/script`
+- `<noscript>` iframe rendered in `app/layout.tsx` for non-JS environments
+- `window.__portfolioGtmInitialized` prevents duplicate GTM start pushes
+- Event properties are flattened onto the `dataLayer` push object
 
 ### Amplitude
 
-- Amplitude is reached through the Segment destination
-- no Amplitude browser SDK is loaded directly
-- valid identity handling is enforced before events reach the destination
+- Reached through the Segment destination — no Amplitude SDK loaded directly
+- `device_id` derived from `anonymousId` ensures session continuity without a `userId`
+
+---
 
 ## Environment Variables
 
 ```bash
-NEXT_PUBLIC_SEGMENT_WRITE_KEY=your_segment_key
-NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-XXXXXX
+NEXT_PUBLIC_SEGMENT_WRITE_KEY=your_segment_write_key
+NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-XXXXXXX
 ```
 
-If either variable is missing, that platform is skipped and a development-only warning is logged.
+If either variable is missing, that platform is silently skipped and a development warning is logged. The other platform continues to operate normally.
