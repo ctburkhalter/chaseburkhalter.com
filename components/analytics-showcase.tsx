@@ -27,7 +27,7 @@ function formatElapsed(ms: number): string {
 
 function EventBadge({ name }: { name: string }) {
   return (
-    <span className="font-mono text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+    <span className="font-mono text-xs px-2 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
       {name}
     </span>
   )
@@ -73,10 +73,10 @@ function LiveEventsTab() {
           const isExpanded = expandedId === ev.id
           const props = ev.properties ? Object.entries(ev.properties) : []
           return (
-            <div key={ev.id} className="rounded-md border border-border/60 overflow-hidden">
+            <div key={ev.id} className="overflow-hidden rounded-md border border-border/70 bg-background/40">
               <button
                 onClick={() => setExpandedId(isExpanded ? null : ev.id)}
-                className="w-full flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 hover:bg-muted/50 transition-colors text-left"
+                className="w-full flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 hover:bg-primary/5 transition-colors text-left"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <EventBadge name={ev.name} />
@@ -94,7 +94,7 @@ function LiveEventsTab() {
                 </div>
               </button>
               {isExpanded && props.length > 0 && (
-                <div className="border-t border-border/40 bg-muted/10 px-3 py-2.5">
+                <div className="border-t border-border/50 bg-muted/10 px-3 py-2.5">
                   <table className="w-full text-xs">
                     <tbody>
                       {props.map(([key, val]) => (
@@ -143,10 +143,10 @@ function TrackingPlanTab() {
   return (
     <div className="space-y-6">
       {/* Event spec table */}
-      <div className="overflow-x-auto rounded-md border border-border/60">
+      <div className="overflow-x-auto rounded-md border border-border/70">
         <table className="w-full text-xs">
           <thead>
-            <tr className="border-b border-border/60 bg-muted/40">
+            <tr className="border-b border-border/70 bg-muted/40">
               <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Event</th>
               <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Trigger</th>
               <th className="px-3 py-2 text-left font-semibold text-muted-foreground hidden sm:table-cell">Properties</th>
@@ -155,9 +155,9 @@ function TrackingPlanTab() {
           </thead>
           <tbody>
             {trackingPlanRows.map((row) => (
-              <tr key={row.event} className="border-b border-border/40 last:border-0">
+              <tr key={row.event} className="border-b border-border/50 last:border-0">
                 <td className="px-3 py-2.5 align-top">
-                  <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                  <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
                     {row.event}
                   </span>
                 </td>
@@ -180,7 +180,7 @@ function TrackingPlanTab() {
           { label: "Amplitude", sub: "Analytics destination" },
         ].map((node, i, arr) => (
           <div key={node.label} className="flex items-center">
-            <div className="flex flex-col items-center text-center px-3 py-2 rounded-md border border-border/60 bg-muted/30 min-w-[90px]">
+            <div className="flex min-w-[90px] flex-col items-center rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-center">
               <span className="font-medium text-foreground text-[11px]">{node.label}</span>
               <span className="text-muted-foreground text-[10px] mt-0.5 leading-tight">{node.sub}</span>
             </div>
@@ -198,10 +198,11 @@ export function AnalyticsShowcase() {
   const [activeTab, setActiveTab] = useState<"events" | "plan">("events")
 
   return (
-    <section id="demos" className="w-full py-16 md:py-24 bg-muted/40">
+    <section id="demos" className="w-full border-y border-border/70 bg-muted/25 py-16 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="flex flex-col gap-3 mb-8 text-center">
+            <p className="section-kicker">Instrumentation</p>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Live Analytics on This Site</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
               This portfolio is instrumented with the same CDP-to-destination pattern I implement for clients —{" "}
@@ -210,14 +211,14 @@ export function AnalyticsShowcase() {
             </p>
           </div>
 
-          <div className="rounded-lg border border-border/60 bg-background overflow-hidden">
+          <div className="engine-panel overflow-hidden rounded-lg">
             {/* Tab bar */}
-            <div className="flex border-b border-border/60">
+            <div className="flex border-b border-border/70">
               <button
                 onClick={() => setActiveTab("events")}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === "events"
-                    ? "bg-background text-foreground border-b-2 border-primary"
+                    ? "bg-background/70 text-foreground border-b-2 border-primary"
                     : "bg-muted/30 text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -227,7 +228,7 @@ export function AnalyticsShowcase() {
                 onClick={() => setActiveTab("plan")}
                 className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === "plan"
-                    ? "bg-background text-foreground border-b-2 border-primary"
+                    ? "bg-background/70 text-foreground border-b-2 border-primary"
                     : "bg-muted/30 text-muted-foreground hover:text-foreground"
                 }`}
               >

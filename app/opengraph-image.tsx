@@ -17,8 +17,8 @@ export default function OpenGraphImage() {
           display: "flex",
           flexDirection: "column",
           justifyContent: "space-between",
-          background: "linear-gradient(135deg, #f8fafc 0%, #e0f2fe 48%, #ecfdf5 100%)",
-          color: "#0f172a",
+          background: "linear-gradient(135deg, #08111f 0%, #101b2e 48%, #1f163f 100%)",
+          color: "#dde7f3",
           padding: "72px",
           fontFamily: "Inter, Arial, sans-serif",
         }}
@@ -33,15 +33,16 @@ export default function OpenGraphImage() {
                 alignItems: "center",
                 justifyContent: "center",
                 borderRadius: 18,
-                background: "#0284c7",
-                color: "white",
+                background: "#101b2e",
+                border: "3px solid #22c55e",
+                color: "#22c55e",
               }}
             >
               CB
             </div>
             chaseburkhalter.com
           </div>
-          <div style={{ color: "#0369a1", fontSize: 26, fontWeight: 700 }}>
+          <div style={{ color: "#f97316", fontSize: 26, fontWeight: 700 }}>
             Analytics Engineering
           </div>
         </div>
@@ -65,7 +66,7 @@ export default function OpenGraphImage() {
               maxWidth: 950,
               fontSize: 38,
               lineHeight: 1.25,
-              color: "#334155",
+              color: "#a9b7ca",
               fontWeight: 500,
             }}
           >
@@ -73,11 +74,11 @@ export default function OpenGraphImage() {
           </p>
         </div>
 
-        <div style={{ display: "flex", gap: "18px", fontSize: 26, fontWeight: 700, color: "#0f766e" }}>
+        <div style={{ display: "flex", gap: "18px", fontSize: 26, fontWeight: 700, color: "#22c55e" }}>
           <span>Snowflake</span>
-          <span>dbt</span>
+          <span style={{ color: "#8b5cf6" }}>dbt</span>
           <span>Segment</span>
-          <span>Amplitude</span>
+          <span style={{ color: "#f97316" }}>Amplitude</span>
           <span>GA4</span>
         </div>
       </div>

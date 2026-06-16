@@ -4,7 +4,7 @@ const experience = [
     role: "Senior Analytics Engineer",
     period: "Feb 2026 – May 2026",
     type: "Contract",
-    color: "sky",
+    color: "orange",
     bullets: [
       "Re-architected dbt incremental modeling across the core Snowflake pipeline, cutting compute spend by ~80% while query volume continued to grow",
       "Established an AI-first analytics layer by persisting governed model documentation into Snowflake, building 3 custom MCP servers (Hightouch, Snowflake, Linear via FastMCP), and generating a LookML-to-Hex semantic context layer",
@@ -65,24 +65,25 @@ const experience = [
 ]
 
 const colorDot: Record<string, string> = {
-  sky: "bg-sky-500",
+  orange: "bg-orange-500",
   emerald: "bg-emerald-500",
   violet: "bg-violet-500",
   amber: "bg-amber-500",
 }
 
 const colorBadge: Record<string, string> = {
-  sky: "border-sky-500/30 bg-sky-500/5 text-sky-700 dark:text-sky-400",
-  emerald: "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400",
-  violet: "border-violet-500/30 bg-violet-500/5 text-violet-700 dark:text-violet-400",
-  amber: "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400",
+  orange: "border-orange-400/30 bg-orange-400/10 text-orange-300",
+  emerald: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300",
+  violet: "border-violet-400/30 bg-violet-400/10 text-violet-300",
+  amber: "border-amber-400/30 bg-amber-400/10 text-amber-300",
 }
 
 export function ExperienceSection() {
   return (
-    <section id="experience" className="w-full py-16 md:py-24 bg-background">
+    <section id="experience" className="w-full py-16 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="flex flex-col items-center text-center gap-3 mb-12">
+          <p className="section-kicker">Work History</p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Experience</h2>
           <p className="max-w-2xl text-muted-foreground">
             6+ years building modern data stacks across fintech, B2B SaaS, digital media, and health tech.
@@ -90,15 +91,15 @@ export function ExperienceSection() {
         </div>
 
         <div className="mx-auto max-w-3xl">
-          <div className="relative pl-8 border-l border-border space-y-10">
+          <div className="relative space-y-6 border-l border-border/70 pl-8">
             {experience.map(({ company, role, period, type, color, bullets, tags }) => (
               <div key={company} className="relative">
-                <span className={`absolute -left-[21px] top-1.5 h-3 w-3 rounded-full border-2 border-background ${colorDot[color]}`} />
-                <div className="space-y-3">
+                <span className={`absolute -left-[21px] top-5 h-3 w-3 rounded-full border-2 border-background shadow-[0_0_18px_currentColor] ${colorDot[color]}`} />
+                <div className="engine-panel rounded-lg p-5 space-y-3">
                   <div>
                     <div className="flex flex-wrap items-baseline gap-2">
                       <h3 className="text-lg font-semibold">{company}</h3>
-                      <span className="text-xs text-muted-foreground border border-border rounded px-1.5 py-0.5">{type}</span>
+                      <span className="rounded border border-border/70 bg-muted/40 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">{type}</span>
                     </div>
                     <p className="text-sm font-medium text-muted-foreground">{role}</p>
                     <p className="text-xs text-muted-foreground mt-0.5">{period}</p>
@@ -106,8 +107,8 @@ export function ExperienceSection() {
 
                   <ul className="space-y-1.5">
                     {bullets.map((b) => (
-                      <li key={b} className="text-sm text-muted-foreground flex gap-2">
-                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/50" />
+                      <li key={b} className="flex gap-2 text-sm text-muted-foreground">
+                        <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-primary/70" />
                         {b}
                       </li>
                     ))}
@@ -117,7 +118,7 @@ export function ExperienceSection() {
                     {tags.map((tag) => (
                       <span
                         key={tag}
-                        className={`text-xs px-2.5 py-0.5 rounded border font-medium ${colorBadge[color]}`}
+                        className={`rounded border px-2.5 py-0.5 font-mono text-[11px] font-medium ${colorBadge[color]}`}
                       >
                         {tag}
                       </span>

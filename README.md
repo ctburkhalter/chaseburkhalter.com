@@ -11,6 +11,7 @@ Personal portfolio for Chase Burkhalter, Senior Analytics Engineer. Built with N
 - **Resume download tracking** — `resume_downloaded` event with `download_source` attribution (nav / hero / contact)
 - **Privacy-aware loading** — respects Do Not Track and Global Privacy Control browser signals
 - **Security headers** — X-Frame-Options, CSP-adjacent headers via Edge Runtime middleware
+- **Dark engineering design system** — navy UI, terminal-style panels, and green / purple / orange accents
 - **Responsive design** — mobile-first, accessible UI
 
 ## Analytics Implementation
@@ -61,6 +62,7 @@ See `.env.example` for the full variable list. Configure the same value in Verce
 
 ```
 app/
+  icon.svg                       # Browser tab favicon / app icon
   layout.tsx                    # Root layout — analytics scripts, provider
   page.tsx                      # Main portfolio page
   opengraph-image.tsx           # Dynamic OG image

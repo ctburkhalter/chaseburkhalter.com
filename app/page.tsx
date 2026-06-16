@@ -1,6 +1,6 @@
 import Image from "next/image"
 import Link from "next/link"
-import { ArrowRight, Download, Mail, Phone, MapPin, ExternalLink } from "lucide-react"
+import { ArrowRight, Download, Mail, Phone, MapPin, ExternalLink, Activity, Database, GitBranch, Terminal } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -23,7 +23,7 @@ export default function Home() {
     },
     {
       label: "AI & LLM Tools",
-      color: "rose",
+      color: "violet",
       tools: ["FastMCP", "Claude AI", "Claude Code", "ChatGPT / Codex", "Hex AI", "MCP Server Development", "Prompt Engineering", "AI-Ready Data Design", "LookML → Semantic Context"],
     },
     {
@@ -33,42 +33,43 @@ export default function Home() {
     },
     {
       label: "BI & Visualization",
-      color: "violet",
+      color: "purple",
       tools: ["Looker / LookML", "Hex", "Tableau", "Power BI", "Apache Superset", "Hashboard", "Mixpanel", "Chartbeat"],
     },
     {
       label: "Engineering & Methodologies",
-      color: "sky",
+      color: "orange",
       tools: ["Python", "TypeScript / JS", "Jinja", "React / Next.js", "Jupyter", "CI/CD", "Git", "Incremental dbt Modeling", "Data Lineage & Governance"],
     },
   ]
 
   const colorMap: Record<string, string> = {
-    emerald: "border-emerald-500/30 bg-emerald-500/5 text-emerald-700 dark:text-emerald-400 hover:border-emerald-500/60 hover:bg-emerald-500/10",
-    rose: "border-rose-500/30 bg-rose-500/5 text-rose-700 dark:text-rose-400 hover:border-rose-500/60 hover:bg-rose-500/10",
-    amber: "border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400 hover:border-amber-500/60 hover:bg-amber-500/10",
-    violet: "border-violet-500/30 bg-violet-500/5 text-violet-700 dark:text-violet-400 hover:border-violet-500/60 hover:bg-violet-500/10",
-    sky: "border-sky-500/30 bg-sky-500/5 text-sky-700 dark:text-sky-400 hover:border-sky-500/60 hover:bg-sky-500/10",
+    emerald: "border-emerald-400/30 bg-emerald-400/10 text-emerald-300 hover:border-emerald-300/60 hover:bg-emerald-400/15",
+    amber: "border-amber-400/30 bg-amber-400/10 text-amber-300 hover:border-amber-300/60 hover:bg-amber-400/15",
+    violet: "border-violet-400/30 bg-violet-400/10 text-violet-300 hover:border-violet-300/60 hover:bg-violet-400/15",
+    purple: "border-purple-400/30 bg-purple-400/10 text-purple-300 hover:border-purple-300/60 hover:bg-purple-400/15",
+    orange: "border-orange-400/30 bg-orange-400/10 text-orange-300 hover:border-orange-300/60 hover:bg-orange-400/15",
   }
 
   const categoryHeaderColor: Record<string, string> = {
-    emerald: "text-emerald-600 dark:text-emerald-400",
-    rose: "text-rose-600 dark:text-rose-400",
-    amber: "text-amber-600 dark:text-amber-400",
-    violet: "text-violet-600 dark:text-violet-400",
-    sky: "text-sky-600 dark:text-sky-400",
+    emerald: "text-emerald-300",
+    amber: "text-amber-300",
+    violet: "text-violet-300",
+    purple: "text-purple-300",
+    orange: "text-orange-300",
   }
 
   const categoryDotColor: Record<string, string> = {
     emerald: "bg-emerald-500",
-    rose: "bg-rose-500",
     amber: "bg-amber-500",
     violet: "bg-violet-500",
-    sky: "bg-sky-500",
+    purple: "bg-purple-500",
+    orange: "bg-orange-500",
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="relative flex min-h-screen flex-col overflow-hidden">
+      <div className="circuit-grid pointer-events-none absolute inset-x-0 top-0 h-[720px] opacity-70" />
       <a
         href="#main-content"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-4 focus:left-4 focus:p-4 focus:bg-primary focus:text-primary-foreground focus:rounded-md focus:shadow-lg"
@@ -77,11 +78,11 @@ export default function Home() {
       </a>
 
       {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
         <div className="container flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="Chase Burkhalter Home">
-            <span className="text-primary font-bold">CB</span>
-            <span className="hidden sm:inline text-sm text-muted-foreground">Chase Burkhalter</span>
+            <span className="rounded border border-primary/35 bg-primary/10 px-2 py-1 font-mono text-xs font-bold text-primary">CB</span>
+            <span className="hidden font-mono text-xs text-muted-foreground sm:inline">~/chase-burkhalter</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
             {[
@@ -93,14 +94,14 @@ export default function Home() {
               <Link
                 key={href}
                 href={href}
-                className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                className="font-mono text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
               >
                 {label}
               </Link>
             ))}
           </nav>
           <div className="flex items-center gap-3">
-            <Button variant="outline" size="sm" asChild className="hidden md:inline-flex gap-2">
+            <Button variant="outline" size="sm" asChild className="hidden border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 md:inline-flex gap-2">
               <ResumeDownloadLink source="nav">
                 <Download className="h-3.5 w-3.5" />
                 Resume
@@ -114,30 +115,35 @@ export default function Home() {
       <main id="main-content" className="flex-1">
 
         {/* Hero */}
-        <section id="hero" className="w-full pt-6 pb-16 md:pt-8 md:pb-24 lg:pb-32 bg-background">
-          <div className="container px-4 md:px-6 space-y-5">
+        <section id="hero" className="relative w-full overflow-hidden pt-10 pb-16 md:pt-16 md:pb-24 lg:pb-32">
+          <div className="pointer-events-none absolute right-[-12rem] top-12 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" />
+          <div className="pointer-events-none absolute left-[-10rem] top-56 h-80 w-80 rounded-full bg-emerald-500/14 blur-3xl" />
+          <div className="container relative px-4 md:px-6 space-y-8">
 
             {/* Row 1: Identity strip — headshot · name · title/status */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <div className="engine-panel flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg p-4">
               <div className="flex items-center gap-4 shrink-0">
                 <Image
                   src="/headshot.jpg"
                   alt="Chase Burkhalter"
                   width={88}
                   height={88}
-                  className="rounded-full object-cover ring-2 ring-border shrink-0"
+                  className="rounded-full object-cover ring-2 ring-primary/45 shadow-[0_0_34px_rgb(34_197_94/0.24)] shrink-0"
                   priority
                 />
-                <h1 className="text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl whitespace-nowrap">
-                  Chase Burkhalter
-                </h1>
+                <div>
+                  <p className="section-kicker">Senior Analytics Engineer</p>
+                  <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+                    Chase Burkhalter
+                  </h1>
+                </div>
               </div>
-              <div className="sm:ml-auto sm:pl-6 sm:border-l sm:border-border/40 flex flex-col gap-1">
-                <p className="text-base font-medium text-muted-foreground">
-                  Senior Analytics Engineer · Data &amp; Analytics Engineering
+              <div className="flex flex-col gap-1 sm:ml-auto sm:border-l sm:border-border/60 sm:pl-6">
+                <p className="font-mono text-xs text-muted-foreground">
+                  stack_status: operational
                 </p>
                 <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+                  <span className="h-2 w-2 rounded-full bg-primary animate-pulse shrink-0 shadow-[0_0_16px_rgb(34_197_94/0.9)]" />
                   <span className="text-sm text-muted-foreground">Open to senior data engineering &amp; analytics engineering roles</span>
                 </div>
               </div>
@@ -148,17 +154,21 @@ export default function Home() {
 
               {/* Left: bio, CTAs, social, pills, location */}
               <div className="flex flex-col gap-5">
-                <p className="text-base text-muted-foreground leading-relaxed max-w-lg">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-orange-400/25 bg-orange-400/10 px-3 py-1 font-mono text-xs text-orange-300">
+                  <Terminal className="h-3.5 w-3.5" />
+                  building governed data systems for product teams
+                </div>
+                <p className="max-w-2xl text-lg leading-relaxed text-muted-foreground md:text-xl">
                   I own the full analytics stack — dbt Snowflake pipelines, Segment and Amplitude instrumentation, BI delivery, and AI-era tooling like custom MCP servers and governed semantic layers. I&apos;ve built and run these systems as the sole analytics engineer at multiple companies across fintech, SaaS, and health tech.
                 </p>
 
                 <div className="flex flex-wrap gap-3">
-                  <Button asChild size="lg">
+                  <Button asChild size="lg" className="bg-primary text-primary-foreground shadow-[0_0_28px_rgb(34_197_94/0.24)] hover:bg-primary/90">
                     <Link href="#projects">
                       View Projects <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
-                  <Button variant="outline" size="lg" asChild>
+                  <Button variant="outline" size="lg" asChild className="border-violet-400/35 bg-violet-400/10 text-violet-200 hover:bg-violet-400/15">
                     <ResumeDownloadLink source="hero" className="gap-2 flex items-center">
                       <Download className="h-4 w-4" />
                       Download Resume
@@ -171,7 +181,7 @@ export default function Home() {
                     href="https://www.linkedin.com/in/chaseburkhalter/"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
@@ -182,7 +192,7 @@ export default function Home() {
                     href="https://github.com/ctburkhalter"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground transition-colors hover:text-primary"
                   >
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                       <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" />
@@ -196,35 +206,46 @@ export default function Home() {
                   {stackTools.map((tool) => (
                     <span
                       key={tool}
-                      className="text-xs px-2.5 py-1 rounded-full border border-border text-muted-foreground bg-muted/50"
+                      className="rounded border border-border/70 bg-muted/50 px-2.5 py-1 font-mono text-[11px] text-muted-foreground"
                     >
                       {tool}
                     </span>
                   ))}
                 </div>
 
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
                   <MapPin className="h-3.5 w-3.5" />
                   <span>Dothan, AL — open to remote</span>
                 </div>
               </div>
 
               {/* Right: impact stats */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="engine-panel rounded-lg p-3">
+                <div className="mb-3 flex items-center justify-between border-b border-border/70 px-2 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full bg-orange-500" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
+                  </div>
+                  <span className="font-mono text-[11px] text-muted-foreground">impact.log</span>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                 {[
-                  { value: "$1.4M", label: "Annual infrastructure savings", sub: "SteadyApp aggregator rebuild" },
-                  { value: "80%", label: "Snowflake credit reduction", sub: "While query volume grew 58%" },
-                  { value: "2.4B", label: "Rows recovered, zero data loss", sub: "13-day Fivetran incident response" },
-                  { value: "7", label: "Digital properties instrumented", sub: "End-to-end Amplitude at AJC" },
-                ].map(({ value, label, sub }) => (
-                  <Card key={value} className="border-border/60">
+                  { value: "$1.4M", label: "Annual infrastructure savings", sub: "SteadyApp aggregator rebuild", icon: Database, tone: "text-emerald-300" },
+                  { value: "80%", label: "Snowflake credit reduction", sub: "While query volume grew 58%", icon: Activity, tone: "text-violet-300" },
+                  { value: "2.4B", label: "Rows recovered, zero data loss", sub: "13-day Fivetran incident response", icon: GitBranch, tone: "text-orange-300" },
+                  { value: "7", label: "Digital properties instrumented", sub: "End-to-end Amplitude at AJC", icon: Terminal, tone: "text-primary" },
+                ].map(({ value, label, sub, icon: Icon, tone }) => (
+                  <Card key={value} className="border-border/70 bg-background/55 transition-colors hover:border-primary/35">
                     <CardContent className="p-5">
-                      <p className="text-3xl font-bold text-primary">{value}</p>
+                      <Icon className={`mb-4 h-4 w-4 ${tone}`} />
+                      <p className={`text-3xl font-bold ${tone}`}>{value}</p>
                       <p className="text-sm font-medium mt-1">{label}</p>
                       <p className="text-xs text-muted-foreground mt-0.5">{sub}</p>
                     </CardContent>
                   </Card>
                 ))}
+                </div>
               </div>
 
             </div>
@@ -232,7 +253,7 @@ export default function Home() {
         </section>
 
         {/* Impact metrics strip */}
-        <section className="w-full border-y bg-muted/40 py-8">
+        <section className="w-full border-y border-border/70 bg-muted/35 py-8">
           <div className="container px-4 md:px-6">
             <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 lg:grid-cols-5">
               {[
@@ -242,8 +263,8 @@ export default function Home() {
                 { value: "3", label: "MCP servers built" },
                 { value: "2.4B rows", label: "Recovered in production incident" },
               ].map(({ value, label }) => (
-                <div key={label} className="flex flex-col items-center text-center gap-1">
-                  <span className="text-2xl font-bold">{value}</span>
+                <div key={label} className="flex flex-col items-center gap-1 text-center">
+                  <span className="font-mono text-2xl font-bold text-foreground">{value}</span>
                   <span className="text-xs text-muted-foreground">{label}</span>
                 </div>
               ))}
@@ -255,9 +276,10 @@ export default function Home() {
         <ExperienceSection />
 
         {/* Projects */}
-        <section id="projects" className="w-full py-16 md:py-24 bg-muted/20">
+        <section id="projects" className="w-full border-y border-border/70 bg-muted/20 py-16 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center text-center gap-3 mb-12">
+              <p className="section-kicker">Selected Work</p>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Featured Projects</h2>
               <p className="max-w-2xl text-muted-foreground">
                 Senior-level data and analytics engineering work with measurable impact across cost, governance, instrumentation, and decision velocity.
@@ -305,9 +327,10 @@ export default function Home() {
         </section>
 
         {/* Skills */}
-        <section id="skills" className="w-full py-16 md:py-24 bg-background">
+        <section id="skills" className="w-full py-16 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center text-center gap-3 mb-12">
+              <p className="section-kicker">Toolchain</p>
               <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Technical Skills</h2>
               <p className="max-w-2xl text-muted-foreground">
                 Deep expertise in dbt and Snowflake; full-stack coverage from event instrumentation to self-service BI.
@@ -322,7 +345,7 @@ export default function Home() {
                       {label}
                     </h3>
                   </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="engine-panel flex flex-wrap gap-2 rounded-lg p-4">
                     {tools.map((tool) => (
                       <span
                         key={tool}
@@ -339,7 +362,7 @@ export default function Home() {
               <p className="text-xs text-muted-foreground text-center mb-3">Also worked with</p>
               <div className="flex flex-wrap justify-center gap-2">
                 {["Iterable", "Braze", "Stripe", "Salesforce", "HubSpot", "LaunchDarkly", "Optimizely", "FullStory", "Qualtrics", "Chameleon", "Plaid", "Zendesk", "Clojure", "Figma"].map((tool) => (
-                  <span key={tool} className="text-xs px-2.5 py-1 rounded border border-border text-muted-foreground">
+                  <span key={tool} className="rounded border border-border/70 bg-muted/30 px-2.5 py-1 font-mono text-[11px] text-muted-foreground">
                     {tool}
                   </span>
                 ))}
@@ -352,10 +375,11 @@ export default function Home() {
         <AnalyticsShowcase />
 
         {/* Contact */}
-        <section id="contact" className="w-full py-16 md:py-24 bg-background">
+        <section id="contact" className="w-full py-16 md:py-24">
           <div className="container px-4 md:px-6">
             <div className="mx-auto max-w-lg flex flex-col items-center text-center gap-6">
               <div className="space-y-2">
+                <p className="section-kicker">Contact</p>
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Get in Touch</h2>
                 <p className="text-muted-foreground">
                   Open to data engineering and analytics engineering roles at product-led tech companies, contract work, and collaboration. Remote.
@@ -365,7 +389,7 @@ export default function Home() {
               <div className="w-full space-y-3">
                 <a
                   href="mailto:chase@chaseburkhalter.com"
-                  className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors group"
+                  className="engine-panel flex items-center gap-3 rounded-lg p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 group"
                 >
                   <Mail className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <div className="text-left">
@@ -375,7 +399,7 @@ export default function Home() {
                 </a>
                 <a
                   href="tel:334-333-4308"
-                  className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors group"
+                  className="engine-panel flex items-center gap-3 rounded-lg p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 group"
                 >
                   <Phone className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <div className="text-left">
@@ -387,7 +411,7 @@ export default function Home() {
                   href="https://www.linkedin.com/in/chaseburkhalter/"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors group"
+                  className="engine-panel flex items-center gap-3 rounded-lg p-4 transition-colors hover:border-primary/40 hover:bg-primary/5 group"
                 >
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <div className="text-left">
@@ -404,7 +428,7 @@ export default function Home() {
                     Send Email
                   </a>
                 </Button>
-                <Button variant="outline" asChild className="flex-1">
+                <Button variant="outline" asChild className="flex-1 border-violet-400/35 bg-violet-400/10 text-violet-200 hover:bg-violet-400/15">
                   <ResumeDownloadLink source="contact">
                     <Download className="mr-2 h-4 w-4" />
                     Resume
@@ -418,10 +442,10 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t py-8">
+      <footer className="w-full border-t border-border/70 py-8">
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-muted-foreground">© 2026 Chase Burkhalter</p>
-          <p className="text-xs text-muted-foreground">
+          <p className="font-mono text-xs text-muted-foreground">
             Built with Next.js · TypeScript · Tailwind CSS · Segment · Amplitude
           </p>
           <div className="flex items-center gap-4">
