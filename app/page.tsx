@@ -68,7 +68,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden">
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden">
       <div className="circuit-grid pointer-events-none absolute inset-x-0 top-0 h-[720px] opacity-70" />
       <a
         href="#main-content"
