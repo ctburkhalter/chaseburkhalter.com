@@ -1,5 +1,4 @@
-// Simplified analytics system with Segment and GTM only
-// Single initialization, no duplicate events
+// Analytics system — Segment only, single initialization, no duplicate events
 
 import { canLoadAnalytics } from "@/lib/analytics-consent"
 import { getEventContext } from "@/lib/analytics-events"
@@ -11,7 +10,6 @@ if (typeof window !== "undefined" && !window.global) {
 
 // Environment variables
 const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY ?? ""
-const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID ?? ""
 const SEGMENT_METHODS = [
   "trackSubmit", "trackClick", "trackLink", "trackForm",
   "pageview", "identify", "reset", "group", "track",
@@ -278,115 +276,15 @@ class SegmentProvider {
   }
 }
 
-// Google Tag Manager Provider
-class GTMProvider {
-  private isInitialized = false
-
-  initialize(): void {
-    if (this.isInitialized || typeof window === "undefined") {
-      return
-    }
-
-    if (!GTM_CONTAINER_ID) {
-      AnalyticsLogger.warn("GTM container ID not provided")
-      return
-    }
-
-    try {
-      // Initialize data layer
-      window.dataLayer = window.dataLayer || []
-      if (!window.__portfolioGtmInitialized) {
-        window.dataLayer.push({
-          'gtm.start': new Date().getTime(),
-          event: 'gtm.js'
-        })
-        window.__portfolioGtmInitialized = true
-      }
-
-      this.isInitialized = true
-      AnalyticsLogger.info("GTM initialized")
-    } catch (error) {
-      AnalyticsLogger.error("Failed to initialize GTM", error)
-    }
-  }
-
-  trackEvent(event: AnalyticsEvent): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: event.name,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio',
-        ...event.properties
-      })
-      AnalyticsLogger.info("GTM event tracked", event)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM event", error)
-    }
-  }
-
-  trackPageView(pageView: PageViewEvent): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: "page_view",
-        page_path: pageView.path,
-        page_title: pageView.title,
-        page_referrer: pageView.referrer,
-        timestamp: new Date().toISOString(),
-        source: 'portfolio',
-        ...pageView.properties
-      })
-      AnalyticsLogger.info("GTM page view tracked", pageView)
-    } catch (error) {
-      AnalyticsLogger.error("Failed to track GTM page view", error)
-    }
-  }
-
-  identify(userId: string, traits?: Record<string, any>): void {
-    if (typeof window === "undefined" || !window.dataLayer) {
-      return
-    }
-
-    // Validate userId before calling identify
-    // Amplitude requires minimum 5 characters for userId
-    if (!userId || userId.trim().length < 5) {
-      AnalyticsLogger.warn("Invalid userId provided to GTM identify() - must be at least 5 characters", { userId })
-      return
-    }
-
-    try {
-      window.dataLayer.push({
-        event: "user_identify",
-        user_id: userId,
-        user_traits: traits,
-        identified_at: new Date().toISOString(),
-        source: 'portfolio'
-      })
-      AnalyticsLogger.info("GTM user identified", { userId, traits })
-    } catch (error) {
-      AnalyticsLogger.error("Failed to identify GTM user", error)
-    }
-  }
-}
-
 // Main Analytics Manager (Singleton)
 class AnalyticsManager {
   private segment: SegmentProvider
-  private gtm: GTMProvider
   private isInitialized = false
   private isDisabled = false
   private lastPageView: { path: string; timestamp: number } | null = null
 
   constructor() {
     this.segment = new SegmentProvider()
-    this.gtm = new GTMProvider()
   }
 
   initialize(): void {
@@ -404,7 +302,6 @@ class AnalyticsManager {
     AnalyticsLogger.info("Initializing analytics...")
 
     this.segment.initialize()
-    this.gtm.initialize()
 
     this.isInitialized = true
     AnalyticsLogger.info("Analytics initialized successfully")
@@ -426,7 +323,6 @@ class AnalyticsManager {
     }
 
     this.segment.trackEvent(enriched)
-    this.gtm.trackEvent(enriched)
   }
 
   trackPageView(pageView: PageViewEvent): void {
@@ -459,7 +355,6 @@ class AnalyticsManager {
     }
 
     this.segment.trackPageView(enriched)
-    this.gtm.trackPageView(enriched)
   }
 
   identify(userId: string, traits?: Record<string, any>): void {
@@ -480,7 +375,6 @@ class AnalyticsManager {
     }
 
     this.segment.identify(userId, traits)
-    this.gtm.identify(userId, traits)
   }
 }
 
@@ -491,8 +385,6 @@ export const analytics = new AnalyticsManager()
 declare global {
   interface Window {
     analytics: any
-    dataLayer: any[]
     global: any
-    __portfolioGtmInitialized?: boolean
   }
 }

@@ -6,7 +6,6 @@ import Script from "next/script"
 import { canLoadAnalytics } from "@/lib/analytics-consent"
 
 const SEGMENT_WRITE_KEY = process.env.NEXT_PUBLIC_SEGMENT_WRITE_KEY ?? ""
-const GTM_CONTAINER_ID = process.env.NEXT_PUBLIC_GTM_CONTAINER_ID ?? ""
 
 export function AnalyticsScripts() {
   const [shouldLoadAnalytics, setShouldLoadAnalytics] = useState(false)
@@ -59,31 +58,6 @@ if (!window.analytics.invoked && Array.isArray(window.analytics)) {
           <Script
             id="segment-analytics"
             src={`https://cdn.segment.com/analytics.js/v1/${SEGMENT_WRITE_KEY}/analytics.min.js`}
-            strategy="afterInteractive"
-          />
-        </>
-      ) : null}
-      {GTM_CONTAINER_ID ? (
-        <>
-          <Script
-            id="google-tag-manager-queue"
-            strategy="afterInteractive"
-            dangerouslySetInnerHTML={{
-              __html: `
-window.dataLayer = window.dataLayer || [];
-if (!window.__portfolioGtmInitialized) {
-  window.dataLayer.push({
-    "gtm.start": new Date().getTime(),
-    event: "gtm.js"
-  });
-  window.__portfolioGtmInitialized = true;
-}
-              `,
-            }}
-          />
-          <Script
-            id="google-tag-manager"
-            src={`https://www.googletagmanager.com/gtm.js?id=${GTM_CONTAINER_ID}`}
             strategy="afterInteractive"
           />
         </>

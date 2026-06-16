@@ -5,7 +5,6 @@
 This portfolio uses a production analytics layer that routes events through:
 
 - **Segment** — collection and downstream routing
-- **Google Tag Manager** — tag orchestration
 - **Amplitude** — analytics destination via Segment
 
 The system instruments automatic portfolio events (page view, section visibility, section navigation, resume downloads) and enriches every event with device context and UTM marketing attribution.
@@ -23,14 +22,11 @@ RootLayout
   → AnalyticsScripts (components/analytics/analytics-scripts.tsx)
       → checks browser privacy signals (lib/analytics-consent.ts)
       → if allowed: injects Segment queue + analytics.js via next/script
-      → if allowed: injects GTM dataLayer queue + gtm.js via next/script
-  → GTMNoScript (components/analytics/gtm-noscript.tsx)
-      → renders <noscript> iframe fallback for GTM
 ```
 
-Scripts are only injected when:
+The Segment script is only injected when:
 
-- The corresponding environment variable is configured
+- `NEXT_PUBLIC_SEGMENT_WRITE_KEY` is configured
 - No browser-level privacy signal (DNT, GPC) opts the visitor out
 
 ### Initialization
@@ -182,19 +178,18 @@ Defined in `components/analytics/analytics-provider.tsx`:
 
 ```
 app/
-  layout.tsx                           # Root layout — mounts AnalyticsScripts, GTMNoScript, AnalyticsProvider
+  layout.tsx                           # Root layout — mounts AnalyticsScripts, AnalyticsProvider
   page.tsx                             # Main portfolio page
 components/
   analytics/
     analytics-provider.tsx             # Section tracking, navigation click tracking
-    analytics-scripts.tsx              # next/script Segment and GTM loaders
-    gtm-noscript.tsx                   # GTM <noscript> iframe fallback
+    analytics-scripts.tsx              # next/script Segment loader
   analytics-showcase.tsx               # Live event stream + tracking plan tab UI
   resume-download-link.tsx             # Client component — fires resume_downloaded on click
 hooks/
   use-analytics.ts                     # Initialization, page view, section tracking hooks
 lib/
-  analytics.ts                         # SegmentProvider, GTMProvider, AnalyticsManager
+  analytics.ts                         # SegmentProvider, AnalyticsManager
   analytics-consent.ts                 # DNT / GPC browser signal checks
   analytics-events.ts                  # Event constants, types, creators, getEventContext()
 middleware.ts                          # Edge Runtime — security response headers
@@ -214,13 +209,6 @@ ANALYTICS_SYSTEM.md                    # This document
   - Filters user IDs shorter than 5 characters or equal to `"me"`
   - Maps `anonymousId` to Amplitude `device_id` when no valid `userId` exists
 
-### Google Tag Manager
-
-- `gtm.js` loaded via `next/script`
-- `<noscript>` iframe rendered in `app/layout.tsx` for non-JS environments
-- `window.__portfolioGtmInitialized` prevents duplicate GTM start pushes
-- Event properties are flattened onto the `dataLayer` push object
-
 ### Amplitude
 
 - Reached through the Segment destination — no Amplitude SDK loaded directly
@@ -232,7 +220,6 @@ ANALYTICS_SYSTEM.md                    # This document
 
 ```bash
 NEXT_PUBLIC_SEGMENT_WRITE_KEY=your_segment_write_key
-NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-XXXXXXX
 ```
 
-If either variable is missing, that platform is silently skipped and a development warning is logged. The other platform continues to operate normally.
+If the variable is missing, Segment is silently skipped and a development warning is logged.

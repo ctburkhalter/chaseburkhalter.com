@@ -5,7 +5,7 @@ Personal portfolio for Chase Burkhalter, Senior Analytics Engineer. Built with N
 ## Features
 
 - **Modern tech stack** — Next.js 15 App Router, React 19, TypeScript, Tailwind CSS
-- **Production analytics** — Segment CDP → GTM → Amplitude pipeline, fully instrumented
+- **Production analytics** — Segment CDP → Amplitude pipeline, fully instrumented
 - **Live analytics showcase** — real-time event stream and rendered tracking plan, visible to site visitors
 - **Event enrichment** — every event carries device context, viewport, timezone, and UTM marketing attribution
 - **Resume download tracking** — `resume_downloaded` event with source attribution (nav / hero / contact)
@@ -20,8 +20,7 @@ Personal portfolio for Chase Burkhalter, Senior Analytics Engineer. Built with N
 ```
 Browser events
   → Segment (CDP, write key)
-    → GTM (tag management)
-      → Amplitude (destination)
+    → Amplitude (destination)
 ```
 
 ### Tracked Events
@@ -70,8 +69,7 @@ app/
 components/
   analytics/
     analytics-provider.tsx      # Section + navigation tracking
-    analytics-scripts.tsx       # next/script Segment and GTM loaders
-    gtm-noscript.tsx            # GTM <noscript> iframe fallback
+    analytics-scripts.tsx       # next/script Segment loader
   analytics-showcase.tsx        # Live event stream + tracking plan UI
   experience-section.tsx        # Work history timeline
   mobile-navigation.tsx         # Mobile nav sheet

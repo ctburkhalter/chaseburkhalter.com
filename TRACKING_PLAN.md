@@ -7,7 +7,6 @@ This document defines the event tracking specification for `chaseburkhalter.com`
 Events are routed through:
 
 - **Segment** — customer data platform for collection and routing
-- **Google Tag Manager** — tag management and event passthrough
 - **Amplitude** — analytics destination via Segment
 
 Analytics loading is privacy-aware: browser Do Not Track and Global Privacy Control signals prevent third-party scripts from loading and make all tracking calls no-ops.
@@ -264,19 +263,6 @@ Special handling:
 - Middleware filters invalid user IDs before delivery
 - `anonymousId` is mapped to Amplitude `device_id` when no valid `userId` exists
 
-### Google Tag Manager
-
-GTM is loaded in `components/analytics/analytics-scripts.tsx` via `next/script`. A `<noscript>` iframe fallback is rendered in `app/layout.tsx` via `components/analytics/gtm-noscript.tsx`.
-
-```ts
-window.dataLayer.push({ event: eventName, ...properties })
-```
-
-Special handling:
-
-- `window.__portfolioGtmInitialized` prevents duplicate GTM start events
-- Event properties are flattened onto the `dataLayer` push object
-
 ### Amplitude
 
 Amplitude receives events through the Segment destination. The Amplitude SDK is not loaded directly.
@@ -355,6 +341,7 @@ Production:
 
 **UTM properties missing:**
 
+
 - Confirm the landing URL included UTM params
 - Check `sessionStorage` for the `portfolio:utm` key — it should hold the captured values
 
@@ -364,6 +351,7 @@ Production:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 3.1.0 | 2026-06-16 | Removed GTM — events route Segment → Amplitude directly |
 | 3.0.0 | 2026-06-16 | Added `resume_downloaded` event; added automatic device context and UTM enrichment on all events; removed `portfolio_interaction` and `error_occurred` (no longer implemented); updated implementation examples |
 | 2.0.0 | 2026-06-15 | Updated for `next/script` loading, browser privacy-signal handling |
 | 1.0.0 | 2025-01-15 | Initial tracking plan |

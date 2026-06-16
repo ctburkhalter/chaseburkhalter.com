@@ -6,7 +6,6 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
-import { GTMNoScript } from "@/components/analytics/gtm-noscript"
 import { ToastContainer } from "@/components/toast"
 
 import "./globals.css"
@@ -21,7 +20,7 @@ export const metadata: Metadata = {
   title: "Chase Burkhalter | Senior Data & Analytics Engineer",
   description:
     "Portfolio of Chase Burkhalter, a Senior Data & Analytics Engineer specializing in product analytics, event tracking, and data governance. 6+ years experience with modern data stack tooling.",
-  keywords: ["Data Analytics", "Analytics Engineer", "Product Analytics", "Event Tracking", "Data Governance", "Snowflake", "dbt", "Amplitude", "Segment", "GA4", "GTM", "Apache Superset"],
+  keywords: ["Data Analytics", "Analytics Engineer", "Product Analytics", "Event Tracking", "Data Governance", "Snowflake", "dbt", "Amplitude", "Segment", "GA4", "Apache Superset"],
   authors: [{ name: "Chase Burkhalter", url: "https://chaseburkhalter.com" }],
   creator: "Chase Burkhalter",
   publisher: "Chase Burkhalter",
@@ -112,7 +111,6 @@ export default function RootLayout({
                   "Data Engineering",
                   "Apache Superset",
                   "GA4",
-                  "Google Tag Manager"
                 ],
                 hasOccupation: {
                   "@type": "Occupation",
@@ -147,7 +145,6 @@ export default function RootLayout({
         />
       </head>
       <body className={inter.className}>
-        <GTMNoScript containerId={process.env.NEXT_PUBLIC_GTM_CONTAINER_ID} />
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AnalyticsScripts />

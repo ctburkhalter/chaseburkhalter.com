@@ -177,7 +177,6 @@ function TrackingPlanTab() {
         {[
           { label: "Browser Events", sub: "Intersection Observer + click listeners" },
           { label: "Segment CDP", sub: "Write key · TypeScript tracking plan" },
-          { label: "GTM", sub: "Tag manager · event passthrough" },
           { label: "Amplitude", sub: "Analytics destination" },
         ].map((node, i, arr) => (
           <div key={node.label} className="flex items-center">
@@ -206,7 +205,7 @@ export function AnalyticsShowcase() {
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Live Analytics on This Site</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
               This portfolio is instrumented with the same CDP-to-destination pattern I implement for clients —{" "}
-              <strong>Segment</strong> as the CDP, <strong>GTM</strong> for tag management, and{" "}
+              <strong>Segment</strong> as the CDP routing events directly to{" "}
               <strong>Amplitude</strong> as the destination. Watch the tracking plan run live below.
             </p>
           </div>
