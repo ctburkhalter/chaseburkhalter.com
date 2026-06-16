@@ -50,6 +50,7 @@ export interface SectionClickedProperties extends BaseEventProperties {
 }
 
 export interface ResumeDownloadedProperties extends BaseEventProperties {
+  download_source: string
   file_name: string
   url: string
 }
@@ -156,7 +157,7 @@ export function createResumeDownloadedEvent(source: string): ResumeDownloadedEve
   return {
     name: ANALYTICS_EVENTS.RESUME_DOWNLOADED,
     properties: {
-      source,
+      download_source: source,
       file_name: 'Chase_Burkhalter_Resume_2026.pdf',
       url: typeof window !== 'undefined' ? window.location.href : '',
     },

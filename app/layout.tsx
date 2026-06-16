@@ -6,7 +6,6 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AnalyticsScripts } from "@/components/analytics/analytics-scripts"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
-import { ToastContainer } from "@/components/toast"
 
 import "./globals.css"
 
@@ -96,7 +95,7 @@ export default function RootLayout({
                   addressCountry: "US"
                 },
                 sameAs: [
-                  "https://www.linkedin.com/in/chase-burkhalter/",
+                  "https://www.linkedin.com/in/chaseburkhalter/",
                   "https://github.com/ctburkhalter"
                 ],
                 knowsAbout: [
@@ -148,11 +147,9 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <AnalyticsScripts />
-            <ToastContainer>
-              <AnalyticsProvider>
-                {children}
-              </AnalyticsProvider>
-            </ToastContainer>
+            <AnalyticsProvider>
+              {children}
+            </AnalyticsProvider>
           </ThemeProvider>
         </Suspense>
       </body>

@@ -36,13 +36,12 @@ AnalyticsProvider mounts
   → useAnalytics() (hooks/use-analytics.ts)
       → analytics.initialize() (lib/analytics.ts)
           → SegmentProvider: creates queue/stub, installs middleware
-          → GTMProvider: initializes dataLayer
       → page_view fires once (deduped against window.__pageViewTracked)
 ```
 
 ### Event Enrichment
 
-Every event passes through `AnalyticsManager.trackEvent()` or `trackPageView()` before reaching Segment or GTM. At that point:
+Every event passes through `AnalyticsManager.trackEvent()` or `trackPageView()` before reaching Segment. At that point:
 
 ```
 Event created by creator function (lib/analytics-events.ts)
@@ -51,7 +50,7 @@ Event created by creator function (lib/analytics-events.ts)
           - device/browser properties (UA, screen, viewport, timezone, etc.)
           - page_url, page_path, page_referrer
           - UTM params from sessionStorage (captured on landing)
-      → enriched event sent to SegmentProvider and GTMProvider
+      → enriched event sent to SegmentProvider
       → CustomEvent('analytics:event') dispatched on window
           → LiveEventsTab in AnalyticsShowcase picks this up for real-time display
 ```
@@ -77,7 +76,7 @@ User clicks an internal hash link
 ```
 User clicks a resume link
   → ResumeDownloadLink.onClick (components/resume-download-link.tsx)
-      → resume_downloaded fires with source = "nav" | "hero" | "contact"
+      → resume_downloaded fires with download_source = "nav" | "hero" | "contact"
       → browser opens PDF
 ```
 
@@ -110,7 +109,7 @@ UTM values are captured from the landing URL into `sessionStorage` (`portfolio:u
 
 When any signal is active:
 
-- Segment and GTM scripts are not injected
+- Segment scripts are not injected
 - `analytics.initialize()` marks the manager as disabled
 - `trackEvent`, `trackPageView`, and `identify` return without sending data
 
@@ -142,7 +141,7 @@ The showcase has two tabs:
 | `page_view` | App init | `path`, `title`, `referrer`, `initial_load` |
 | `section_viewed` | 50% viewport intersection | `section_id`, `section_name`, `interaction_type` |
 | `section_clicked` | Internal nav link click | `section_id`, `section_name`, `click_source` |
-| `resume_downloaded` | Resume link click | `source`, `file_name` |
+| `resume_downloaded` | Resume link click | `download_source`, `file_name` |
 
 All events additionally carry the automatic context properties listed above.
 

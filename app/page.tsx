@@ -29,7 +29,7 @@ export default function Home() {
     {
       label: "Instrumentation & Analytics",
       color: "amber",
-      tools: ["Amplitude", "Segment", "GA4", "Google Tag Manager", "AppsFlyer", "Airship", "Avo", "DataHub", "OpenMetadata", "Pendo"],
+      tools: ["Amplitude", "Segment", "GA4", "Google Tag Manager", "Iterable", "AppsFlyer", "Airship", "Avo", "DataHub", "OpenMetadata", "Pendo"],
     },
     {
       label: "BI & Visualization",
@@ -168,7 +168,7 @@ export default function Home() {
 
                 <div className="flex items-center gap-4">
                   <Link
-                    href="https://www.linkedin.com/in/chase-burkhalter/"
+                    href="https://www.linkedin.com/in/chaseburkhalter/"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
@@ -384,7 +384,7 @@ export default function Home() {
                   </div>
                 </a>
                 <Link
-                  href="https://www.linkedin.com/in/chase-burkhalter/"
+                  href="https://www.linkedin.com/in/chaseburkhalter/"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-3 p-4 rounded-lg border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors group"
@@ -392,7 +392,7 @@ export default function Home() {
                   <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
                   <div className="text-left">
                     <p className="text-xs text-muted-foreground">LinkedIn</p>
-                    <p className="text-sm font-medium">linkedin.com/in/chase-burkhalter</p>
+                    <p className="text-sm font-medium">linkedin.com/in/chaseburkhalter</p>
                   </div>
                 </Link>
               </div>
@@ -426,7 +426,7 @@ export default function Home() {
           </p>
           <div className="flex items-center gap-4">
             <Link
-              href="https://www.linkedin.com/in/chase-burkhalter/"
+              href="https://www.linkedin.com/in/chaseburkhalter/"
               target="_blank"
               rel="noopener noreferrer"
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"

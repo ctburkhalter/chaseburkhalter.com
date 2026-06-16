@@ -25,13 +25,13 @@ Analytics loading is privacy-aware: browser Do Not Track and Global Privacy Cont
 
 ## Automatic Context Properties
 
-Every event — regardless of type — is automatically enriched by `AnalyticsManager` before it reaches Segment or GTM. No manual effort is needed in event creators or components.
+Every event — regardless of type — is automatically enriched by `AnalyticsManager` before it reaches Segment. No manual effort is needed in event creators or components.
 
 ### Reserved Properties (added by `lib/analytics.ts`)
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `timestamp` | string | ISO 8601 timestamp, added by Segment/GTM providers |
+| `timestamp` | string | ISO 8601 timestamp, added by the Segment provider |
 | `source` | string | Always `"portfolio"` |
 
 ### Device Context (added by `getEventContext()` in `lib/analytics-events.ts`)
@@ -188,11 +188,11 @@ Example payload:
 
 **When to fire**: On click of any resume download link. Fired by `components/resume-download-link.tsx` before the browser opens the PDF.
 
-**Sources**: Three entry points, each tagged with a distinct `source` value.
+**Sources**: Three entry points, each tagged with a distinct `download_source` value.
 
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
-| `source` | string | Yes | Where the download was triggered | `"hero"`, `"nav"`, `"contact"` |
+| `download_source` | string | Yes | Where the download was triggered | `"hero"`, `"nav"`, `"contact"` |
 | `file_name` | string | Yes | PDF filename | `"Chase_Burkhalter_Resume_2026.pdf"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
 
@@ -202,7 +202,7 @@ Example payload:
 {
   "event": "resume_downloaded",
   "properties": {
-    "source": "hero",
+    "download_source": "hero",
     "file_name": "Chase_Burkhalter_Resume_2026.pdf",
     "url": "https://chaseburkhalter.com/",
     "utm_source": "linkedin",
@@ -230,20 +230,6 @@ Validation rules:
 - `user_id` must be at least 5 characters
 - Values like `"me"`, empty strings, or `null` are rejected at the manager level
 - Segment middleware removes invalid IDs before delivery to any destination
-
-GTM `dataLayer` shape:
-
-```json
-{
-  "event": "user_identify",
-  "user_id": "user@example.com",
-  "user_traits": { "visited_portfolio": true },
-  "identified_at": "2026-06-16T10:04:00.000Z",
-  "source": "portfolio"
-}
-```
-
----
 
 ## Platform Implementation
 
@@ -299,7 +285,7 @@ PII guidance:
 3. Add the event to `ANALYTICS_EVENTS`
 4. Write a creator function (`createXxxEvent`)
 5. Add to this tracking plan
-6. Validate in Segment Debugger, GTM Preview Mode, and Amplitude
+6. Validate in Segment Debugger and Amplitude
 
 ---
 
@@ -309,13 +295,11 @@ Development:
 
 - `[Analytics]` prefixed logs appear in the browser console
 - Segment sends requests to `api.segment.io`
-- GTM Preview Mode shows tag firing
 - No analytics scripts load when DNT or GPC is enabled
 
 Production:
 
 - Segment Debugger shows all event types with enriched properties
-- GTM Preview Mode receives events including `resume_downloaded`
 - Amplitude events arrive through the Segment destination
 
 ---
@@ -324,7 +308,7 @@ Production:
 
 **Events not firing:**
 
-- Confirm `NEXT_PUBLIC_SEGMENT_WRITE_KEY` and `NEXT_PUBLIC_GTM_CONTAINER_ID` are set
+- Confirm `NEXT_PUBLIC_SEGMENT_WRITE_KEY` is set
 - Check whether DNT or GPC is enabled in the browser
 - Verify `AnalyticsProvider` is mounted in `app/layout.tsx`
 

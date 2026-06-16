@@ -18,55 +18,70 @@ const SEGMENT_METHODS = [
   "setAnonymousId", "addDestinationMiddleware"
 ]
 
-type SegmentAnalytics = any[] & {
-  [key: string]: any
+export type AnalyticsProperties = object
+type SegmentQueuedCall = [string, ...unknown[]]
+type SegmentIntegrationSettings = Record<string, Record<string, unknown>>
+type SegmentPayloadObject = {
+  userId?: string | null
+  anonymousId?: string
+  type?: string
+  integrations?: SegmentIntegrationSettings
+}
+type SegmentMiddlewareArgs = {
+  payload: {
+    obj?: SegmentPayloadObject
+  }
+  next: (payload: SegmentMiddlewareArgs["payload"]) => void
+}
+type SegmentAnalytics = SegmentQueuedCall[] & {
+  [key: string]: unknown
   invoked?: boolean
   methods?: string[]
-  factory?: (method: string) => (...args: any[]) => SegmentAnalytics
+  factory?: (method: string) => (...args: unknown[]) => SegmentAnalytics
   _writeKey?: string
   SNIPPET_VERSION?: string
   ready?: (callback: () => void) => void
-  track?: (eventName: string, properties?: Record<string, any>) => void
-  page?: (pageName: string, properties?: Record<string, any>) => void
-  identify?: (userId: string, traits?: Record<string, any>) => void
+  track?: (eventName: string, properties?: AnalyticsProperties) => void
+  page?: (pageName: string, properties?: AnalyticsProperties) => void
+  identify?: (userId: string, traits?: AnalyticsProperties) => void
   reset?: () => void
   user?: () => {
     anonymousId?: () => string
     id?: () => string
   }
-  addSourceMiddleware?: (middleware: (args: any) => void) => void
+  addSourceMiddleware?: (middleware: (args: SegmentMiddlewareArgs) => void) => void
 }
 
 // Types
 export type AnalyticsEvent = {
   name: string
-  properties?: Record<string, any>
+  properties?: AnalyticsProperties
 }
 
 export type PageViewEvent = {
   path: string
   title: string
   referrer?: string
-  properties?: Record<string, any>
+  properties?: AnalyticsProperties
 }
 
 // Development logging
 class AnalyticsLogger {
   private static shouldLog = process.env.NODE_ENV === 'development'
 
-  static info(message: string, data?: any) {
+  static info(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.log(`[Analytics] ${message}`, data || '')
     }
   }
 
-  static warn(message: string, data?: any) {
+  static warn(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.warn(`[Analytics] ${message}`, data || '')
     }
   }
 
-  static error(message: string, data?: any) {
+  static error(message: string, data?: unknown) {
     if (this.shouldLog) {
       console.error(`[Analytics] ${message}`, data || '')
     }
@@ -99,9 +114,8 @@ class SegmentProvider {
         analytics.invoked = true
         analytics.methods = SEGMENT_METHODS
 
-        analytics.factory = (method: string) => (...args: any[]) => {
-          const params = Array.prototype.slice.call(args)
-          params.unshift(method)
+        analytics.factory = (method: string) => (...args: unknown[]) => {
+          const params: SegmentQueuedCall = [method, ...args]
           analytics.push(params)
           return analytics
         }
@@ -127,14 +141,14 @@ class SegmentProvider {
           // This clears any previously stored invalid userIds like "me"
           if (currentUserId && (currentUserId === "me" || currentUserId.length < 5)) {
             AnalyticsLogger.warn("Found invalid stored userId, resetting identity", { currentUserId })
-            window.analytics.reset()
+            window.analytics.reset?.()
             AnalyticsLogger.info("Identity reset complete, will use anonymousId only")
           }
 
           // Add middleware to filter out invalid userId values and ensure Amplitude gets proper IDs
           // This prevents "me" or other invalid userIds from being sent to destinations
           if (!this.middlewareInstalled && typeof window.analytics.addSourceMiddleware === "function") {
-            window.analytics.addSourceMiddleware(({ payload, next }: any) => {
+            window.analytics.addSourceMiddleware(({ payload, next }: SegmentMiddlewareArgs) => {
               // Check if userId exists and is invalid
               if (payload.obj?.userId) {
                 const userId = payload.obj.userId
@@ -205,10 +219,11 @@ class SegmentProvider {
     if (typeof window === "undefined" || !window.analytics?.track) {
       return
     }
+    const track = window.analytics.track
 
     this.whenReady(() => {
       try {
-        window.analytics.track(event.name, {
+        track(event.name, {
           ...event.properties,
           timestamp: new Date().toISOString(),
           source: 'portfolio'
@@ -227,10 +242,11 @@ class SegmentProvider {
     if (typeof window === "undefined" || !window.analytics?.page) {
       return
     }
+    const page = window.analytics.page
 
     this.whenReady(() => {
       try {
-        window.analytics.page(pageView.title, {
+        page(pageView.title, {
           path: pageView.path,
           url: window.location.href,
           referrer: pageView.referrer,
@@ -248,10 +264,11 @@ class SegmentProvider {
     })
   }
 
-  identify(userId: string, traits?: Record<string, any>): void {
+  identify(userId: string, traits?: AnalyticsProperties): void {
     if (typeof window === "undefined" || !window.analytics?.identify) {
       return
     }
+    const identify = window.analytics.identify
 
     // Validate userId before calling identify
     // This prevents invalid userIds from being stored in Segment
@@ -263,7 +280,7 @@ class SegmentProvider {
 
     this.whenReady(() => {
       try {
-        window.analytics.identify(userId, {
+        identify(userId, {
           ...traits,
           identified_at: new Date().toISOString(),
           source: 'portfolio'
@@ -357,7 +374,7 @@ class AnalyticsManager {
     this.segment.trackPageView(enriched)
   }
 
-  identify(userId: string, traits?: Record<string, any>): void {
+  identify(userId: string, traits?: AnalyticsProperties): void {
     if (this.isDisabled || !canLoadAnalytics()) {
       this.isDisabled = true
       return
@@ -384,7 +401,7 @@ export const analytics = new AnalyticsManager()
 // Type definitions for window
 declare global {
   interface Window {
-    analytics: any
-    global: any
+    analytics: SegmentAnalytics
+    global: Window
   }
 }

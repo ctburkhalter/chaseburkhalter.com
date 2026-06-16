@@ -8,7 +8,7 @@ Personal portfolio for Chase Burkhalter, Senior Analytics Engineer. Built with N
 - **Production analytics** — Segment CDP → Amplitude pipeline, fully instrumented
 - **Live analytics showcase** — real-time event stream and rendered tracking plan, visible to site visitors
 - **Event enrichment** — every event carries device context, viewport, timezone, and UTM marketing attribution
-- **Resume download tracking** — `resume_downloaded` event with source attribution (nav / hero / contact)
+- **Resume download tracking** — `resume_downloaded` event with `download_source` attribution (nav / hero / contact)
 - **Privacy-aware loading** — respects Do Not Track and Global Privacy Control browser signals
 - **Security headers** — X-Frame-Options, CSP-adjacent headers via Edge Runtime middleware
 - **Responsive design** — mobile-first, accessible UI
@@ -30,7 +30,7 @@ Browser events
 | `page_view` | Initial page load |
 | `section_viewed` | 50% viewport intersection per section |
 | `section_clicked` | Internal navigation link click |
-| `resume_downloaded` | Resume PDF link click (source: nav / hero / contact) |
+| `resume_downloaded` | Resume PDF link click (`download_source`: nav / hero / contact) |
 
 All events are automatically enriched with device context (UA, screen, viewport, timezone, pixel ratio, connection type) and UTM attribution captured from the landing URL.
 
@@ -53,16 +53,15 @@ Create `.env.local`:
 
 ```bash
 NEXT_PUBLIC_SEGMENT_WRITE_KEY=your_segment_write_key
-NEXT_PUBLIC_GTM_CONTAINER_ID=GTM-XXXXXXX
 ```
 
-See `.env.example` for the full variable list. Configure the same values in Vercel for production. `.env.local` is excluded from git.
+See `.env.example` for the full variable list. Configure the same value in Vercel for production. `.env.local` is excluded from git.
 
 ## Project Structure
 
 ```
 app/
-  layout.tsx                    # Root layout — analytics scripts, GTM noscript, provider
+  layout.tsx                    # Root layout — analytics scripts, provider
   page.tsx                      # Main portfolio page
   opengraph-image.tsx           # Dynamic OG image
   sitemap.ts                    # Sitemap generation
@@ -75,11 +74,10 @@ components/
   mobile-navigation.tsx         # Mobile nav sheet
   project-card.tsx              # Project display cards (optional githubUrl prop)
   resume-download-link.tsx      # Tracked resume download link (client component)
-  toast.tsx                     # Toast notifications
 hooks/
   use-analytics.ts              # Analytics init, page view, section tracking
 lib/
-  analytics.ts                  # Segment/GTM providers and AnalyticsManager
+  analytics.ts                  # Segment provider and AnalyticsManager
   analytics-consent.ts          # DNT / GPC browser signal checks
   analytics-events.ts           # Event constants, types, creators, getEventContext()
 middleware.ts                   # Edge Runtime security headers

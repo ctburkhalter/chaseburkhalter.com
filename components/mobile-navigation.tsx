@@ -5,6 +5,7 @@ import Link from "next/link"
 import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { ResumeDownloadLink } from "@/components/resume-download-link"
 
 export function MobileNavigation() {
   const [isOpen, setIsOpen] = useState(false)
@@ -61,9 +62,9 @@ export function MobileNavigation() {
               </Link>
             </Button>
             <Button variant="outline" asChild className="w-full">
-              <a href="/resume.pdf" target="_blank" rel="noopener noreferrer" onClick={handleLinkClick}>
+              <ResumeDownloadLink source="nav" onClick={handleLinkClick}>
                 Download Resume
-              </a>
+              </ResumeDownloadLink>
             </Button>
           </div>
         </nav>

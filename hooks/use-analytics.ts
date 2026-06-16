@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useCallback, useRef } from "react"
-import { analytics, type AnalyticsEvent } from "@/lib/analytics"
+import { analytics, type AnalyticsEvent, type AnalyticsProperties } from "@/lib/analytics"
 import {
   createSectionViewedEvent,
   createSectionClickedEvent,
@@ -94,7 +94,7 @@ export function useAnalytics() {
   }, [])
 
   // Identify user
-  const identifyUser = useCallback((userId: string, traits?: Record<string, any>) => {
+  const identifyUser = useCallback((userId: string, traits?: AnalyticsProperties) => {
     // Always try to identify - the analytics manager will handle queueing if not ready
     try {
       analytics.identify(userId, traits)
