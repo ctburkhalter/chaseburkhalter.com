@@ -223,13 +223,14 @@ class SegmentProvider {
 
     this.whenReady(() => {
       try {
-        track(event.name, {
+        const properties = {
           ...event.properties,
           timestamp: new Date().toISOString(),
           source: 'portfolio'
-        })
+        }
+        track(event.name, properties)
         window.dispatchEvent(new CustomEvent('analytics:event', {
-          detail: { name: event.name, properties: event.properties, timestamp: Date.now() }
+          detail: { name: event.name, properties, timestamp: Date.now() }
         }))
         AnalyticsLogger.info("Segment event tracked", event)
       } catch (error) {
@@ -246,16 +247,17 @@ class SegmentProvider {
 
     this.whenReady(() => {
       try {
-        page(pageView.title, {
+        const properties = {
           path: pageView.path,
           url: window.location.href,
-          referrer: pageView.referrer,
+          referrer: pageView.referrer || 'direct',
           timestamp: new Date().toISOString(),
           source: 'portfolio',
           ...pageView.properties
-        })
+        }
+        page(pageView.title, properties)
         window.dispatchEvent(new CustomEvent('analytics:event', {
-          detail: { name: 'page_view', properties: { path: pageView.path, title: pageView.title }, timestamp: Date.now() }
+          detail: { name: 'page_view', properties: { ...properties, title: pageView.title }, timestamp: Date.now() }
         }))
         AnalyticsLogger.info("Segment page view tracked", pageView)
       } catch (error) {

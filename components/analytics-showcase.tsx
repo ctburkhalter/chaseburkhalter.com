@@ -128,13 +128,13 @@ const trackingPlanRows = [
   {
     event: "section_viewed",
     trigger: "50% in viewport",
-    properties: "section_id, section_name, interaction_type: scroll",
+    properties: "section_id, section_name, referrer, interaction_type: scroll",
     route: "Segment → Amplitude",
   },
   {
     event: "section_clicked",
     trigger: "Nav link click",
-    properties: "section_id, section_name, click_source: navigation",
+    properties: "section_id, section_name, referrer, click_source: navigation",
     route: "Segment → Amplitude",
   },
 ]

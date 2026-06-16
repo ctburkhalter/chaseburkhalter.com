@@ -71,6 +71,7 @@ export type ResumeDownloadedEvent = AnalyticsEventPayload<ResumeDownloadedProper
 
 const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const
 const SESSION_UTM_KEY = 'portfolio:utm'
+const SESSION_REFERRER_KEY = 'portfolio:referrer'
 
 // Persist UTM params from the initial landing URL into sessionStorage so they
 // survive SPA navigations that strip query strings from the URL bar.
@@ -95,9 +96,23 @@ function captureUtmParams(): Record<string, string> {
   return captured
 }
 
+// Persist the landing referrer so every event in the session carries the same
+// traffic attribution, even if later SPA interactions happen after navigation.
+function captureInitialReferrer(): string {
+  if (typeof window === 'undefined') return 'direct'
+
+  const stored = sessionStorage.getItem(SESSION_REFERRER_KEY)
+  if (stored) return stored
+
+  const referrer = document.referrer || 'direct'
+  sessionStorage.setItem(SESSION_REFERRER_KEY, referrer)
+  return referrer
+}
+
 export function getEventContext(): Record<string, unknown> {
   if (typeof window === 'undefined') return {}
   const nav = navigator as Navigator & { connection?: { effectiveType?: string } }
+  const referrer = captureInitialReferrer()
   return {
     // Device & browser
     user_agent: navigator.userAgent,
@@ -112,7 +127,8 @@ export function getEventContext(): Record<string, unknown> {
     // Page
     page_url: window.location.href,
     page_path: window.location.pathname,
-    page_referrer: document.referrer || undefined,
+    referrer,
+    page_referrer: document.referrer || 'direct',
     // UTM / marketing attribution
     ...captureUtmParams(),
   }

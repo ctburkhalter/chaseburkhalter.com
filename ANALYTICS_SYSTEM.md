@@ -48,7 +48,7 @@ Event created by creator function (lib/analytics-events.ts)
   → AnalyticsManager.trackEvent()
       → getEventContext() merges:
           - device/browser properties (UA, screen, viewport, timezone, etc.)
-          - page_url, page_path, page_referrer
+          - page_url, page_path, referrer, page_referrer
           - UTM params from sessionStorage (captured on landing)
       → enriched event sent to SegmentProvider
       → CustomEvent('analytics:event') dispatched on window
@@ -90,7 +90,13 @@ User clicks a resume link
 `user_agent`, `browser_language`, `screen_width`, `screen_height`, `viewport_width`, `viewport_height`, `device_pixel_ratio`, `timezone`, `connection_type` (when available via `navigator.connection`)
 
 **Page:**
-`page_url`, `page_path`, `page_referrer`
+`page_url`, `page_path`, `referrer`, `page_referrer`
+
+`referrer` is stable session attribution. It is captured from `document.referrer` on the landing page, persisted in `sessionStorage` under `portfolio:referrer`, and attached to every event in the session. This is the field to use when analyzing where traffic came from.
+
+`page_referrer` is raw current page context. It reflects the browser's `document.referrer` at the moment the event fires, which is useful for debugging and future multi-page behavior.
+
+If the browser does not provide either value, it is normalized to `"direct"` so every event has explicit attribution fields.
 
 **UTM attribution:**
 `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`
@@ -139,9 +145,9 @@ The showcase has two tabs:
 | Event | Trigger | Key Properties |
 |-------|---------|----------------|
 | `page_view` | App init | `path`, `title`, `referrer`, `initial_load` |
-| `section_viewed` | 50% viewport intersection | `section_id`, `section_name`, `interaction_type` |
-| `section_clicked` | Internal nav link click | `section_id`, `section_name`, `click_source` |
-| `resume_downloaded` | Resume link click | `download_source`, `file_name` |
+| `section_viewed` | 50% viewport intersection | `section_id`, `section_name`, `referrer`, `interaction_type` |
+| `section_clicked` | Internal nav link click | `section_id`, `section_name`, `referrer`, `click_source` |
+| `resume_downloaded` | Resume link click | `download_source`, `file_name`, `referrer` |
 
 All events additionally carry the automatic context properties listed above.
 

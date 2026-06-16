@@ -49,7 +49,10 @@ Every event — regardless of type — is automatically enriched by `AnalyticsMa
 | `connection_type` | string | Effective connection type (if supported) | `"4g"` |
 | `page_url` | string | Full current URL | `"https://chaseburkhalter.com/"` |
 | `page_path` | string | URL pathname | `"/"` |
-| `page_referrer` | string | HTTP referrer (if present) | `"https://linkedin.com"` |
+| `referrer` | string | Stable session attribution: the landing-page `document.referrer`, persisted for the full session; `"direct"` when unavailable | `"https://linkedin.com"` |
+| `page_referrer` | string | Raw current browser `document.referrer` at the moment the event fires; `"direct"` when unavailable | `"https://linkedin.com"` |
+
+`referrer` is always present on every tracked event and is the best field for traffic-source reporting, such as resume downloads by source. `page_referrer` is kept as raw page context for debugging and future multi-page behavior. Browsers do not always provide a referrer for direct visits, privacy-protected traffic, native apps, or strict referrer-policy sources; those sessions are normalized to `"direct"`.
 
 ### UTM / Marketing Attribution
 
@@ -80,7 +83,7 @@ UTM properties are only present when the corresponding parameter exists in the U
 | `path` | string | Yes | URL pathname | `"/"` |
 | `title` | string | Yes | Document title | `"Chase Burkhalter \| Senior Analytics Engineer"` |
 | `url` | string | Yes | Full URL | `"https://chaseburkhalter.com/"` |
-| `referrer` | string | No | HTTP referrer | `"https://linkedin.com"` |
+| `referrer` | string | Yes | Initial landing referrer, or `"direct"` | `"https://linkedin.com"` |
 | `hash` | string | No | URL hash | `""` |
 | `initial_load` | boolean | Yes | Initial page-load marker | `true` |
 
@@ -94,6 +97,7 @@ Example payload (device context and UTM properties omitted for brevity):
     "title": "Chase Burkhalter | Senior Analytics Engineer",
     "url": "https://chaseburkhalter.com/",
     "referrer": "https://linkedin.com",
+    "page_referrer": "https://linkedin.com",
     "hash": "",
     "initial_load": true,
     "utm_source": "linkedin",
@@ -123,6 +127,7 @@ Example payload (device context and UTM properties omitted for brevity):
 | `section_name` | string | Yes | Human-readable name | `"Projects"` |
 | `interaction_type` | string | Yes | Always `"scroll"` | `"scroll"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
+| `referrer` | string | Yes | Initial landing referrer, or `"direct"` | `"https://linkedin.com"` |
 
 Tracked sections (defined in `components/analytics/analytics-provider.tsx`):
 
@@ -143,6 +148,7 @@ Example payload:
     "section_name": "Projects",
     "interaction_type": "scroll",
     "url": "https://chaseburkhalter.com/",
+    "referrer": "https://linkedin.com",
     "timestamp": "2026-06-16T10:01:00.000Z",
     "source": "portfolio"
   }
@@ -163,6 +169,7 @@ Example payload:
 | `section_name` | string | Yes | Human-readable name | `"Contact"` |
 | `click_source` | string | Yes | Click origin | `"navigation"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
+| `referrer` | string | Yes | Initial landing referrer, or `"direct"` | `"https://linkedin.com"` |
 
 Example payload:
 
@@ -174,6 +181,7 @@ Example payload:
     "section_name": "Contact",
     "click_source": "navigation",
     "url": "https://chaseburkhalter.com/",
+    "referrer": "https://linkedin.com",
     "timestamp": "2026-06-16T10:02:00.000Z",
     "source": "portfolio"
   }
@@ -195,6 +203,7 @@ Example payload:
 | `download_source` | string | Yes | Where the download was triggered | `"hero"`, `"nav"`, `"contact"` |
 | `file_name` | string | Yes | PDF filename | `"Chase_Burkhalter_Resume_2026.pdf"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
+| `referrer` | string | Yes | Initial landing referrer, or `"direct"` | `"https://linkedin.com"` |
 
 Example payload:
 
@@ -205,6 +214,7 @@ Example payload:
     "download_source": "hero",
     "file_name": "Chase_Burkhalter_Resume_2026.pdf",
     "url": "https://chaseburkhalter.com/",
+    "referrer": "https://linkedin.com",
     "utm_source": "linkedin",
     "utm_medium": "social",
     "browser_language": "en-US",

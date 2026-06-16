@@ -7,7 +7,7 @@ Personal portfolio for Chase Burkhalter, Senior Analytics Engineer. Built with N
 - **Modern tech stack** — Next.js 15 App Router, React 19, TypeScript, Tailwind CSS
 - **Production analytics** — Segment CDP → Amplitude pipeline, fully instrumented
 - **Live analytics showcase** — real-time event stream and rendered tracking plan, visible to site visitors
-- **Event enrichment** — every event carries device context, viewport, timezone, and UTM marketing attribution
+- **Event enrichment** — every event carries device context, viewport, timezone, referrer, and UTM marketing attribution
 - **Resume download tracking** — `resume_downloaded` event with `download_source` attribution (nav / hero / contact)
 - **Privacy-aware loading** — respects Do Not Track and Global Privacy Control browser signals
 - **Security headers** — X-Frame-Options, CSP-adjacent headers via Edge Runtime middleware
@@ -33,7 +33,7 @@ Browser events
 | `section_clicked` | Internal navigation link click |
 | `resume_downloaded` | Resume PDF link click (`download_source`: nav / hero / contact) |
 
-All events are automatically enriched with device context (UA, screen, viewport, timezone, pixel ratio, connection type) and UTM attribution captured from the landing URL.
+All events are automatically enriched with device context (UA, screen, viewport, timezone, pixel ratio, connection type), the landing referrer, and UTM attribution captured from the landing URL.
 
 ### Documentation
 
