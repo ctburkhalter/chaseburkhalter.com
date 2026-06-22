@@ -122,20 +122,20 @@ const trackingPlanRows = [
   {
     event: "page_view",
     trigger: "Initial page load",
-    properties: "path, title, referrer, initial_load: true",
-    route: "Segment → Amplitude",
+    properties: "path, title, referrer, is_page_reload, initial_load: true",
+    route: "Amplitude (direct)",
   },
   {
     event: "section_viewed",
     trigger: "50% in viewport",
     properties: "section_id, section_name, interaction_type: scroll",
-    route: "Segment → Amplitude",
+    route: "Amplitude (direct)",
   },
   {
     event: "section_clicked",
     trigger: "Nav link click",
     properties: "section_id, section_name, click_source: navigation",
-    route: "Segment → Amplitude",
+    route: "Amplitude (direct)",
   },
 ]
 
@@ -176,7 +176,7 @@ function TrackingPlanTab() {
       <div className="flex items-start justify-center gap-0 text-xs flex-wrap sm:flex-nowrap">
         {[
           { label: "Browser Events", sub: "Intersection Observer + click listeners" },
-          { label: "Segment CDP", sub: "Write key · TypeScript tracking plan" },
+          { label: "/api/amplitude", sub: "First-party proxy · bypasses ad blockers" },
           { label: "Amplitude", sub: "Analytics destination" },
         ].map((node, i, arr) => (
           <div key={node.label} className="flex items-center">
@@ -205,9 +205,10 @@ export function AnalyticsShowcase() {
             <p className="section-kicker">Instrumentation</p>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Live Analytics on This Site</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              This portfolio is instrumented with the same CDP-to-destination pattern I implement for clients —{" "}
-              <strong>Segment</strong> as the CDP routing events directly to{" "}
-              <strong>Amplitude</strong> as the destination. Watch the tracking plan run live below.
+              This portfolio is instrumented with a production analytics stack — the{" "}
+              <strong>Amplitude Browser SDK</strong> routed through a first-party server proxy so
+              events reach Amplitude even for visitors with ad blockers or Safari ITP. Watch the
+              tracking plan run live below.
             </p>
           </div>
 
@@ -244,7 +245,7 @@ export function AnalyticsShowcase() {
             {/* Footer */}
             <div className="px-5 pb-4 flex items-center justify-between gap-4 flex-wrap">
               <p className="text-xs text-muted-foreground">
-                Events are anonymized and routed to Amplitude via Segment. DNT / GPC signals disable tracking.
+                Events are anonymized and sent directly to Amplitude. DNT / GPC signals disable tracking.
               </p>
               <Link
                 href="https://github.com/ctburkhalter/chaseburkhalter.com"

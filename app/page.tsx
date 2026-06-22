@@ -446,7 +446,7 @@ export default function Home() {
         <div className="container flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-muted-foreground">© 2026 Chase Burkhalter</p>
           <p className="font-mono text-xs text-muted-foreground">
-            Built with Next.js · TypeScript · Tailwind CSS · Segment · Amplitude
+            Built with Next.js · TypeScript · Tailwind CSS · Amplitude
           </p>
           <div className="flex items-center gap-4">
             <Link
