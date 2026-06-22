@@ -47,31 +47,5 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
     }
   }, [trackSectionClick])
 
-  // Global error boundary for analytics
-  useEffect(() => {
-    const originalOnError = window.onerror
-
-    window.onerror = function (message, source, lineno, colno, error) {
-      // Log analytics errors but don't let them break the app
-      if (source?.includes("analytics") || source?.includes("segment")) {
-        if (process.env.NODE_ENV === 'development') {
-          console.error("Analytics error caught:", { message, source, lineno, colno, error })
-        }
-        return true // Prevent default error handling
-      }
-
-      // Call original handler for other errors
-      if (originalOnError) {
-        return originalOnError.apply(this, [message, source, lineno, colno, error])
-      }
-
-      return false
-    }
-
-    return () => {
-      window.onerror = originalOnError
-    }
-  }, [])
-
   return <>{children}</>
 }
