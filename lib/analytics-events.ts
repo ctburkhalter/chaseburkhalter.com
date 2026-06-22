@@ -133,12 +133,12 @@ function getIsPageReload(): boolean {
 function getPageEventLinkId(): number {
   if (typeof window === 'undefined') return 0
   if (!window.__pageEventLinkId) {
-    const buf = new Uint8Array(7)
+    const buf = new Uint8Array(13)
     crypto.getRandomValues(buf)
     const digits = Array.from(buf).map(b => b % 10)
     // Ensure the leading digit is non-zero to preserve the 13-digit length
     if (digits[0] === 0) digits[0] = (crypto.getRandomValues(new Uint8Array(1))[0] % 9) + 1
-    window.__pageEventLinkId = parseInt(digits.slice(0, 13).join(''), 10)
+    window.__pageEventLinkId = parseInt(digits.join(''), 10)
   }
   return window.__pageEventLinkId
 }
