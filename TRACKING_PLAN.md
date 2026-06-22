@@ -152,7 +152,7 @@ Example payload (automatic context properties shown selectively):
 
 **Description**: Tracks when a portfolio section becomes visible in the viewport.
 
-**When to fire**: Automatically when an observed section reaches at least 50% viewport visibility (IntersectionObserver threshold: 0.5).
+**When to fire**: Automatically when an observed section reaches at least 20% viewport visibility (IntersectionObserver threshold: 0.2). The threshold is set to 0.2 rather than 0.5 to handle tall sections (like Experience) that exceed the viewport height — for those, `intersectionRatio` is capped at `viewportHeight / elementHeight` and can never reach 0.5.
 
 **Frequency**: Once per section per session (tracked in a `Set` inside `useSectionTracking`).
 

@@ -127,7 +127,7 @@ const trackingPlanRows = [
   },
   {
     event: "section_viewed",
-    trigger: "50% in viewport",
+    trigger: "20% in viewport",
     properties: "section_id, section_name, interaction_type: scroll",
     route: "Amplitude (direct)",
   },
