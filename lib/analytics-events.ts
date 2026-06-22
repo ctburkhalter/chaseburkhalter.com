@@ -71,6 +71,7 @@ export type ResumeDownloadedEvent = AnalyticsEventPayload<ResumeDownloadedProper
 
 const UTM_PARAMS = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const
 const SESSION_UTM_KEY = 'portfolio:utm'
+const SESSION_REFERRER_KEY = 'portfolio:referrer'
 
 // Persist UTM params from the initial landing URL into sessionStorage so they
 // survive SPA navigations that strip query strings from the URL bar.
@@ -95,6 +96,53 @@ function captureUtmParams(): Record<string, string> {
   return captured
 }
 
+// Capture the landing-page referrer once and persist it for the session.
+// In a SPA, document.referrer is empty after the first navigation because no
+// full-page load occurs. Persisting to sessionStorage means all events in a
+// session carry the original traffic source, not just the page_view.
+function captureSessionReferrer(): string {
+  if (typeof window === 'undefined') return 'direct'
+
+  const stored = sessionStorage.getItem(SESSION_REFERRER_KEY)
+  if (stored) return stored
+
+  const referrer = document.referrer || 'direct'
+  sessionStorage.setItem(SESSION_REFERRER_KEY, referrer)
+  return referrer
+}
+
+// Distinguish real page views from browser refreshes using the Navigation
+// Timing API. Prevents reloads from inflating unique page view counts in
+// Amplitude. Falls back to the deprecated performance.navigation API for
+// older browsers that don't support getEntriesByType.
+function getIsPageReload(): boolean {
+  const entries = performance.getEntriesByType?.('navigation')
+  if (entries?.length) {
+    return (entries[0] as PerformanceNavigationTiming).type === 'reload'
+  }
+  if (performance.navigation) {
+    return performance.navigation.type === performance.navigation.TYPE_RELOAD
+  }
+  return false
+}
+
+// Generate a stable 13-digit random integer once per page load and cache it on
+// window.__pageEventLinkId. Every event in the same page load shares this ID,
+// making it possible to group all events from a single load in Amplitude even
+// when session boundaries or user IDs change.
+function getPageEventLinkId(): number {
+  if (typeof window === 'undefined') return 0
+  if (!window.__pageEventLinkId) {
+    const buf = new Uint8Array(13)
+    crypto.getRandomValues(buf)
+    const digits = Array.from(buf).map(b => b % 10)
+    // Ensure the leading digit is non-zero to preserve the 13-digit length
+    if (digits[0] === 0) digits[0] = (crypto.getRandomValues(new Uint8Array(1))[0] % 9) + 1
+    window.__pageEventLinkId = parseInt(digits.join(''), 10)
+  }
+  return window.__pageEventLinkId
+}
+
 export function getEventContext(): Record<string, unknown> {
   if (typeof window === 'undefined') return {}
   const nav = navigator as Navigator & { connection?: { effectiveType?: string } }
@@ -112,14 +160,14 @@ export function getEventContext(): Record<string, unknown> {
     // Page
     page_url: window.location.href,
     page_path: window.location.pathname,
-    page_referrer: document.referrer || undefined,
+    referrer: captureSessionReferrer(),
+    page_referrer: document.referrer || 'direct',
+    is_page_reload: getIsPageReload(),
+    page_event_link_id: getPageEventLinkId(),
     // UTM / marketing attribution
     ...captureUtmParams(),
   }
 }
-
-// Keep the old name as an alias so any direct callers aren't broken.
-export const getDeviceContext = getEventContext
 
 // ============================================================================
 // EVENT CREATORS
@@ -161,5 +209,11 @@ export function createResumeDownloadedEvent(source: string): ResumeDownloadedEve
       file_name: 'Chase_Burkhalter_Resume_2026.pdf',
       url: typeof window !== 'undefined' ? window.location.href : '',
     },
+  }
+}
+
+declare global {
+  interface Window {
+    __pageEventLinkId?: number
   }
 }

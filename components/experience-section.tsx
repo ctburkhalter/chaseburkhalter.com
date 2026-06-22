@@ -1,6 +1,7 @@
 const experience = [
   {
     company: "Future Research, Inc.",
+    url: "https://future.co/",
     role: "Senior Analytics Engineer",
     period: "Feb 2026 – May 2026",
     type: "Contract",
@@ -17,6 +18,7 @@ const experience = [
   },
   {
     company: "The Atlanta Journal-Constitution",
+    url: "https://www.ajc.com/",
     role: "Senior Data & Analytics Engineer",
     period: "Aug 2024 – Jun 2025",
     type: "Promoted · Feb 2025",
@@ -33,6 +35,7 @@ const experience = [
   },
   {
     company: "Shortcut",
+    url: "https://www.shortcut.com/",
     role: "Senior Data Analyst",
     period: "Oct 2022 – May 2024",
     type: "Remote · SaaS",
@@ -49,6 +52,7 @@ const experience = [
   },
   {
     company: "SteadyApp / SteadyIQ",
+    url: "https://steadyiq.com/",
     role: "Product & Data Analyst",
     period: "Mar 2020 – Sep 2022",
     type: "Fintech",
@@ -92,13 +96,22 @@ export function ExperienceSection() {
 
         <div className="mx-auto max-w-3xl">
           <div className="relative space-y-6 border-l border-border/70 pl-8">
-            {experience.map(({ company, role, period, type, color, bullets, tags }) => (
+            {experience.map(({ company, url, role, period, type, color, bullets, tags }) => (
               <div key={company} className="relative">
                 <span className={`absolute -left-[21px] top-5 h-3 w-3 rounded-full border-2 border-background shadow-[0_0_18px_currentColor] ${colorDot[color]}`} />
                 <div className="engine-panel rounded-lg p-5 space-y-3">
                   <div>
                     <div className="flex flex-wrap items-baseline gap-2">
-                      <h3 className="text-lg font-semibold">{company}</h3>
+                      <h3 className="text-lg font-semibold">
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="hover:text-primary transition-colors"
+                        >
+                          {company}
+                        </a>
+                      </h3>
                       <span className="rounded border border-border/70 bg-muted/40 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">{type}</span>
                     </div>
                     <p className="text-sm font-medium text-muted-foreground">{role}</p>

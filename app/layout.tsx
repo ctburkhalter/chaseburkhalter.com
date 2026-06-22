@@ -4,7 +4,6 @@ import { Inter } from "next/font/google"
 import { Suspense } from "react"
 
 import { ThemeProvider } from "@/components/theme-provider"
-import { AnalyticsScripts } from "@/components/analytics/analytics-scripts"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 
 import "./globals.css"
@@ -146,7 +145,6 @@ export default function RootLayout({
       <body className={inter.className}>
         <Suspense fallback={null}>
           <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
-            <AnalyticsScripts />
             <AnalyticsProvider>
               {children}
             </AnalyticsProvider>
