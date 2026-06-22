@@ -152,7 +152,7 @@ Example payload (automatic context properties shown selectively):
 
 **Description**: Tracks when a portfolio section becomes visible in the viewport.
 
-**When to fire**: Automatically when an observed section reaches at least 50% viewport visibility (IntersectionObserver threshold: 0.5).
+**When to fire**: Automatically when the section's leading edge enters the bottom 80% of the viewport (`rootMargin: '0px 0px -20% 0px'`, `threshold: 0`). At that moment exactly 20% of the viewport is covered by the section, regardless of element height. This handles both compact sections and sections taller than the viewport (like Experience on mobile) where `intersectionRatio` is capped at `viewportHeight / elementHeight` and can never reach a meaningful fixed fraction.
 
 **Frequency**: Once per section per session (tracked in a `Set` inside `useSectionTracking`).
 
