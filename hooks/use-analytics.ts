@@ -66,7 +66,7 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
     observerRef.current = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting && entry.intersectionRatio >= 0.2) {
+          if (entry.isIntersecting) {
             const sectionId = entry.target.id
             if (!trackedSections.current.has(sectionId)) {
               trackedSections.current.add(sectionId)
@@ -76,10 +76,13 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
           }
         })
       },
-      // 0.2 threshold works for both compact sections and tall sections
-      // (like experience) that exceed the viewport height and can never
-      // reach 0.5 intersectionRatio.
-      { threshold: 0.2, rootMargin: "0px" }
+      // rootMargin shrinks the observable area 20% from the bottom, so the
+      // callback fires when the section's leading edge is 20% above the
+      // viewport bottom. At that point exactly 20% of the viewport is covered
+      // by the section — regardless of element height. This handles both
+      // compact sections and sections taller than the viewport (like
+      // experience on mobile) where intersectionRatio can never reach 0.2.
+      { threshold: 0, rootMargin: "0px 0px -20% 0px" }
     )
 
     let timeoutId: ReturnType<typeof setTimeout> | null = null

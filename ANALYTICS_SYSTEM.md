@@ -97,7 +97,7 @@ useEffect() fires (after hydration)
 
 ```
 User scrolls
-  → IntersectionObserver (20% threshold) detects section
+  → IntersectionObserver (rootMargin -20% bottom, threshold 0) detects section
       → section_viewed fires once per section per session
           → tracked in Set<string> in useSectionTracking ref
 ```
@@ -245,7 +245,7 @@ The showcase has two tabs:
 | Event | Trigger | Key Properties |
 |-------|---------|----------------|
 | `page_view` | App init | `path`, `title`, `referrer`, `is_page_reload`, `initial_load` |
-| `section_viewed` | 20% viewport intersection | `section_id`, `section_name`, `referrer`, `interaction_type` |
+| `section_viewed` | Leading edge 20% above viewport bottom | `section_id`, `section_name`, `referrer`, `interaction_type` |
 | `section_clicked` | Internal nav link click | `section_id`, `section_name`, `referrer`, `click_source` |
 | `resume_downloaded` | Resume link click | `download_source`, `file_name`, `referrer` |
 
