@@ -77,9 +77,9 @@ Every event is automatically enriched by `AnalyticsManager.trackEvent()` before 
 
 **On `referrer` vs `page_referrer`:** `referrer` is always present and is the right field for traffic-source reporting (e.g., resume downloads by source). `page_referrer` reflects the raw browser state at event fire time, which in a SPA becomes empty immediately after the landing page — it's kept for completeness and debugging, not for attribution.
 
-**Why `is_page_reload`:** Page reloads create a new Amplitude session and appear as new page views. Without this flag, a user refreshing the page looks identical to a new unique visitor in session-level analysis. The Navigation Timing API (`PerformanceNavigationTiming.type`) identifies reloads natively. This pattern is proven in production AJC GTM instrumentation.
+**Why `is_page_reload`:** Page reloads create a new Amplitude session and appear as new page views. Without this flag, a user refreshing the page looks identical to a new unique visitor in session-level analysis. The Navigation Timing API (`PerformanceNavigationTiming.type`) identifies reloads natively. Filter `is_page_reload = false` in Amplitude charts to count only genuine first-load page views.
 
-**Why `page_event_link_id`:** Session IDs can be interrupted by tab suspension, and user IDs may be absent. A per-load random ID lets you join `page_view` to all subsequent `section_viewed` and `section_clicked` events from that load without relying on session continuity. Also from production AJC GTM.
+**Why `page_event_link_id`:** Session IDs can be interrupted by tab suspension, and user IDs may be absent. A per-load random ID lets you join `page_view` to all subsequent `section_viewed` and `section_clicked` events from that load without relying on session continuity.
 
 ### UTM / Marketing Attribution
 
@@ -306,9 +306,17 @@ The proxy solves this by routing SDK requests through `/api/amplitude`, a Next.j
 // app/api/amplitude/route.ts
 export async function POST(request: Request) {
   const body = await request.text()
+
+  const clientIp =
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    request.headers.get('x-real-ip')
+
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (clientIp) (headers as Record<string, string>)['X-Forwarded-For'] = clientIp
+
   const res = await fetch('https://api2.amplitude.com/batch', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body,
   })
   return new Response(await res.text(), { status: res.status })
@@ -316,6 +324,8 @@ export async function POST(request: Request) {
 ```
 
 **Why `request.text()` not `request.json()`:** The SDK serializes its own JSON. Parsing with `.json()` then re-serializing with `JSON.stringify()` risks floating-point precision loss and key ordering changes. `text()` gives raw bytes forwarded without transformation.
+
+**Why `X-Forwarded-For` is forwarded:** The server-to-server call to Amplitude originates from Vercel's infrastructure. Without forwarding the original client IP, Amplitude geolocates the Vercel server — producing wrong city, DMA, and region data for every event. Vercel provides the visitor's IP in `x-forwarded-for`; reading the first value (the list is ordered oldest-to-newest when multiple proxies are in the chain) and passing it through restores correct geolocation.
 
 **Why compression is off:** The SDK's `enableRequestBodyCompression` is left at its default (off). Enabling it would require gzip decompression in the API route before forwarding, adding unnecessary complexity. Plain JSON forwarding is sufficient.
 
@@ -332,7 +342,7 @@ window.addEventListener('pagehide', () => {
 })
 ```
 
-`navigator.sendBeacon` is fire-and-forget — the browser will deliver it even after the page context is destroyed. This pattern was validated in production AJC GTM instrumentation.
+`navigator.sendBeacon` is fire-and-forget — the browser will deliver it even after the page context is destroyed.
 
 ---
 
@@ -426,6 +436,8 @@ PII guidance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 4.0.2 | 2026-06-22 | Proxy: forward `X-Forwarded-For` to restore correct visitor geolocation in Amplitude |
+| 4.0.1 | 2026-06-22 | Fix `page_event_link_id` buffer size (`Uint8Array(7)` → `Uint8Array(13)`) to produce full 13-digit IDs |
 | 4.0.0 | 2026-06-22 | Removed Segment CDP entirely; direct Amplitude Browser SDK (`@amplitude/analytics-browser`); first-party proxy at `/api/amplitude`; added `is_page_reload`, `page_event_link_id`, session-stable `referrer` to all events; removed 500ms page_view timer; updated env var to `NEXT_PUBLIC_AMPLITUDE_API_KEY` |
 | 3.1.0 | 2026-06-16 | Removed GTM — events routed Segment → Amplitude directly |
 | 3.0.0 | 2026-06-16 | Added `resume_downloaded` event; added automatic device context and UTM enrichment on all events; removed `portfolio_interaction` and `error_occurred` (no longer implemented) |
