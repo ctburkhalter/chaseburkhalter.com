@@ -129,7 +129,7 @@ User closes tab or navigates away
           → navigator.sendBeacon to /api/amplitude (fire-and-forget, survives tab close)
 ```
 
-Standard `fetch()` requests are aborted when a page unloads. `sendBeacon` queues the payload in the browser's outgoing queue and delivers it even after the page context is destroyed — no events lost on tab close. This pattern was validated in production AJC GTM instrumentation.
+Standard `fetch()` requests are aborted when a page unloads. `sendBeacon` queues the payload in the browser's outgoing queue and delivers it even after the page context is destroyed — no events lost on tab close.
 
 ---
 
@@ -150,14 +150,22 @@ Browser SDK
               └── POST https://api2.amplitude.com/batch (server-side)
 ```
 
-The API route is a minimal tunnel:
+The API route forwards the payload verbatim with the original client IP:
 
 ```ts
 export async function POST(request: Request) {
   const body = await request.text()
+
+  const clientIp =
+    request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
+    request.headers.get('x-real-ip')
+
+  const headers: HeadersInit = { 'Content-Type': 'application/json' }
+  if (clientIp) (headers as Record<string, string>)['X-Forwarded-For'] = clientIp
+
   const res = await fetch('https://api2.amplitude.com/batch', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body,
   })
   return new Response(await res.text(), { status: res.status })
@@ -165,6 +173,8 @@ export async function POST(request: Request) {
 ```
 
 **`request.text()` not `request.json()`:** The SDK serializes its own JSON payload. Parsing it with `.json()` and re-serializing with `JSON.stringify()` would risk floating-point precision loss and key-order changes. `text()` forwards the exact bytes the SDK produced.
+
+**Client IP forwarding:** Without `X-Forwarded-For`, the server-to-server call to Amplitude carries the IP of the Vercel data center, not the visitor. Amplitude derives city, DMA, and region from the request IP, so all geolocation data would reflect the server's location. Vercel sets `x-forwarded-for` on every inbound request; reading and re-emitting it ensures Amplitude geolocates the actual visitor. The header may be a comma-separated list when multiple proxies are in the chain — taking the first value gives the original client IP.
 
 **Compression off:** `enableRequestBodyCompression` is left at its default (off) in the SDK config. Enabling it would require gzip decompression in the proxy before forwarding. Plain JSON is simpler and sufficient.
 
@@ -186,7 +196,7 @@ export async function POST(request: Request) {
 
 `is_page_reload` uses the Navigation Timing API (`PerformanceNavigationTiming.type`) to identify browser refreshes. Without this, a visitor hitting F5 looks identical to a new unique visitor in Amplitude session analysis. Falls back to the deprecated `performance.navigation.type` for older browsers.
 
-`page_event_link_id` is a 13-digit random integer generated once per page load and cached on `window.__pageEventLinkId`. All events from the same load share this ID, enabling grouping in Amplitude queries independent of session or user ID continuity. Both `is_page_reload` and `page_event_link_id` are production patterns ported from the AJC GTM workspace.
+`page_event_link_id` is a 13-digit random integer generated once per page load and cached on `window.__pageEventLinkId`. All events from the same load share this ID, enabling grouping in Amplitude queries independent of session or user ID continuity.
 
 **UTM attribution:**
 `utm_source`, `utm_medium`, `utm_campaign`, `utm_term`, `utm_content`
