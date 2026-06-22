@@ -1,12 +1,11 @@
 "use client"
 
-import { useEffect, useCallback } from "react"
+import { useEffect, useCallback, useRef } from "react"
 import { analytics, type AnalyticsEvent, type AnalyticsProperties } from "@/lib/analytics"
 import {
   createSectionViewedEvent,
   createSectionClickedEvent,
 } from "@/lib/analytics-events"
-import { useRef } from "react"
 
 export function useAnalytics() {
   useEffect(() => {

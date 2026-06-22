@@ -169,9 +169,6 @@ export function getEventContext(): Record<string, unknown> {
   }
 }
 
-// Keep the old name as an alias so any direct callers aren't broken.
-export const getDeviceContext = getEventContext
-
 // ============================================================================
 // EVENT CREATORS
 // ============================================================================
