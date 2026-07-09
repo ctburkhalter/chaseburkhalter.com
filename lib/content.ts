@@ -78,7 +78,7 @@ export const IMPACT_STATS: ImpactStat[] = [
   { value: "2.4B", label: "Rows recovered, verified parity", sub: "13-day Fivetran incident response" },
   { value: "$100K+/yr", label: "BI licensing eliminated", sub: "Superset migration at Shortcut" },
   { value: "7", label: "Properties, one Amplitude taxonomy", sub: "Solo rollout at the AJC" },
-  { value: "3", label: "MCP servers in production use", sub: "Hightouch, Snowflake, Linear" },
+  { value: "3", label: "MCP servers in production use", sub: "Snowflake, Hightouch, Linear" },
 ]
 
 // ============================================================================
@@ -224,7 +224,7 @@ export const AI_ENTRIES: AiEntry[] = [
   {
     title: "Custom MCP Servers",
     description:
-      "Three FastMCP servers in production use: Hightouch for sync operations, Snowflake with RSA key auth and automatic query limits, and Linear for ticket workflows. Built to run real engineering work from Claude Code sessions, not as demos.",
+      "Three FastMCP servers in production use: Snowflake with RSA key auth and automatic query limits, Hightouch for sync operations, and Linear for ticket workflows. Built to run real engineering work from Claude Code sessions, not as demos.",
     tags: ["FastMCP", "Python", "MCP"],
   },
   {
@@ -277,13 +277,13 @@ export const EXPERIENCE: Role[] = [
     period: "Feb 2026 – May 2026",
     type: "Contract",
     accent: "orange",
-    scope: "Owned dbt, Snowflake, and Fivetran across a four-month engagement: 84 of 90 assigned Linear issues completed, about 30 PRs merged.",
+    scope: "Sole analytics-engineering contractor on the core Analytics team: 84 of 90 assigned Linear issues completed and about 30 PRs merged across modeling, infrastructure, AI enablement, and incident response in four months.",
     bullets: [
       "Cut Snowflake credits on the 11 costliest dbt models by 80%, worth $12,312 a year, by converting full-refresh builds to incremental and archiving dead models. Schema spend held about 25% below baseline while query volume grew 58%.",
       "Built the AI-ready analytics foundation: dbt persist_docs into Snowflake, 18 mart models migrated to governed per-model YAML, 90 LookML-derived context guides covering 539 measures, and 53 generated MetricFlow semantic models.",
       "Designed least-privilege Claude access to production Snowflake for 13 teammates, read-only and scoped to the mart schema with raw PII schemas excluded.",
       "Led a 13-day Fivetran Aurora PostgreSQL incident to full recovery, sequencing resyncs of 2.4 billion rows across three connectors with verified row parity, then won a $1,000 billing credit in the follow-up usage dispute.",
-      "Owned source-to-mart integrations for Intercom, Amplitude, Iterable, and Google Search Console, covering ingestion, identity resolution, and modeling through production marts, and replaced spreadsheet-dependent marketing workflows with scheduled API pipelines.",
+      "Owned source-to-mart integrations for Intercom, Amplitude, Iterable, and Google Search Console, covering ingestion, identity resolution, and modeling through production marts, and replaced a stale, agency-maintained affiliate-spend spreadsheet with a scheduled API-driven pipeline plus source-freshness monitoring that ended chronic stale data and false alerts.",
     ],
     tags: ["dbt", "Snowflake", "Fivetran", "Python", "LookML", "Hex", "MCP"],
   },
@@ -300,6 +300,7 @@ export const EXPERIENCE: Role[] = [
       "Rolled out Amplitude across 7 digital properties solo: JavaScript instrumentation, object-action taxonomy, QA playbook, and governance documentation that outlived the tenure.",
       "Migrated event tracking and reporting from Redshift to Snowflake, improving dashboard performance and setting the foundation for governed dbt modeling.",
       "Rebuilt GTM and GA4 tracking after a restructuring left no handoff documentation, taking sole ownership of tagging, debugging, and QA across every web property.",
+      "Laid the groundwork for enterprise dbt adoption and data governance through documentation, taxonomy standardization, and data-lineage mapping.",
       "Integrated AppsFlyer, Airship, and Iterable with product and platform teams, and built Power BI and Tableau dashboards that sped up editorial decisions during election coverage.",
     ],
     tags: ["Amplitude", "Snowflake", "GA4", "GTM", "Tableau", "Power BI"],
@@ -330,6 +331,7 @@ export const EXPERIENCE: Role[] = [
     scope: "Primary technical analytics resource for product, growth, and executive teams.",
     bullets: [
       "Saved $1.4M annually by analyzing roughly 3 billion transactions and their fraud indicators to redesign the data-aggregator infrastructure around Plaid.",
+      "Promoted from Product Analyst to Data Analyst in January 2022 on expanded technical ownership of the analytics stack.",
       "Built source-of-truth dbt models in Snowflake that executives trusted without re-verification, replacing inconsistent ad hoc reporting.",
       "Ran the core analytics stack: Segment, Amplitude, Tableau, Braze, and Extole.",
       "Designed tracking plans and measurement frameworks for feature launches and A/B tests before they shipped, not after.",
@@ -359,12 +361,12 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   {
     label: "Analytics Engineering",
     accent: "green",
-    tools: ["Dimensional Modeling", "Incremental Models", "Semantic Layers", "MetricFlow", "Metric Governance", "dbt Testing", "Documentation & Lineage", "Data Quality", "CI/CD"],
+    tools: ["Dimensional Modeling", "Incremental Models", "Warehouse Cost Optimization (FinOps)", "Semantic Layers", "MetricFlow", "Metric Governance", "dbt Testing", "Documentation & Lineage", "Data Quality", "CI/CD"],
   },
   {
     label: "AI-Ready Data Systems",
     accent: "violet",
-    tools: ["MCP Server Development", "FastMCP", "Governed AI Data Access", "Context Engineering", "Claude", "Claude Code", "ChatGPT / Codex", "Hex AI"],
+    tools: ["MCP Server Development", "FastMCP", "Governed AI Data Access", "Context Engineering", "Claude", "Claude Code", "ChatGPT / Codex", "Hex AI (Context Studio)"],
   },
   {
     label: "Product Analytics & Instrumentation",
@@ -379,7 +381,7 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   {
     label: "Engineering Practices",
     accent: "violet",
-    tools: ["Git", "TypeScript / JavaScript", "React / Next.js", "Jinja", "Jupyter", "APIs & Automation", "Incident Response"],
+    tools: ["Git", "TypeScript / JavaScript", "React / Next.js", "Jinja", "APIs & Automation", "Incident Response"],
   },
 ]
 

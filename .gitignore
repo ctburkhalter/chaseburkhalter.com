@@ -29,3 +29,4 @@ next-env.d.ts
 
 # resume files
 /resume/
+.DS_Store
