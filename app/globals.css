@@ -45,41 +45,8 @@
     --sidebar-border: 217 34% 20%;
     --sidebar-ring: 153 76% 56%;
   }
-  .dark {
-    color-scheme: dark;
-    --background: 219 64% 7%;
-    --foreground: 213 36% 92%;
-    --card: 219 48% 11%;
-    --card-foreground: 213 36% 92%;
-    --popover: 219 48% 10%;
-    --popover-foreground: 213 36% 92%;
-    --primary: 153 76% 56%;
-    --primary-foreground: 219 64% 7%;
-    --secondary: 260 42% 20%;
-    --secondary-foreground: 213 36% 92%;
-    --muted: 220 34% 14%;
-    --muted-foreground: 217 19% 67%;
-    --accent: 29 92% 55%;
-    --accent-foreground: 219 64% 7%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 217 34% 20%;
-    --input: 217 34% 20%;
-    --ring: 153 76% 56%;
-    --chart-1: 160 60% 45%;
-    --chart-2: 262 75% 65%;
-    --chart-3: 38 80% 55%;
-    --chart-4: 199 80% 60%;
-    --chart-5: 350 75% 60%;
-    --sidebar-background: 219 48% 10%;
-    --sidebar-foreground: 213 36% 92%;
-    --sidebar-primary: 153 76% 56%;
-    --sidebar-primary-foreground: 219 64% 7%;
-    --sidebar-accent: 260 42% 20%;
-    --sidebar-accent-foreground: 213 36% 92%;
-    --sidebar-border: 217 34% 20%;
-    --sidebar-ring: 153 76% 56%;
-  }
+  /* Dark is the only theme; ThemeProvider forces it. The :root block above
+     defines all tokens, so no separate .dark override is needed. */
 }
 
 @layer base {
@@ -97,6 +64,23 @@
 
   ::selection {
     @apply bg-primary/30 text-foreground;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 

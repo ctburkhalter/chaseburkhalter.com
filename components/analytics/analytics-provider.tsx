@@ -3,16 +3,7 @@
 import type React from "react"
 import { useEffect } from "react"
 import { useAnalytics, useSectionTracking } from "@/hooks/use-analytics"
-
-// Define all trackable sections on the site
-const SECTION_IDS = [
-  "hero",
-  "experience",
-  "projects",
-  "skills",
-  "demos",
-  "contact"
-]
+import { SECTION_IDS } from "@/lib/content"
 
 export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
   // Initialize analytics and track initial page view

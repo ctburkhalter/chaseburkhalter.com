@@ -1,8 +1,9 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import Link from "next/link"
 import { ExternalLink } from "lucide-react"
+import { TrackedLink } from "@/components/tracked-link"
+import { IDENTITY } from "@/lib/content"
 
 interface LiveEvent {
   id: number
@@ -65,7 +66,7 @@ function LiveEventsTab() {
     <div className="space-y-2">
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground gap-2">
-          <span className="text-2xl">↕</span>
+          <span className="text-2xl" aria-hidden="true">↕</span>
           <p>Scroll or click a nav link to see events fire in real time.</p>
         </div>
       ) : (
@@ -76,7 +77,8 @@ function LiveEventsTab() {
             <div key={ev.id} className="overflow-hidden rounded-md border border-border/70 bg-background/40">
               <button
                 onClick={() => setExpandedId(isExpanded ? null : ev.id)}
-                className="w-full flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 hover:bg-primary/5 transition-colors text-left"
+                aria-expanded={isExpanded}
+                className="w-full flex items-center justify-between gap-3 bg-muted/30 px-3 py-2 hover:bg-primary/5 transition-colors text-left focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <EventBadge name={ev.name} />
@@ -90,7 +92,7 @@ function LiveEventsTab() {
                   <span className="text-xs text-muted-foreground tabular-nums">
                     {formatElapsed(now - ev.ts)}
                   </span>
-                  <span className="text-muted-foreground text-xs">{isExpanded ? "▲" : "▼"}</span>
+                  <span className="text-muted-foreground text-xs" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
                 </div>
               </button>
               {isExpanded && props.length > 0 && (
@@ -122,20 +124,32 @@ const trackingPlanRows = [
   {
     event: "page_view",
     trigger: "Initial page load",
-    properties: "path, title, referrer, is_page_reload, initial_load: true",
-    route: "Amplitude (direct)",
+    properties: "path, title, referrer, is_page_reload",
   },
   {
     event: "section_viewed",
-    trigger: "20% above viewport bottom",
-    properties: "section_id, section_name, interaction_type: scroll",
-    route: "Amplitude (direct)",
+    trigger: "Section reaches 20% above viewport bottom",
+    properties: "section_id, section_name, interaction_type",
   },
   {
     event: "section_clicked",
-    trigger: "Nav link click",
-    properties: "section_id, section_name, click_source: navigation",
-    route: "Amplitude (direct)",
+    trigger: "Internal nav link click",
+    properties: "section_id, section_name, click_source",
+  },
+  {
+    event: "resume_downloaded",
+    trigger: "Resume PDF click (nav, hero, contact)",
+    properties: "download_source, file_name",
+  },
+  {
+    event: "external_link_clicked",
+    trigger: "Outbound link click",
+    properties: "link_type, destination, link_location",
+  },
+  {
+    event: "contact_clicked",
+    trigger: "Email or LinkedIn contact click",
+    properties: "contact_method, link_location",
   },
 ]
 
@@ -147,45 +161,47 @@ function TrackingPlanTab() {
         <table className="w-full text-xs">
           <thead>
             <tr className="border-b border-border/70 bg-muted/40">
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Event</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Trigger</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground hidden sm:table-cell">Properties</th>
-              <th className="px-3 py-2 text-left font-semibold text-muted-foreground">Route</th>
+              <th scope="col" className="px-3 py-2 text-left font-semibold text-muted-foreground">Event</th>
+              <th scope="col" className="px-3 py-2 text-left font-semibold text-muted-foreground">Trigger</th>
+              <th scope="col" className="px-3 py-2 text-left font-semibold text-muted-foreground hidden sm:table-cell">Properties</th>
             </tr>
           </thead>
           <tbody>
             {trackingPlanRows.map((row) => (
               <tr key={row.event} className="border-b border-border/50 last:border-0">
                 <td className="px-3 py-2.5 align-top">
-                  <span className="font-mono text-[11px] px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
+                  <span className="font-mono text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/25">
                     {row.event}
                   </span>
                 </td>
                 <td className="px-3 py-2.5 text-muted-foreground align-top">{row.trigger}</td>
-                <td className="px-3 py-2.5 text-muted-foreground align-top hidden sm:table-cell font-mono text-[11px]">
+                <td className="px-3 py-2.5 text-muted-foreground align-top hidden sm:table-cell font-mono text-xs">
                   {row.properties}
                 </td>
-                <td className="px-3 py-2.5 text-muted-foreground align-top whitespace-nowrap">{row.route}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      <p className="text-xs text-muted-foreground text-center">
+        Every event routes through the same first-party proxy and carries shared device, referrer,
+        and UTM context.
+      </p>
 
       {/* Pipeline diagram */}
       <div className="flex items-start justify-center gap-0 text-xs flex-wrap sm:flex-nowrap">
         {[
           { label: "Browser Events", sub: "Intersection Observer + click listeners" },
-          { label: "/api/amplitude", sub: "First-party proxy · bypasses ad blockers" },
+          { label: "/api/amplitude", sub: "First-party proxy, immune to ad blockers" },
           { label: "Amplitude", sub: "Analytics destination" },
         ].map((node, i, arr) => (
           <div key={node.label} className="flex items-center">
             <div className="flex min-w-[90px] flex-col items-center rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-center">
-              <span className="font-medium text-foreground text-[11px]">{node.label}</span>
-              <span className="text-muted-foreground text-[10px] mt-0.5 leading-tight">{node.sub}</span>
+              <span className="font-medium text-foreground text-xs">{node.label}</span>
+              <span className="text-muted-foreground text-[11px] mt-0.5 leading-tight">{node.sub}</span>
             </div>
             {i < arr.length - 1 && (
-              <span className="text-muted-foreground px-1 text-base shrink-0">→</span>
+              <span className="text-muted-foreground px-1 text-base shrink-0" aria-hidden="true">→</span>
             )}
           </div>
         ))}
@@ -205,19 +221,20 @@ export function AnalyticsShowcase() {
             <p className="section-kicker">Instrumentation</p>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Live Analytics on This Site</h2>
             <p className="text-sm text-muted-foreground max-w-xl mx-auto">
-              This portfolio is instrumented with a production analytics stack — the{" "}
-              <strong>Amplitude Browser SDK</strong> routed through a first-party server proxy so
-              events reach Amplitude even for visitors with ad blockers or Safari ITP. Watch the
-              tracking plan run live below.
+              This section is a working sample of my instrumentation. A real tracking plan, real
+              events, and a real first-party proxy that reaches visitors ad blockers would
+              otherwise hide, all running on the page you are reading.
             </p>
           </div>
 
           <div className="engine-panel overflow-hidden rounded-lg">
             {/* Tab bar */}
-            <div className="flex border-b border-border/70">
+            <div className="flex border-b border-border/70" role="tablist" aria-label="Analytics showcase tabs">
               <button
                 onClick={() => setActiveTab("events")}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                role="tab"
+                aria-selected={activeTab === "events"}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${
                   activeTab === "events"
                     ? "bg-background/70 text-foreground border-b-2 border-primary"
                     : "bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -227,7 +244,9 @@ export function AnalyticsShowcase() {
               </button>
               <button
                 onClick={() => setActiveTab("plan")}
-                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                role="tab"
+                aria-selected={activeTab === "plan"}
+                className={`flex-1 px-4 py-3 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary ${
                   activeTab === "plan"
                     ? "bg-background/70 text-foreground border-b-2 border-primary"
                     : "bg-muted/30 text-muted-foreground hover:text-foreground"
@@ -245,16 +264,19 @@ export function AnalyticsShowcase() {
             {/* Footer */}
             <div className="px-5 pb-4 flex items-center justify-between gap-4 flex-wrap">
               <p className="text-xs text-muted-foreground">
-                Events are anonymized and sent directly to Amplitude. DNT / GPC signals disable tracking.
+                Events are anonymized and routed through a first-party proxy to Amplitude. Do Not
+                Track and Global Privacy Control signals disable tracking entirely.
               </p>
-              <Link
-                href="https://github.com/ctburkhalter/chaseburkhalter.com"
+              <TrackedLink
+                href={IDENTITY.siteRepo}
+                linkType="github"
+                location="demos"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-primary hover:underline shrink-0"
               >
-                View source <ExternalLink className="h-3 w-3" />
-              </Link>
+                View source <ExternalLink className="h-3 w-3" aria-hidden="true" />
+              </TrackedLink>
             </div>
           </div>
         </div>
