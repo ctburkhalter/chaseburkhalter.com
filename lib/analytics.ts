@@ -1,4 +1,4 @@
-// Analytics system — Amplitude Browser SDK, single initialization, no duplicate events
+// Analytics system: Amplitude Browser SDK, single initialization, no duplicate events
 
 import * as amplitude from '@amplitude/analytics-browser'
 import { canLoadAnalytics } from '@/lib/analytics-consent'
@@ -58,7 +58,7 @@ class AmplitudeProvider {
       })
 
       // On pagehide, switch to sendBeacon transport and flush. navigator.sendBeacon
-      // is fire-and-forget and survives tab close — regular fetch() would be aborted.
+      // is fire-and-forget and survives tab close; regular fetch() would be aborted.
       window.addEventListener('pagehide', () => {
         amplitude.setTransport('beacon')
         amplitude.flush()
@@ -79,7 +79,7 @@ class AmplitudeProvider {
         timestamp: new Date().toISOString(),
         source: 'portfolio',
       })
-      // Dispatch for the Live Analytics Showcase — decoupled from analytics layer
+      // Dispatch for the Live Analytics Showcase, decoupled from the analytics layer
       window.dispatchEvent(new CustomEvent('analytics:event', {
         detail: { name: event.name, properties: event.properties, timestamp: Date.now() }
       }))
@@ -190,7 +190,7 @@ class AnalyticsManager {
     if (!this.isInitialized) this.initialize()
 
     if (!userId || userId.trim().length < 5) {
-      AnalyticsLogger.warn('Invalid userId — must be at least 5 characters', { userId })
+      AnalyticsLogger.warn('Invalid userId: must be at least 5 characters', { userId })
       return
     }
     this.provider.identify(userId, traits)

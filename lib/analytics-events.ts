@@ -1,4 +1,4 @@
-// Analytics Events Registry — event names, property types, and creator functions
+// Analytics Events Registry: event names, property types, and creator functions
 
 // ============================================================================
 // EVENT NAMES
@@ -17,10 +17,16 @@ export const DOWNLOAD_EVENTS = {
   RESUME_DOWNLOADED: 'resume_downloaded',
 } as const
 
+export const ENGAGEMENT_EVENTS = {
+  EXTERNAL_LINK_CLICKED: 'external_link_clicked',
+  CONTACT_CLICKED: 'contact_clicked',
+} as const
+
 export const ANALYTICS_EVENTS = {
   ...PAGE_EVENTS,
   ...SECTION_EVENTS,
   ...DOWNLOAD_EVENTS,
+  ...ENGAGEMENT_EVENTS,
 } as const
 
 // ============================================================================
@@ -55,6 +61,23 @@ export interface ResumeDownloadedProperties extends BaseEventProperties {
   url: string
 }
 
+export type ExternalLinkType = 'github' | 'linkedin' | 'live_site' | 'company'
+
+export interface ExternalLinkClickedProperties extends BaseEventProperties {
+  link_type: ExternalLinkType
+  destination: string
+  link_location: string
+  url: string
+}
+
+export type ContactMethod = 'email' | 'linkedin'
+
+export interface ContactClickedProperties extends BaseEventProperties {
+  contact_method: ContactMethod
+  link_location: string
+  url: string
+}
+
 export interface AnalyticsEventPayload<T extends BaseEventProperties = BaseEventProperties> {
   name: AnalyticsEventName | string
   properties?: T
@@ -63,6 +86,8 @@ export interface AnalyticsEventPayload<T extends BaseEventProperties = BaseEvent
 export type SectionViewedEvent = AnalyticsEventPayload<SectionViewedProperties>
 export type SectionClickedEvent = AnalyticsEventPayload<SectionClickedProperties>
 export type ResumeDownloadedEvent = AnalyticsEventPayload<ResumeDownloadedProperties>
+export type ExternalLinkClickedEvent = AnalyticsEventPayload<ExternalLinkClickedProperties>
+export type ContactClickedEvent = AnalyticsEventPayload<ContactClickedProperties>
 
 // ============================================================================
 // EVENT CONTEXT
@@ -207,6 +232,36 @@ export function createResumeDownloadedEvent(source: string): ResumeDownloadedEve
     properties: {
       download_source: source,
       file_name: 'Chase_Burkhalter_Resume_2026.pdf',
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    },
+  }
+}
+
+export function createExternalLinkClickedEvent(
+  linkType: ExternalLinkType,
+  destination: string,
+  linkLocation: string
+): ExternalLinkClickedEvent {
+  return {
+    name: ANALYTICS_EVENTS.EXTERNAL_LINK_CLICKED,
+    properties: {
+      link_type: linkType,
+      destination,
+      link_location: linkLocation,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    },
+  }
+}
+
+export function createContactClickedEvent(
+  contactMethod: ContactMethod,
+  linkLocation: string
+): ContactClickedEvent {
+  return {
+    name: ANALYTICS_EVENTS.CONTACT_CLICKED,
+    properties: {
+      contact_method: contactMethod,
+      link_location: linkLocation,
       url: typeof window !== 'undefined' ? window.location.href : '',
     },
   }

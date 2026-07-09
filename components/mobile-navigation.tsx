@@ -6,16 +6,10 @@ import { Menu } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { ResumeDownloadLink } from "@/components/resume-download-link"
+import { NAV_ITEMS } from "@/lib/content"
 
 export function MobileNavigation() {
   const [isOpen, setIsOpen] = useState(false)
-
-  const navigationItems = [
-    { href: "#experience", label: "Experience" },
-    { href: "#projects", label: "Projects" },
-    { href: "#skills", label: "Skills" },
-    { href: "#contact", label: "Contact" },
-  ]
 
   const handleLinkClick = () => {
     setIsOpen(false)
@@ -41,7 +35,7 @@ export function MobileNavigation() {
           </SheetTitle>
         </SheetHeader>
         <nav className="flex flex-col space-y-4 mt-6" role="navigation" aria-label="Mobile navigation">
-          {navigationItems.map((item) => (
+          {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
               href={item.href}

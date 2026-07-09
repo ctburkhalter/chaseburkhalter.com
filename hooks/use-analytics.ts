@@ -6,6 +6,7 @@ import {
   createSectionViewedEvent,
   createSectionClickedEvent,
 } from "@/lib/analytics-events"
+import { getSectionLabel } from "@/lib/content"
 
 export function useAnalytics() {
   useEffect(() => {
@@ -70,8 +71,7 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
             const sectionId = entry.target.id
             if (!trackedSections.current.has(sectionId)) {
               trackedSections.current.add(sectionId)
-              const sectionName = sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-              trackEvent(createSectionViewedEvent(sectionId, sectionName))
+              trackEvent(createSectionViewedEvent(sectionId, getSectionLabel(sectionId)))
             }
           }
         })
@@ -79,7 +79,7 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
       // rootMargin shrinks the observable area 20% from the bottom, so the
       // callback fires when the section's leading edge is 20% above the
       // viewport bottom. At that point exactly 20% of the viewport is covered
-      // by the section — regardless of element height. This handles both
+      // by the section, regardless of element height. This handles both
       // compact sections and sections taller than the viewport (like
       // experience on mobile) where intersectionRatio can never reach 0.2.
       { threshold: 0, rootMargin: "0px 0px -20% 0px" }
@@ -112,8 +112,7 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
   }, [sectionIds, trackEvent])
 
   const trackSectionClick = useCallback((sectionId: string, clickSource: string = "navigation") => {
-    const sectionName = sectionId.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())
-    trackEvent(createSectionClickedEvent(sectionId, sectionName, clickSource))
+    trackEvent(createSectionClickedEvent(sectionId, getSectionLabel(sectionId), clickSource))
   }, [trackEvent])
 
   return { trackSectionClick }
