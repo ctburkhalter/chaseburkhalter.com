@@ -17,6 +17,8 @@ Built with Next.js 15 and Tailwind CSS, and designed, implemented, instrumented,
 - **Security headers**: X-Frame-Options, nosniff, referrer and permissions policies via Edge Runtime middleware
 - **Dark engineering design system**: navy UI, terminal-style panels, three restrained accent hues
 - **Accessible and responsive**: skip link, semantic landmarks, reduced-motion support, mobile-first layout
+- **Tornado data engineering demo**: `/weather` pairs a focused tornado event explorer with a native dbt project explorer, both backed by a companion dbt-duckdb pipeline that combines confirmed NCEI events with labeled preliminary IEM Local Storm Reports after the NCEI cutoff
+- **Dedicated Weather navigation**: the primary header links directly to the weather case study from every route
 
 ## Analytics Implementation
 
@@ -79,6 +81,12 @@ NEXT_PUBLIC_AMPLITUDE_API_KEY=your_amplitude_api_key
 Get your API key from Amplitude → Settings → Projects → your project → API Key.
 
 See `.env.example` for the full variable list. Configure the same value in Vercel (Settings → Environment Variables) for production. `.env.local` is excluded from git.
+
+### Weather explorer data
+
+`/weather` renders labeled local contract fixtures until `WEATHER_DATA_URL` points to the companion pipeline's published `portfolio-weather.v1.json` artifact. The same artifact base supplies the versioned `dbt-project.v1.json` project-explorer contract and published dbt docs. The self-contained pipeline workspace includes NCEI loading, preliminary IEM Local Storm Report loading, dbt models, tests, and a GitHub Pages deployment workflow.
+
+The page documents why the data distinction matters: NCEI Storm Events are historical confirmations, and IEM Local Storm Reports are preliminary point reports appended only after the latest confirmed NCEI timestamp. The published event contract exposes `eventCoverage`, `recordStatus`, `sourceSystem`, and `isSurveyedTrack` so the event explorer can show current rows without treating preliminary reports as surveyed tornado tracks. The native dbt project explorer shows curated public source files, direct model lineage, test outcomes, and a commit-pinned source link from the same successful pipeline run. Its interaction analytics are specified in [TRACKING_PLAN.md](./TRACKING_PLAN.md).
 
 ## Project Structure
 

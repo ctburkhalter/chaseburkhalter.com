@@ -24,6 +24,7 @@ export const IDENTITY = {
 
 export const NAV_ITEMS = [
   { href: "#projects", label: "Work" },
+  { href: "/weather", label: "Weather" },
   { href: "#ai-engineering", label: "AI" },
   { href: "#experience", label: "Experience" },
   { href: "#skills", label: "Skills" },
@@ -162,9 +163,18 @@ export interface Project {
   tags: string[]
   githubUrl?: string
   liveUrl?: string
+  href?: string
 }
 
 export const PROJECTS: Project[] = [
+  {
+    metric: "NCEI + IEM",
+    title: "South Alabama Tornado Watch",
+    description:
+      "A zero-cost dbt and DuckDB pipeline that models NOAA Storm Events history with preliminary Iowa State Mesonet reports, then serves an event-level explorer with rating, estimated wind range, path dimensions, and source context.",
+    tags: ["dbt", "DuckDB", "NOAA", "GitHub Actions"],
+    href: "/weather",
+  },
   {
     metric: "First-party",
     title: "This Site: Ad-Block-Proof Analytics Pipeline",

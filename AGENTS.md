@@ -23,7 +23,7 @@ Get the key from Amplitude → Settings → Projects. In production, this is set
 
 ## Architecture
 
-**Single-page Next.js 15 portfolio** (App Router, TypeScript, React 19) deployed to Vercel. All content lives on `/`. Hash-based internal navigation (`#section-id`); there are no dynamic routes.
+**Next.js 15 portfolio** (App Router, TypeScript, React 19) deployed to Vercel. The primary portfolio is `/` with hash-based navigation. `/weather` is a dedicated static data-product route backed by same-origin cached APIs and a companion dbt project under `weather-pipeline/`.
 
 ### Content Model
 
@@ -112,6 +112,15 @@ middleware.ts                  - Security headers (Edge Runtime)
 - No em dashes anywhere in site copy, documentation, or comments; use commas, colons, periods, or parentheses
 - Every metric in site copy must trace to the resume or the engagement work summary; keep scope qualifiers (for example, "80% on the 11 costliest models") intact
 - Voice: direct and specific, no filler vocabulary (avoid "delve", "robust", "seamless", "leverage", "empower", "cutting-edge")
+- Documentation is part of the implementation contract. When changing a feature, event, data interface, route, or operational workflow, update the relevant README, `AGENTS.md`, `CLAUDE.md`, `TRACKING_PLAN.md`, `ANALYTICS_SYSTEM.md`, and on-page documentation in the same change. Do not leave documentation reconciliation as follow-up work.
+
+### Weather Explorers
+
+- `app/weather/page.tsx` renders the case-study page. `components/weather/weather-dashboard.tsx` owns the tornado event explorer, while `components/weather/dbt-project-explorer.tsx` renders the native dbt project explorer. Both emit the scoped weather analytics described in `TRACKING_PLAN.md`.
+- `app/api/weather` and `app/api/weather/events` are the browser-facing event-data routes. They use `WEATHER_DATA_URL` when the companion artifact is published and fall back to visibly labeled local contract fixtures. The server-rendered weather page also derives the companion `dbt-project.v1.json` artifact and dbt docs URL from that same base, then renders a native project explorer without browser-side GitHub API calls.
+- `weather-pipeline/` is designed to move into its own public repository. It ingests NCEI confirmed history and preliminary IEM Local Storm Reports after the NCEI cutoff, then models `src`, `dim`, `fct`, and mart layers with dbt-duckdb, validates data quality, and publishes versioned JSON plus dbt docs.
+- The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.
+- Do not conflate confirmed NCEI tornadoes with preliminary IEM Local Storm Reports. F/EF wind values are estimates inferred from damage. Begin/end coordinates are endpoints, not survey track geometry.
 
 ### Styling
 

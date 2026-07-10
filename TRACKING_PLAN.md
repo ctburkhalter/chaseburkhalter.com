@@ -103,6 +103,31 @@ UTM properties are only present when the corresponding parameter exists in the U
 
 ## Event Catalog
 
+### Weather explorer events
+
+`/weather` receives the standard `page_view` event with `page_path = "/weather"`, plus two typed events that measure use of the tornado event explorer and dbt project explorer without collecting visitor-entered data.
+
+| Event | Trigger | Properties |
+|---|---|---|
+| `weather_dashboard_viewed` | Weather explorer route mounts, once per page load | `data_source_mode` |
+| `weather_dashboard_interacted` | Event-explorer filter or inspection, project-explorer interaction, source-record open, or methodology view | `interaction_type`, `selected_region`, `minimum_rating`, `year_from`, `year_to`, `selected_month`, `event_rating`, `event_state`, `source_type`, `pipeline_file_category`, `pipeline_node_layer` |
+
+`interaction_type` is one of `region_filter_changed`, `minimum_rating_changed`, `year_filter_changed`, `month_filter_changed`, `event_inspected`, `source_record_opened`, `methodology_viewed`, `pipeline_explorer_viewed`, `pipeline_file_inspected`, `pipeline_model_inspected`, `pipeline_repository_opened`, or `pipeline_docs_opened`. Event-explorer filters record their selected region, rating, year range, or month. `source_type` is `ncei_storm_events` or `iem_lsr` when present. Project-explorer events use the low-cardinality `pipeline_file_category` and `pipeline_node_layer`, never source text, file paths, node IDs, event IDs, or narratives. All automatic page, device, referrer, UTM, reload, and per-load link context remains attached.
+
+Example:
+
+```json
+{
+  "event": "weather_dashboard_interacted",
+  "properties": {
+    "interaction_type": "event_inspected",
+    "event_rating": "EF3",
+    "event_state": "AL",
+    "page_path": "/weather"
+  }
+}
+```
+
 ### `page_view`
 
 **Description**: Tracks the initial portfolio page load.
@@ -513,6 +538,9 @@ PII guidance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 5.2.0 | 2026-07-10 | Reframed `/weather` as a tornado event explorer plus dbt project explorer. Removed chart-tab and cohort tracking while retaining event filters, event and source-record inspection, methodology, and pipeline-explorer tracking. |
+| 5.1.1 | 2026-07-10 | Added `iem_lsr` as a weather `source_type` for preliminary Local Storm Report source opens. |
+| 5.1.0 | 2026-07-09 | Added `/weather` explorer view and interaction events; documented safe weather event-property handling and excluded high-cardinality source detail. |
 | 5.0.0 | 2026-07-09 | Added `external_link_clicked` and `contact_clicked` events via `components/tracked-link.tsx`; section registry moved to `SECTIONS` in `lib/content.ts` with stable ids and explicit display names; added `ai-engineering` and `about` sections; on-page Tracking Plan tab corrected to show the first-party proxy route and full event catalog |
 | 4.0.2 | 2026-06-22 | Proxy: forward `X-Forwarded-For` to restore correct visitor geolocation in Amplitude |
 | 4.0.1 | 2026-06-22 | Fix `page_event_link_id` buffer size (`Uint8Array(7)` → `Uint8Array(13)`) to produce full 13-digit IDs |

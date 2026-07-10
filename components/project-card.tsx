@@ -1,4 +1,5 @@
 import { ExternalLink, GithubIcon } from "lucide-react"
+import Link from "next/link"
 import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { TrackedLink } from "@/components/tracked-link"
@@ -10,9 +11,10 @@ interface ProjectCardProps {
   tags: string[]
   githubUrl?: string
   liveUrl?: string
+  href?: string
 }
 
-export function ProjectCard({ metric, title, description, tags, githubUrl, liveUrl }: ProjectCardProps) {
+export function ProjectCard({ metric, title, description, tags, githubUrl, liveUrl, href }: ProjectCardProps) {
   return (
     <Card className="engine-panel group relative flex flex-col overflow-hidden rounded-lg transition-colors hover:border-primary/40">
       <CardContent className="flex-1 p-5 space-y-3">
@@ -51,6 +53,14 @@ export function ProjectCard({ metric, title, description, tags, githubUrl, liveU
           >
             <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Visit live site
           </TrackedLink>
+        )}
+        {href && (
+          <Link
+            href={href}
+            className="flex items-center gap-1 font-mono text-xs text-muted-foreground transition-colors hover:text-primary shrink-0"
+          >
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> View dashboard
+          </Link>
         )}
       </CardFooter>
     </Card>

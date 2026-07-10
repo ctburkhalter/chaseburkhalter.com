@@ -151,6 +151,16 @@ const trackingPlanRows = [
     trigger: "Email or LinkedIn contact click",
     properties: "contact_method, link_location",
   },
+  {
+    event: "weather_dashboard_viewed",
+    trigger: "Weather dashboard mount",
+    properties: "data_source_mode",
+  },
+  {
+    event: "weather_dashboard_interacted",
+    trigger: "Weather filter, detail, source, methodology action",
+    properties: "interaction_type, selected_region, event_rating, source_type",
+  },
 ]
 
 function TrackingPlanTab() {

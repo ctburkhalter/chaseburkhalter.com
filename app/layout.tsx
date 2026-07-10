@@ -6,6 +6,7 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 
+import "leaflet/dist/leaflet.css"
 import "./globals.css"
 
 const inter = Inter({

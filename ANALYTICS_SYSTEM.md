@@ -112,6 +112,12 @@ User clicks an internal hash link
       → section_clicked fires with click_source = "navigation"
 ```
 
+### Weather Explorer Tracking
+
+`/weather` is a data-product route rather than a hash section, so its automatic `page_view` uses `page_path = "/weather"`. The explorer route emits `weather_dashboard_viewed` once when it mounts, carrying only the current artifact mode. A single `weather_dashboard_interacted` event captures event-explorer filters and inspection, project-explorer visibility and selection, external project links, source-record opens, and methodology visibility with an `interaction_type` property. The retained event names are compatibility identifiers, not a description of the visible experience.
+
+The implementation deliberately excludes source event IDs, narratives, coordinates, project file paths, node IDs, and source text from Amplitude. Those values are useful in the public explorers, but they would create unnecessary high-cardinality analytics properties. Source opens may report only the coarse `source_type` (`ncei_storm_events` or `iem_lsr`), while project-explorer events use only `pipeline_file_category` and `pipeline_node_layer`. The tracking specification and interaction enum live in `lib/analytics-events.ts`; see `TRACKING_PLAN.md` for the full property contract.
+
 ### Resume Download Tracking
 
 ```
@@ -304,8 +310,12 @@ app/
   api/
     amplitude/
       route.ts                         # First-party proxy → api2.amplitude.com/batch (Node runtime)
+    weather/
+      route.ts                         # Cached weather-explorer contract API
+      events/route.ts                  # Validated event-explorer query API
   layout.tsx                           # Root layout: metadata, JSON-LD, mounts AnalyticsProvider
   page.tsx                             # Thin composition of section components
+  weather/page.tsx                     # Dedicated weather case-study route
 components/
   analytics/
     analytics-provider.tsx             # Section tracking, navigation click tracking
@@ -314,6 +324,8 @@ components/
     (hero, impact-band, work, ai, experience, skills, about, contact sections)
   resume-download-link.tsx             # Client component: fires resume_downloaded on click
   tracked-link.tsx                     # Client component: external_link_clicked / contact_clicked
+  weather/weather-dashboard.tsx        # Tornado event explorer and typed weather analytics
+  weather/dbt-project-explorer.tsx     # dbt project explorer and typed weather analytics
 hooks/
   use-analytics.ts                     # Init, page view, section tracking hooks
 lib/
