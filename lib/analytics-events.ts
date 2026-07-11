@@ -25,8 +25,9 @@ export const ENGAGEMENT_EVENTS = {
 } as const
 
 export const WEATHER_EVENTS = {
-  WEATHER_DASHBOARD_VIEWED: 'weather_dashboard_viewed',
-  WEATHER_DASHBOARD_INTERACTED: 'weather_dashboard_interacted',
+  WEATHER_PAGE_VIEWED: 'weather_page_viewed',
+  EVENT_EXPLORER_INTERACTION: 'event_explorer_interaction',
+  PROJECT_EXPLORER_INTERACTION: 'project_explorer_interaction',
 } as const
 
 export const ANALYTICS_EVENTS = {
@@ -86,26 +87,20 @@ export interface ContactClickedProperties extends BaseEventProperties {
   url: string
 }
 
-export interface WeatherDashboardViewedProperties extends BaseEventProperties {
+export interface WeatherPageViewedProperties extends BaseEventProperties {
   data_source_mode: 'pipeline' | 'fixture'
 }
 
-export type WeatherInteractionType =
+export type EventExplorerInteractionType =
   | 'region_filter_changed'
   | 'minimum_rating_changed'
   | 'year_filter_changed'
   | 'month_filter_changed'
   | 'event_inspected'
   | 'source_record_opened'
-  | 'methodology_viewed'
-  | 'pipeline_explorer_viewed'
-  | 'pipeline_file_inspected'
-  | 'pipeline_model_inspected'
-  | 'pipeline_repository_opened'
-  | 'pipeline_docs_opened'
 
-export interface WeatherDashboardInteractedProperties extends BaseEventProperties {
-  interaction_type: WeatherInteractionType
+export interface EventExplorerInteractionProperties extends BaseEventProperties {
+  interaction_type: EventExplorerInteractionType
   selected_region?: string
   minimum_rating?: string
   year_from?: number
@@ -114,6 +109,17 @@ export interface WeatherDashboardInteractedProperties extends BaseEventPropertie
   event_rating?: string
   event_state?: string
   source_type?: 'ncei_storm_events' | 'iem_lsr'
+}
+
+export type ProjectExplorerInteractionType =
+  | 'pipeline_explorer_viewed'
+  | 'pipeline_file_inspected'
+  | 'pipeline_model_inspected'
+  | 'pipeline_repository_opened'
+  | 'pipeline_docs_opened'
+
+export interface ProjectExplorerInteractionProperties extends BaseEventProperties {
+  interaction_type: ProjectExplorerInteractionType
   pipeline_file_category?: string
   pipeline_node_layer?: string
 }
@@ -128,8 +134,9 @@ export type SectionClickedEvent = AnalyticsEventPayload<SectionClickedProperties
 export type ResumeDownloadedEvent = AnalyticsEventPayload<ResumeDownloadedProperties>
 export type ExternalLinkClickedEvent = AnalyticsEventPayload<ExternalLinkClickedProperties>
 export type ContactClickedEvent = AnalyticsEventPayload<ContactClickedProperties>
-export type WeatherDashboardViewedEvent = AnalyticsEventPayload<WeatherDashboardViewedProperties>
-export type WeatherDashboardInteractedEvent = AnalyticsEventPayload<WeatherDashboardInteractedProperties>
+export type WeatherPageViewedEvent = AnalyticsEventPayload<WeatherPageViewedProperties>
+export type EventExplorerInteractionEvent = AnalyticsEventPayload<EventExplorerInteractionProperties>
+export type ProjectExplorerInteractionEvent = AnalyticsEventPayload<ProjectExplorerInteractionProperties>
 
 // ============================================================================
 // EVENT CONTEXT
@@ -309,25 +316,38 @@ export function createContactClickedEvent(
   }
 }
 
-export function createWeatherDashboardViewedEvent({
+export function createWeatherPageViewedEvent({
   dataSourceMode,
 }: {
   dataSourceMode: 'pipeline' | 'fixture'
-}): WeatherDashboardViewedEvent {
+}): WeatherPageViewedEvent {
   return {
-    name: ANALYTICS_EVENTS.WEATHER_DASHBOARD_VIEWED,
+    name: ANALYTICS_EVENTS.WEATHER_PAGE_VIEWED,
     properties: {
       data_source_mode: dataSourceMode,
     },
   }
 }
 
-export function createWeatherDashboardInteractedEvent(
-  interactionType: WeatherInteractionType,
-  properties: Omit<WeatherDashboardInteractedProperties, 'interaction_type'> = {},
-): WeatherDashboardInteractedEvent {
+export function createEventExplorerInteractionEvent(
+  interactionType: EventExplorerInteractionType,
+  properties: Omit<EventExplorerInteractionProperties, 'interaction_type'> = {},
+): EventExplorerInteractionEvent {
   return {
-    name: ANALYTICS_EVENTS.WEATHER_DASHBOARD_INTERACTED,
+    name: ANALYTICS_EVENTS.EVENT_EXPLORER_INTERACTION,
+    properties: {
+      interaction_type: interactionType,
+      ...properties,
+    },
+  }
+}
+
+export function createProjectExplorerInteractionEvent(
+  interactionType: ProjectExplorerInteractionType,
+  properties: Omit<ProjectExplorerInteractionProperties, 'interaction_type'> = {},
+): ProjectExplorerInteractionEvent {
+  return {
+    name: ANALYTICS_EVENTS.PROJECT_EXPLORER_INTERACTION,
     properties: {
       interaction_type: interactionType,
       ...properties,

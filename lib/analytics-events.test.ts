@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest"
 import {
   createContactClickedEvent,
+  createEventExplorerInteractionEvent,
   createExternalLinkClickedEvent,
+  createProjectExplorerInteractionEvent,
   createResumeDownloadedEvent,
   createSectionClickedEvent,
   createSectionViewedEvent,
-  createWeatherDashboardInteractedEvent,
-  createWeatherDashboardViewedEvent,
+  createWeatherPageViewedEvent,
 } from "./analytics-events"
 
 describe("createSectionViewedEvent", () => {
@@ -75,28 +76,28 @@ describe("createContactClickedEvent", () => {
   })
 })
 
-describe("createWeatherDashboardViewedEvent", () => {
-  it("returns weather_dashboard_viewed with the data source mode", () => {
-    const event = createWeatherDashboardViewedEvent({ dataSourceMode: "fixture" })
-    expect(event.name).toBe("weather_dashboard_viewed")
+describe("createWeatherPageViewedEvent", () => {
+  it("returns weather_page_viewed with the data source mode", () => {
+    const event = createWeatherPageViewedEvent({ dataSourceMode: "fixture" })
+    expect(event.name).toBe("weather_page_viewed")
     expect(event.properties).toEqual({ data_source_mode: "fixture" })
   })
 
   it("passes through pipeline mode unchanged", () => {
-    const event = createWeatherDashboardViewedEvent({ dataSourceMode: "pipeline" })
+    const event = createWeatherPageViewedEvent({ dataSourceMode: "pipeline" })
     expect(event.properties).toEqual({ data_source_mode: "pipeline" })
   })
 })
 
-describe("createWeatherDashboardInteractedEvent", () => {
-  it("returns weather_dashboard_interacted with just the interaction type by default", () => {
-    const event = createWeatherDashboardInteractedEvent("methodology_viewed")
-    expect(event.name).toBe("weather_dashboard_interacted")
-    expect(event.properties).toEqual({ interaction_type: "methodology_viewed" })
+describe("createEventExplorerInteractionEvent", () => {
+  it("returns event_explorer_interaction with just the interaction type by default", () => {
+    const event = createEventExplorerInteractionEvent("region_filter_changed")
+    expect(event.name).toBe("event_explorer_interaction")
+    expect(event.properties).toEqual({ interaction_type: "region_filter_changed" })
   })
 
   it("merges through additional properties", () => {
-    const event = createWeatherDashboardInteractedEvent("event_inspected", {
+    const event = createEventExplorerInteractionEvent("event_inspected", {
       selected_region: "alabama",
       event_rating: "EF3",
       event_state: "AL",
@@ -106,6 +107,24 @@ describe("createWeatherDashboardInteractedEvent", () => {
       selected_region: "alabama",
       event_rating: "EF3",
       event_state: "AL",
+    })
+  })
+})
+
+describe("createProjectExplorerInteractionEvent", () => {
+  it("returns project_explorer_interaction with just the interaction type by default", () => {
+    const event = createProjectExplorerInteractionEvent("pipeline_explorer_viewed")
+    expect(event.name).toBe("project_explorer_interaction")
+    expect(event.properties).toEqual({ interaction_type: "pipeline_explorer_viewed" })
+  })
+
+  it("merges through additional properties, with no event-explorer filter state", () => {
+    const event = createProjectExplorerInteractionEvent("pipeline_file_inspected", {
+      pipeline_file_category: "marts",
+    })
+    expect(event.properties).toEqual({
+      interaction_type: "pipeline_file_inspected",
+      pipeline_file_category: "marts",
     })
   })
 })

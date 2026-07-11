@@ -191,14 +191,19 @@ const trackingPlanRows = [
     properties: "contact_method, link_location",
   },
   {
-    event: "weather_dashboard_viewed",
-    trigger: "Weather dashboard mount",
+    event: "weather_page_viewed",
+    trigger: "/weather route mounts",
     properties: "data_source_mode",
   },
   {
-    event: "weather_dashboard_interacted",
-    trigger: "Weather filter, detail, source, methodology action",
+    event: "event_explorer_interaction",
+    trigger: "Tornado event explorer filter, inspection, or source-record open",
     properties: "interaction_type, selected_region, event_rating, source_type",
+  },
+  {
+    event: "project_explorer_interaction",
+    trigger: "dbt project explorer file, model, repo, or docs action",
+    properties: "interaction_type, pipeline_file_category, pipeline_node_layer",
   },
 ]
 

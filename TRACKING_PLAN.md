@@ -105,24 +105,40 @@ UTM properties are only present when the corresponding parameter exists in the U
 
 ### Weather explorer events
 
-`/weather` receives the standard `page_view` event with `page_path = "/weather"`, plus two typed events that measure use of the tornado event explorer and dbt project explorer without collecting visitor-entered data.
+`/weather` receives the standard `page_view` event with `page_path = "/weather"`, plus three typed events scoped to what's actually being interacted with: the page mount itself, the tornado event explorer, and the dbt project explorer. Methodology-section visibility is not a weather-specific event; it fires the same site-wide `section_viewed` event as every home-page section (see below), since the methodology block is a tracked `SECTIONS` entry (`weather-methodology`) like any other.
 
 | Event | Trigger | Properties |
 |---|---|---|
-| `weather_dashboard_viewed` | Weather explorer route mounts, once per page load | `data_source_mode` |
-| `weather_dashboard_interacted` | Event-explorer filter or inspection, project-explorer interaction, source-record open, or methodology view | `interaction_type`, `selected_region`, `minimum_rating`, `year_from`, `year_to`, `selected_month`, `event_rating`, `event_state`, `source_type`, `pipeline_file_category`, `pipeline_node_layer` |
+| `weather_page_viewed` | `/weather` route mounts, once per page load | `data_source_mode` |
+| `event_explorer_interaction` | Tornado event explorer filter change, event inspection, or source-record open | `interaction_type`, `selected_region`, `minimum_rating`, `year_from`, `year_to`, `selected_month`, `event_rating`, `event_state`, `source_type` |
+| `project_explorer_interaction` | dbt project explorer visibility, file/model inspection, or repository/docs link open | `interaction_type`, `pipeline_file_category`, `pipeline_node_layer` |
 
-`interaction_type` is one of `region_filter_changed`, `minimum_rating_changed`, `year_filter_changed`, `month_filter_changed`, `event_inspected`, `source_record_opened`, `methodology_viewed`, `pipeline_explorer_viewed`, `pipeline_file_inspected`, `pipeline_model_inspected`, `pipeline_repository_opened`, or `pipeline_docs_opened`. Event-explorer filters record their selected region, rating, year range, or month. `source_type` is `ncei_storm_events` or `iem_lsr` when present. Project-explorer events use low-cardinality file categories (`staging`, `intermediate`, `marts`, `seeds`, `tests`, `macros`, `ingestion`, `config`) and node layers (`source`, `seed`, `staging`, `intermediate`, `marts`, `exposure`), never source text, file paths, node IDs, event IDs, event keys, or narratives. All automatic page, device, referrer, UTM, reload, and per-load link context remains attached.
+`event_explorer_interaction`'s `interaction_type` is one of `region_filter_changed`, `minimum_rating_changed`, `year_filter_changed`, `month_filter_changed`, `event_inspected`, or `source_record_opened`. Filter changes record their selected region, rating, year range, or month. `source_type` is `ncei_storm_events` or `iem_lsr` when present.
+
+`project_explorer_interaction`'s `interaction_type` is one of `pipeline_explorer_viewed`, `pipeline_file_inspected`, `pipeline_model_inspected`, `pipeline_repository_opened`, or `pipeline_docs_opened`. It uses low-cardinality file categories (`staging`, `intermediate`, `marts`, `seeds`, `tests`, `macros`, `ingestion`, `config`) and node layers (`source`, `seed`, `staging`, `intermediate`, `marts`, `exposure`), never source text, file paths, node IDs, event IDs, event keys, or narratives. It does not carry event-explorer filter state (`selected_region`, `minimum_rating`); browsing pipeline files isn't meaningfully contextualized by which event-explorer filters happen to be set.
+
+All automatic page, device, referrer, UTM, reload, and per-load link context remains attached to both.
 
 Example:
 
 ```json
 {
-  "event": "weather_dashboard_interacted",
+  "event": "event_explorer_interaction",
   "properties": {
     "interaction_type": "event_inspected",
     "event_rating": "EF3",
     "event_state": "AL",
+    "page_path": "/weather"
+  }
+}
+```
+
+```json
+{
+  "event": "project_explorer_interaction",
+  "properties": {
+    "interaction_type": "pipeline_file_inspected",
+    "pipeline_file_category": "marts",
     "page_path": "/weather"
   }
 }
@@ -208,7 +224,7 @@ Example payload, client-side navigation to `/weather` in the same session:
 
 **When to fire**: Automatically when the section's leading edge enters the bottom 80% of the viewport (`rootMargin: '0px 0px -20% 0px'`, `threshold: 0`). At that moment exactly 20% of the viewport is covered by the section, regardless of element height. This handles both compact sections and sections taller than the viewport (like Experience on mobile) where `intersectionRatio` is capped at `viewportHeight / elementHeight` and can never reach a meaningful fixed fraction.
 
-**Frequency**: Once per section per route visit (tracked in a `Set` inside `useSectionTracking`, reset whenever the pathname changes). The observer is re-attached on every pathname change so it always watches the DOM nodes of the currently mounted route; a visitor who navigates `/` → `/weather` → `/` gets fresh `section_viewed` events on the return to `/` instead of a silently dead observer still watching unmounted elements. Routes with no tracked sections in the DOM (`/weather`) skip observation entirely rather than logging a warning per missing id.
+**Frequency**: Once per section per route visit (tracked in a `Set` inside `useSectionTracking`, reset whenever the pathname changes). The observer is re-attached on every pathname change so it always watches the DOM nodes of the currently mounted route; a visitor who navigates `/` → `/weather` → `/` gets fresh `section_viewed` events on the return to `/` instead of a silently dead observer still watching unmounted elements. `SECTIONS` now spans more than the home page: `/weather` contributes its own `weather-methodology` id (the methodology and safety-note block), so `/weather` observes 1 of the registry's ids rather than none. A route observing only a subset of `SECTIONS` is expected, not a sign of a missing id.
 
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
@@ -232,6 +248,9 @@ Tracked sections and their analytics display names are defined in the `SECTIONS`
 | `demos` | `Demos` |
 | `about` | `About` |
 | `contact` | `Contact` |
+| `weather-methodology` | `Weather Methodology` |
+
+`weather-methodology` is the only entry not on the home page; it's the methodology and safety-note block on `/weather`, tracked through this same registry and observer instead of a weather-specific event (see "Weather explorer events" above).
 
 Example payload:
 
@@ -568,6 +587,7 @@ PII guidance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 5.4.0 | 2026-07-11 | Split `weather_dashboard_interacted` into `event_explorer_interaction` (tornado event explorer) and `project_explorer_interaction` (dbt project explorer), each with its own `interaction_type` enum and property contract. Renamed `weather_dashboard_viewed` to `weather_page_viewed` (kept as a separate event from `page_view`: it carries `data_source_mode`, server-fetched data the generic pathname-only `page_view` hook can't see). Removed `methodology_viewed` as a bespoke interaction type; methodology-section visibility now fires the standard `section_viewed` event via a new `weather-methodology` entry in the `SECTIONS` registry (same IntersectionObserver mechanism the home page already uses), which means it no longer carries `selected_region`/`minimum_rating`/`year_from`/`year_to` (site-wide `section_viewed` has a fixed schema). `project_explorer_interaction` no longer carries `selected_region`/`minimum_rating`: that was incidental to the old merged event, not meaningful context for pipeline-file browsing. |
 | 5.3.0 | 2026-07-10 | Fixed `page_view` and `section_viewed` breaking across client-side route changes: `page_view` now fires on every App Router pathname change (not just initial mount) via a last-tracked-path guard replacing the old one-shot `window.__pageViewTracked` boolean; added `navigation_type` (`"initial"` \| `"spa"`) to `page_view`; `section_viewed`'s IntersectionObserver now re-attaches per pathname instead of staying bound to unmounted DOM nodes after a route round trip; `section_clicked` now also matches `a[href^="/#"]` so it fires from non-home routes. Removed the unused `user_identified` event and `analytics.identify()` plumbing (never called from the UI). |
 | 5.2.0 | 2026-07-10 | Reframed `/weather` as a tornado event explorer plus dbt project explorer. Removed chart-tab and cohort tracking while retaining event filters, event and source-record inspection, methodology, and pipeline-explorer tracking. |
 | 5.1.1 | 2026-07-10 | Added `iem_lsr` as a weather `source_type` for preliminary Local Storm Report source opens. |

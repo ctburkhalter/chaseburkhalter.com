@@ -53,6 +53,10 @@ export const SECTIONS = [
   { id: "demos", label: "Demos" },
   { id: "about", label: "About" },
   { id: "contact", label: "Contact" },
+  // Not a home-page hash-nav section: this id lives on /weather and is only
+  // here so useSectionTracking's shared IntersectionObserver (which finds
+  // targets via document.getElementById, not route) picks it up too.
+  { id: "weather-methodology", label: "Weather Methodology" },
 ] as const
 
 export const SECTION_IDS: string[] = SECTIONS.map((s) => s.id)

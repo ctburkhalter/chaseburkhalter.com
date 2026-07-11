@@ -3,7 +3,7 @@ import { WEATHER_REGIONS } from "@/lib/weather/types"
 import type {
   DbtProjectExplorerPayload,
   EventYearCount,
-  WeatherDashboardPayload,
+  WeatherPagePayload,
   WeatherEvent,
   WeatherEventYearShard,
   WeatherRegion,
@@ -19,15 +19,15 @@ const isFiniteNumber = (value: unknown): value is number => typeof value === "nu
 const isStringArray = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === "string")
 
 // Checks every field the weather page actually dereferences from the
-// initial payload (components/weather/weather-dashboard.tsx: generatedAt
+// initial payload (components/weather/weather-page-content.tsx: generatedAt
 // feeds formatDateTime(), each eventYearIndex entry's year feeds the
 // From/Through year selects) so a malformed or partially-written artifact
 // fails this guard and falls back to the fixture, instead of passing
 // validation and throwing during render (Intl.DateTimeFormat throws on an
 // Invalid Date, which is what `new Date(undefined)` produces).
-export function isWeatherPayload(value: unknown): value is WeatherDashboardPayload {
+export function isWeatherPayload(value: unknown): value is WeatherPagePayload {
   if (!value || typeof value !== "object") return false
-  const payload = value as Partial<WeatherDashboardPayload>
+  const payload = value as Partial<WeatherPagePayload>
   return (
     payload.schemaVersion === "2.0" &&
     payload.sourceMode === "pipeline" &&
@@ -44,7 +44,7 @@ export function isWeatherPayload(value: unknown): value is WeatherDashboardPaylo
   )
 }
 
-export async function getWeatherDashboard(): Promise<WeatherDashboardPayload> {
+export async function getWeatherPagePayload(): Promise<WeatherPagePayload> {
   const sourceUrl = process.env.WEATHER_DATA_URL
   if (!sourceUrl) return weatherFixture
 
@@ -195,7 +195,7 @@ export async function getWeatherEventsForYears(years: number[]): Promise<{ event
 }
 
 // Matches the timezone the dashboard displays event dates in
-// (components/weather/weather-dashboard.tsx's formatDate/formatDateTime use
+// (components/weather/weather-page-content.tsx's formatDate/formatDateTime use
 // timeZone: "America/Chicago"). Deriving the filter month via
 // `new Date(occurredAt).getMonth()` instead resolves in the server's
 // timezone (UTC on Vercel), so an event at 2023-03-31T23:30:00-05:00 would

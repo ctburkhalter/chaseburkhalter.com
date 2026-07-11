@@ -9,6 +9,7 @@ import "prismjs/components/prism-python"
 import "prismjs/components/prism-markup"
 import "prismjs/components/prism-markdown"
 import type { DbtProjectExplorerFile, DbtProjectExplorerNode, DbtProjectExplorerPayload } from "@/lib/weather/types"
+import type { ProjectExplorerInteractionType } from "@/lib/analytics-events"
 
 type PrismToken = { type: string; content: string | Array<string | PrismToken>; alias?: string | string[] }
 
@@ -68,8 +69,6 @@ function highlightLine(line: string, language: string): React.ReactNode {
   if (!grammar) return line
   return renderTokenStream(Prism.tokenize(line, grammar) as Array<string | PrismToken>)
 }
-
-type ExplorerInteraction = "pipeline_explorer_viewed" | "pipeline_file_inspected" | "pipeline_model_inspected" | "pipeline_repository_opened" | "pipeline_docs_opened"
 
 const categoryLabels: Record<string, string> = {
   all: "All files",
@@ -179,7 +178,7 @@ function FileTree({ directory, path = "", expandedDirectories, selectedFilePath,
 
 export function DbtProjectExplorer({ explorer, onInteraction }: {
   explorer: DbtProjectExplorerPayload | null
-  onInteraction: (type: ExplorerInteraction, properties?: { pipeline_file_category?: string; pipeline_node_layer?: string }) => void
+  onInteraction: (type: ProjectExplorerInteractionType, properties?: { pipeline_file_category?: string; pipeline_node_layer?: string }) => void
 }) {
   const sectionRef = useRef<HTMLElement>(null)
   const viewedRef = useRef(false)

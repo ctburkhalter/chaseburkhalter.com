@@ -29,7 +29,8 @@ Useful hooks already built into the app for verification:
 - `window.__lastTrackedPageViewPath`: sourced from `hooks/use-analytics.ts`,
   tells you the last pathname a `page_view` fired for.
 - `window.addEventListener('analytics:event', ...)`: every tracked event
-  (page_view, section_viewed, weather_dashboard_*, etc.) dispatches this
+  (page_view, section_viewed, weather_page_viewed, event_explorer_interaction,
+  project_explorer_interaction, etc.) dispatches this
   CustomEvent with `{ name, properties, timestamp }` regardless of whether
   the actual Amplitude network call succeeds or fails. This is the same
   mechanism the "Live Analytics Showcase" section's Live Events tab uses, so

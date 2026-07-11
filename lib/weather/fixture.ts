@@ -1,8 +1,8 @@
-import type { WeatherDashboardPayload, WeatherEvent } from "@/lib/weather/types"
+import type { WeatherPagePayload, WeatherEvent } from "@/lib/weather/types"
 
 // This local contract fixture keeps the route and explorer usable before the
 // independent pipeline has been deployed. It is deliberately labeled in the UI.
-export const weatherFixture: WeatherDashboardPayload = {
+export const weatherFixture: WeatherPagePayload = {
   schemaVersion: "2.0",
   sourceMode: "fixture",
   generatedAt: "2026-07-09T22:40:27.000Z",

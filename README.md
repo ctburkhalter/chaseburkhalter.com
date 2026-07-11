@@ -90,7 +90,7 @@ See `.env.example` for the full variable list. Configure the same value in Verce
 
 `/weather` renders labeled v2 contract fixtures until `WEATHER_DATA_URL` points to the companion pipeline's `data/v2/portfolio-weather.json` artifact. The same base supplies v2 year shards, `dbt-project.json`, and dbt docs. The pipeline uses source-system staging, ephemeral intermediate conformance, a contracted canonical event fact, governed reference data, tests, and GitHub Pages publishing.
 
-`app/api/weather/events`, the only browser-facing weather data route, caps a From/Through year-range query at 20 years (`maxRangeSpan` in that route) and 400s a wider request. The dashboard's From/Through year selects are mutually constrained client-side so a visitor can never choose a wider span in the first place, rather than hitting that limit and seeing the result set clear.
+`app/api/weather/events`, the only browser-facing weather data route, caps a From/Through year-range query at 20 years (`maxRangeSpan` in that route) and 400s a wider request. The event explorer's From/Through year selects are mutually constrained client-side so a visitor can never choose a wider span in the first place, rather than hitting that limit and seeing the result set clear.
 
 The page documents why the data distinction matters: NCEI Storm Events are historical confirmations, and IEM Local Storm Reports are preliminary point reports appended only after the latest confirmed NCEI timestamp. The published event contract exposes `eventCoverage`, `recordStatus`, `sourceSystem`, and `isSurveyedTrack` so the event explorer can show current rows without treating preliminary reports as surveyed tornado tracks. The native dbt project explorer shows curated public source files, direct model lineage, test outcomes, and a commit-pinned source link from the same successful pipeline run. Its interaction analytics are specified in [TRACKING_PLAN.md](./TRACKING_PLAN.md).
 
@@ -135,7 +135,7 @@ components/
     contact-section.tsx
   ui/                                # shadcn/ui primitives: badge, button, card, sheet, skeleton
   weather/
-    weather-dashboard.tsx           # Tornado event explorer
+    weather-page-content.tsx        # /weather page content: hero, dbt + event explorers, methodology
     dbt-project-explorer.tsx        # Native dbt project explorer: files, lineage, tests
     tornado-event-map.tsx           # Leaflet event map (dynamically imported, client-only)
   flagship-card.tsx                 # Problem / approach / outcome case-study card
