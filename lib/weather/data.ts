@@ -14,6 +14,8 @@ const refreshSeconds = 900
 const maxEventResults = 100
 const isNullableString = (value: unknown): value is string | null => value === null || typeof value === "string"
 const isNullableNumber = (value: unknown): value is number | null => value === null || (typeof value === "number" && Number.isFinite(value))
+const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value)
+const isStringArray = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === "string")
 
 // Checks every field the weather page actually dereferences from the
 // initial payload (components/weather/weather-dashboard.tsx: generatedAt
@@ -32,7 +34,7 @@ export function isWeatherPayload(value: unknown): value is WeatherDashboardPaylo
     !Number.isNaN(Date.parse(payload.generatedAt)) &&
     typeof payload.sourceCoverage === "string" &&
     Array.isArray(payload.eventYearIndex) &&
-    payload.eventYearIndex.every((entry) => typeof (entry as Partial<EventYearCount> | null)?.year === "number" && typeof (entry as Partial<EventYearCount>).count === "number") &&
+    payload.eventYearIndex.every((entry) => isFiniteNumber((entry as Partial<EventYearCount> | null)?.year) && isFiniteNumber((entry as Partial<EventYearCount>).count)) &&
     !!payload.eventCoverage &&
     isNullableString(payload.eventCoverage.confirmedThrough) &&
     isNullableString(payload.eventCoverage.preliminaryFrom) &&
@@ -72,21 +74,50 @@ function deriveDocsUrl(dashboardUrl: string, docsPath: string): string {
 export function isProjectExplorerPayload(value: unknown): value is DbtProjectExplorerPayload {
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<DbtProjectExplorerPayload>
+  const project = payload.project
+  const summary = payload.summary
   return (
     payload.schemaVersion === "2.0" &&
-    !!payload.project &&
-    typeof payload.project.repositoryUrl === "string" &&
-    typeof payload.project.docsPath === "string" &&
-    !!payload.summary &&
-    typeof payload.summary.modelCount === "number" &&
-    typeof payload.summary.sourceCount === "number" &&
-    typeof payload.summary.seedCount === "number" &&
-    typeof payload.summary.exposureCount === "number" &&
-    typeof payload.summary.testCount === "number" &&
+    typeof payload.generatedAt === "string" &&
+    !Number.isNaN(Date.parse(payload.generatedAt)) &&
+    !!project &&
+    typeof project.name === "string" &&
+    typeof project.dbtVersion === "string" &&
+    typeof project.commitSha === "string" &&
+    typeof project.repositoryUrl === "string" &&
+    typeof project.docsPath === "string" &&
+    !!summary &&
+    isFiniteNumber(summary.modelCount) &&
+    isFiniteNumber(summary.sourceCount) &&
+    isFiniteNumber(summary.seedCount) &&
+    isFiniteNumber(summary.exposureCount) &&
+    isFiniteNumber(summary.contractedModelCount) &&
+    isFiniteNumber(summary.documentedColumnCount) &&
+    isFiniteNumber(summary.columnCount) &&
+    isFiniteNumber(summary.testCount) &&
+    isFiniteNumber(summary.passingTestCount) &&
+    isFiniteNumber(summary.successfulModelCount) &&
     Array.isArray(payload.files) &&
-    payload.files.every((file) => !!file && typeof file.path === "string" && typeof file.category === "string" && typeof file.content === "string" && Array.isArray(file.relatedNodeIds)) &&
+    payload.files.every((file) => !!file && typeof file.path === "string" && typeof file.category === "string" && typeof file.language === "string" && typeof file.content === "string" && typeof file.githubUrl === "string" && isStringArray(file.relatedNodeIds)) &&
     Array.isArray(payload.nodes) &&
-    payload.nodes.every((node) => !!node && typeof node.id === "string" && typeof node.name === "string" && typeof node.layer === "string" && Array.isArray(node.upstream) && Array.isArray(node.downstream) && Array.isArray(node.columns) && Array.isArray(node.tests))
+    payload.nodes.every((node) => !!node &&
+      typeof node.id === "string" &&
+      typeof node.name === "string" &&
+      (node.resourceType === "model" || node.resourceType === "source" || node.resourceType === "seed" || node.resourceType === "exposure") &&
+      typeof node.layer === "string" &&
+      typeof node.path === "string" &&
+      typeof node.description === "string" &&
+      isNullableString(node.relation) &&
+      Array.isArray(node.columns) && node.columns.every((column) => !!column && typeof column.name === "string" && typeof column.description === "string" && isNullableString(column.dataType)) &&
+      isStringArray(node.upstream) &&
+      isStringArray(node.downstream) &&
+      Array.isArray(node.tests) && node.tests.every((test) => !!test && typeof test.name === "string" && typeof test.status === "string") &&
+      isNullableString(node.buildStatus) &&
+      isNullableString(node.materialization) &&
+      typeof node.contractEnforced === "boolean" &&
+      (node.owner === null || typeof node.owner === "string" || (typeof node.owner === "object" && !Array.isArray(node.owner) && (node.owner.name === undefined || typeof node.owner.name === "string"))) &&
+      isNullableString(node.maturity) &&
+      !!node.meta && typeof node.meta === "object" && !Array.isArray(node.meta))
   )
 }
 
@@ -148,9 +179,18 @@ async function fetchEventYear(year: number): Promise<{ events: WeatherEvent[]; s
 
 export async function getWeatherEventsForYears(years: number[]): Promise<{ events: WeatherEvent[]; sourceMode: WeatherSourceMode }> {
   const results = await Promise.all(years.map(fetchEventYear))
-  const events = results.flatMap((result) => result.events)
-  const sourceMode: WeatherSourceMode = results.every((result) => result.sourceMode === "pipeline") ? "pipeline" : "fixture"
-  return { events, sourceMode }
+  if (results.every((result) => result.sourceMode === "pipeline")) {
+    return { events: results.flatMap((result) => result.events), sourceMode: "pipeline" }
+  }
+
+  // Do not mix a successful published shard with local fixture rows. The
+  // response has a single sourceMode, so mixed rows would make its
+  // provenance label inaccurate. If any requested shard is unavailable,
+  // return the complete requested range from the fixture instead.
+  return {
+    events: years.flatMap((year) => weatherFixtureEventsByYear[year] ?? []),
+    sourceMode: "fixture",
+  }
 }
 
 // Matches the timezone the dashboard displays event dates in

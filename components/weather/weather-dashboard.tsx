@@ -185,6 +185,7 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
 
   useEffect(() => {
     const controller = new AbortController()
+    let isCurrentRequest = true
     const params = new URLSearchParams({ region })
     // "0" is the <select>'s "Any rating" option. Omit the param entirely
     // rather than sending rating=0, since the API now treats an explicitly
@@ -208,15 +209,27 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
     fetch(`/api/weather/events?${params}`, { signal: controller.signal })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Unable to load events")))
       .then((data: WeatherEventsResponse) => {
+        if (!isCurrentRequest) return
         setEvents(data.events)
         setSelectedEvent(data.events[0] ?? null)
         setTotalMatched(data.totalMatched)
         setTruncated(data.truncated)
         setSourceMode(data.sourceMode)
       })
-      .catch((error: unknown) => { if ((error as Error).name !== "AbortError") { setEvents([]); setTotalMatched(0); setTruncated(false) } })
-      .finally(() => setIsLoading(false))
-    return () => controller.abort()
+      .catch((error: unknown) => {
+        if (isCurrentRequest && (error as Error).name !== "AbortError") {
+          setEvents([])
+          setTotalMatched(0)
+          setTruncated(false)
+        }
+      })
+      .finally(() => {
+        if (isCurrentRequest) setIsLoading(false)
+      })
+    return () => {
+      isCurrentRequest = false
+      controller.abort()
+    }
   }, [region, minimumRating, yearFrom, yearTo, month])
 
   const eventCountLabel = useMemo(() => {

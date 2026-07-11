@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   const yearTo = searchParams.get("yearTo")
   const month = searchParams.get("month")
   const rating = searchParams.get("rating")
-  const eventId = searchParams.get("event_id")
+  const eventKey = searchParams.get("event_key")
 
   if (region && !WEATHER_REGIONS.includes(region as (typeof WEATHER_REGIONS)[number])) {
     return NextResponse.json({ error: "Invalid region" }, { status: 400 })
@@ -49,8 +49,8 @@ export async function GET(request: NextRequest) {
 
   const { events: yearEvents, sourceMode } = await getWeatherEventsForYears(years)
 
-  if (eventId) {
-    const match = yearEvents.filter((event) => event.eventId === eventId).slice(0, 1)
+  if (eventKey) {
+    const match = yearEvents.filter((event) => event.eventKey === eventKey).slice(0, 1)
     return NextResponse.json(
       { events: match, count: match.length, totalMatched: match.length, truncated: false, sourceMode },
       { headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900" } },

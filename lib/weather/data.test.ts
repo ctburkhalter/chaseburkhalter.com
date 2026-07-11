@@ -192,11 +192,26 @@ describe("isWeatherPayload", () => {
 describe("isProjectExplorerPayload", () => {
   const valid = {
     schemaVersion: "2.0" as const,
+    generatedAt: "2026-07-11T19:48:19.000Z",
     project: {
+      name: "south_alabama_tornado_watch",
+      dbtVersion: "1.10.0",
+      commitSha: "a4f7979d22d899d951b8f3ea8e2d2abc12345678",
       repositoryUrl: "https://github.com/ctburkhalter/dbt-portfolio-weather",
       docsPath: "dbt-docs/index.html",
     },
-    summary: { modelCount: 9, sourceCount: 2, seedCount: 1, exposureCount: 2, testCount: 10 },
+    summary: {
+      modelCount: 9,
+      sourceCount: 2,
+      seedCount: 1,
+      exposureCount: 2,
+      contractedModelCount: 1,
+      documentedColumnCount: 42,
+      columnCount: 42,
+      testCount: 10,
+      passingTestCount: 10,
+      successfulModelCount: 9,
+    },
     files: [] as unknown[],
     nodes: [] as unknown[],
   }
@@ -214,6 +229,18 @@ describe("isProjectExplorerPayload", () => {
     expect(
       isProjectExplorerPayload({ ...valid, project: { ...valid.project, docsPath: 12 } }),
     ).toBe(false)
+  })
+
+  it("rejects a project missing the rendered commit SHA", () => {
+    const projectWithoutCommitSha: Record<string, unknown> = { ...valid.project }
+    Reflect.deleteProperty(projectWithoutCommitSha, "commitSha")
+    expect(isProjectExplorerPayload({ ...valid, project: projectWithoutCommitSha })).toBe(false)
+  })
+
+  it("rejects a summary missing the rendered passing test count", () => {
+    const summaryWithoutPassingTestCount: Record<string, unknown> = { ...valid.summary }
+    Reflect.deleteProperty(summaryWithoutPassingTestCount, "passingTestCount")
+    expect(isProjectExplorerPayload({ ...valid, summary: summaryWithoutPassingTestCount })).toBe(false)
   })
 
   it("rejects null", () => {
