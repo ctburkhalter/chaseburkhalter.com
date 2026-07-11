@@ -33,11 +33,11 @@ export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
 
 export const NAV_ITEMS = [
   { href: "#projects", label: "Work" },
-  { href: "/weather", label: "Weather" },
   { href: "#ai-engineering", label: "AI" },
   { href: "#experience", label: "Experience" },
   { href: "#skills", label: "Skills" },
   { href: "#contact", label: "Contact" },
+  { href: "/weather", label: "Weather Project" },
 ] as const
 
 // Section registry: drives IntersectionObserver tracking and stable analytics

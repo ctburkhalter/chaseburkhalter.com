@@ -16,12 +16,12 @@ export function SiteHeader({ isPortfolioHome = true }: { isPortfolioHome?: boole
           <span className="rounded border border-primary/35 bg-primary/10 px-2 py-1 font-mono text-xs font-bold text-primary">CB</span>
           <span className="hidden font-mono text-xs text-muted-foreground sm:inline">~/chase-burkhalter</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center gap-5" aria-label="Main navigation">
           {NAV_ITEMS.map(({ href, label }) => (
             <Link
               key={href}
               href={navHref(href)}
-              className="font-mono text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+              className="whitespace-nowrap font-mono text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               {label}
             </Link>
