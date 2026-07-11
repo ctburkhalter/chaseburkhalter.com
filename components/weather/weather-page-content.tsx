@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink } from "lucide-react"
 import Link from "next/link"
 import type {
   DbtProjectExplorerPayload,
-  WeatherDashboardPayload,
+  WeatherPagePayload,
   WeatherEvent,
   WeatherEventsResponse,
   WeatherRegion,
@@ -14,8 +14,9 @@ import type {
 } from "@/lib/weather/types"
 import { useAnalytics } from "@/hooks/use-analytics"
 import {
-  createWeatherDashboardInteractedEvent,
-  createWeatherDashboardViewedEvent,
+  createEventExplorerInteractionEvent,
+  createProjectExplorerInteractionEvent,
+  createWeatherPageViewedEvent,
 } from "@/lib/analytics-events"
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { DbtProjectExplorer } from "@/components/weather/dbt-project-explorer"
@@ -115,7 +116,7 @@ function EventDetailSheet({ event, open, onOpenChange, onSourceOpen }: {
   )
 }
 
-export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { initialPayload: WeatherDashboardPayload; initialProjectExplorer: DbtProjectExplorerPayload | null }) {
+export function WeatherPageContent({ initialPayload, initialProjectExplorer }: { initialPayload: WeatherPagePayload; initialProjectExplorer: DbtProjectExplorerPayload | null }) {
   const { trackEvent } = useAnalytics()
   const [region, setRegion] = useState<WeatherRegion>("alabama")
   const [minimumRating, setMinimumRating] = useState("0")
@@ -156,32 +157,17 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
   // after the initial payload already loaded from "pipeline", and the label
   // below needs to reflect that, not stay pinned to the initial value.
   const [sourceMode, setSourceMode] = useState<WeatherSourceMode>(initialPayload.sourceMode)
-  const dashboardViewTracked = useRef(false)
-  const methodologyTracked = useRef(false)
-  const methodologyRef = useRef<HTMLElement>(null)
+  const pageViewTracked = useRef(false)
   const sourceLabel = sourceMode === "pipeline" ? "Published pipeline data" : "Local contract fixture"
 
   useEffect(() => {
-    if (typeof window === "undefined" || dashboardViewTracked.current || window.__weatherDashboardViewTracked) return
-    dashboardViewTracked.current = true
-    window.__weatherDashboardViewTracked = true
-    trackEvent(createWeatherDashboardViewedEvent({
+    if (typeof window === "undefined" || pageViewTracked.current || window.__weatherPageViewTracked) return
+    pageViewTracked.current = true
+    window.__weatherPageViewTracked = true
+    trackEvent(createWeatherPageViewedEvent({
       dataSourceMode: initialPayload.sourceMode,
     }))
   }, [initialPayload, trackEvent])
-
-  useEffect(() => {
-    const element = methodologyRef.current
-    if (!element) return
-    const observer = new IntersectionObserver((entries) => {
-      if (!entries[0]?.isIntersecting || methodologyTracked.current) return
-      methodologyTracked.current = true
-      trackEvent(createWeatherDashboardInteractedEvent("methodology_viewed", { selected_region: region, minimum_rating: minimumRating, year_from: yearFrom, year_to: yearTo }))
-      observer.disconnect()
-    }, { threshold: 0, rootMargin: "0px 0px -20% 0px" })
-    observer.observe(element)
-    return () => observer.disconnect()
-  }, [minimumRating, region, yearFrom, yearTo, trackEvent])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -241,7 +227,7 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
   const inspectEvent = (event: WeatherEvent) => {
     setSelectedEvent(event)
     setDetailOpen(true)
-    trackEvent(createWeatherDashboardInteractedEvent("event_inspected", {
+    trackEvent(createEventExplorerInteractionEvent("event_inspected", {
       selected_region: region,
       minimum_rating: minimumRating,
       year_from: yearFrom,
@@ -290,11 +276,7 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
 
         <DbtProjectExplorer
           explorer={initialProjectExplorer}
-          onInteraction={(interactionType, properties) => trackEvent(createWeatherDashboardInteractedEvent(interactionType, {
-            selected_region: region,
-            minimum_rating: minimumRating,
-            ...properties,
-          }))}
+          onInteraction={(interactionType, properties) => trackEvent(createProjectExplorerInteractionEvent(interactionType, properties))}
         />
 
         <section className="mt-10 grid gap-5 lg:grid-cols-3" aria-label="Data modeling methodology">
@@ -317,11 +299,11 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
           <h2 id="event-explorer-title" className="mt-2 text-3xl font-bold tracking-tight">Tornado Event Explorer</h2>
           <p className="mt-3 max-w-3xl text-muted-foreground">Select a source-backed confirmed event or preliminary point report to inspect rating details where available, reported impacts, narrative, and coordinate context.</p>
           <div className="mt-6 flex flex-wrap gap-4">
-            <label className="flex flex-col gap-1.5 text-sm font-medium">From year<select value={yearFrom} onChange={(event) => { const nextYear = Number(event.target.value); setYearFrom(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: nextYear, year_to: yearTo })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearFromOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">Through year<select value={yearTo} onChange={(event) => { const nextYear = Number(event.target.value); setYearTo(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: yearFrom, year_to: nextYear })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearToOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">Month<select value={month} onChange={(event) => { const nextMonth = event.target.value; setMonth(nextMonth); trackEvent(createWeatherDashboardInteractedEvent("month_filter_changed", { selected_region: region, minimum_rating: minimumRating, selected_month: nextMonth || "any" })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="">Any month</option>{monthOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">Analysis region<select value={region} onChange={(event) => { const nextRegion = event.target.value as WeatherRegion; setRegion(nextRegion); trackEvent(createWeatherDashboardInteractedEvent("region_filter_changed", { selected_region: nextRegion, minimum_rating: minimumRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="alabama">Alabama</option><option value="dixie">Dixie cohort</option><option value="tornado">Tornado cohort</option></select></label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">Minimum rating<select value={minimumRating} onChange={(event) => { const nextRating = event.target.value; setMinimumRating(nextRating); trackEvent(createWeatherDashboardInteractedEvent("minimum_rating_changed", { selected_region: region, minimum_rating: nextRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="0">Any rating</option><option value="1">F1/EF1+</option><option value="2">F2/EF2+</option><option value="3">F3/EF3+</option></select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">From year<select value={yearFrom} onChange={(event) => { const nextYear = Number(event.target.value); setYearFrom(nextYear); trackEvent(createEventExplorerInteractionEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: nextYear, year_to: yearTo })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearFromOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">Through year<select value={yearTo} onChange={(event) => { const nextYear = Number(event.target.value); setYearTo(nextYear); trackEvent(createEventExplorerInteractionEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: yearFrom, year_to: nextYear })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearToOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">Month<select value={month} onChange={(event) => { const nextMonth = event.target.value; setMonth(nextMonth); trackEvent(createEventExplorerInteractionEvent("month_filter_changed", { selected_region: region, minimum_rating: minimumRating, selected_month: nextMonth || "any" })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="">Any month</option>{monthOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">Analysis region<select value={region} onChange={(event) => { const nextRegion = event.target.value as WeatherRegion; setRegion(nextRegion); trackEvent(createEventExplorerInteractionEvent("region_filter_changed", { selected_region: nextRegion, minimum_rating: minimumRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="alabama">Alabama</option><option value="dixie">Dixie cohort</option><option value="tornado">Tornado cohort</option></select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">Minimum rating<select value={minimumRating} onChange={(event) => { const nextRating = event.target.value; setMinimumRating(nextRating); trackEvent(createEventExplorerInteractionEvent("minimum_rating_changed", { selected_region: region, minimum_rating: nextRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="0">Any rating</option><option value="1">F1/EF1+</option><option value="2">F2/EF2+</option><option value="3">F3/EF3+</option></select></label>
             <p className="self-end pb-2 font-mono text-xs text-muted-foreground">{eventCountLabel}</p>
           </div>
           <div className="mt-6 max-h-[min(68vh,42rem)] overflow-auto rounded-lg border border-border/70">
@@ -333,10 +315,10 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
           event={selectedEvent}
           open={detailOpen}
           onOpenChange={setDetailOpen}
-          onSourceOpen={() => selectedEvent && trackEvent(createWeatherDashboardInteractedEvent("source_record_opened", { selected_region: region, minimum_rating: minimumRating, event_rating: selectedEvent.ratingCode ?? undefined, event_state: selectedEvent.state, source_type: selectedEvent.sourceSystem }))}
+          onSourceOpen={() => selectedEvent && trackEvent(createEventExplorerInteractionEvent("source_record_opened", { selected_region: region, minimum_rating: minimumRating, event_rating: selectedEvent.ratingCode ?? undefined, event_state: selectedEvent.state, source_type: selectedEvent.sourceSystem }))}
         />
 
-        <section ref={methodologyRef} className="mt-10 rounded-lg border border-border/70 bg-muted/25 p-5 text-sm text-muted-foreground">
+        <section id="weather-methodology" className="mt-10 rounded-lg border border-border/70 bg-muted/25 p-5 text-sm text-muted-foreground">
           <h2 className="font-semibold text-foreground">Methodology and safety note</h2>
           <p className="mt-2 leading-relaxed">NOAA Storm Events records are confirmed events. Iowa State Mesonet Local Storm Reports are preliminary point reports after the latest NCEI cutoff. “Dixie Alley” and “Tornado Alley” are project-defined state cohorts for comparison, not official boundaries. F and EF wind ranges are damage-based estimates, not instrument measurements. Endpoint connections are not surveyed tracks. This is a portfolio data demonstration, not a life-safety product.</p>
         </section>
@@ -347,6 +329,6 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
 
 declare global {
   interface Window {
-    __weatherDashboardViewTracked?: boolean
+    __weatherPageViewTracked?: boolean
   }
 }

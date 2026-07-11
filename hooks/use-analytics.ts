@@ -107,14 +107,19 @@ export function useSectionTracking(sectionIds: string[], trackEvent: (event: Ana
 
         if (process.env.NODE_ENV === 'development') {
           if (observedCount === 0 && sectionIds.length > 0) {
-            // Routes like /weather have none of the hash-navigation sections
-            // in the DOM by design. Log once, quietly, instead of warning
-            // once per missing id (which used to spam the console on every
-            // non-home route).
+            // Routes like /weather have none of the home-page hash-nav
+            // sections in the DOM by design. Log once, quietly, instead of
+            // warning once per missing id (which used to spam the console on
+            // every non-home route).
             console.log('[Analytics] No tracked sections present on this route; section observation skipped')
           } else if (observedCount < sectionIds.length) {
+            // Not necessarily a bug: SECTIONS now spans multiple routes (for
+            // example weather-methodology lives only on /weather), so a
+            // route legitimately observing a subset of the registry is
+            // expected, not a signal of a missing/mistyped id. console.log,
+            // not console.warn, to match that.
             const missing = sectionIds.filter((id) => !document.getElementById(id))
-            console.warn(`[Analytics] Observing ${observedCount}/${sectionIds.length} sections (missing: ${missing.join(', ')})`)
+            console.log(`[Analytics] Observing ${observedCount}/${sectionIds.length} sections (not on this route: ${missing.join(', ')})`)
           } else {
             console.log(`[Analytics] Observing ${observedCount}/${sectionIds.length} sections`)
           }

@@ -65,10 +65,10 @@ describe("filterWeatherEvents", () => {
     expect(result.map((e) => e.eventId)).toEqual(["mar"])
   })
 
-  it("filters by month in the dashboard's display timezone (America/Chicago), not server-local UTC", () => {
+  it("filters by month in the page's display timezone (America/Chicago), not server-local UTC", () => {
     // 2023-03-31T23:30:00-05:00 is 2023-04-01T04:30:00Z in UTC. A UTC-based
     // server (Vercel) resolving Date.getMonth() would call this April, but
-    // weather-dashboard.tsx's formatDate displays it as "Mar 31" in
+    // weather-page-content.tsx's formatDate displays it as "Mar 31" in
     // America/Chicago. The filter must agree with what the page shows.
     const event = buildEvent({ eventId: "boundary", occurredAt: "2023-03-31T23:30:00-05:00" })
     const { events: marchResult } = filterWeatherEvents([event], { month: "3" })
@@ -174,7 +174,7 @@ describe("isWeatherPayload", () => {
   })
 
   it("rejects an eventYearIndex entry missing a numeric year", () => {
-    // weather-dashboard.tsx maps eventYearIndex entries to `entry.year` to
+    // weather-page-content.tsx maps eventYearIndex entries to `entry.year` to
     // populate the From/Through year selects.
     expect(isWeatherPayload({ ...validBase, eventYearIndex: [{ count: 4 }] })).toBe(false)
   })

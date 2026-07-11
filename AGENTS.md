@@ -31,7 +31,7 @@ Get the Amplitude key from Amplitude → Settings → Projects. In production, b
 
 All copy and structured data live in `lib/content.ts` (typed: identity, nav, sections, impact stats, flagship case studies, projects, AI entries, experience, skills, about, contact). Section components under `components/sections/` render from this module; content edits are data edits, not JSX edits. Accent styling comes from the three-hue map in `lib/accent.ts` (green = data platform, violet = AI, orange = ops/incidents).
 
-**Adding a page section:** add the `id` + `label` to `SECTIONS` in `lib/content.ts` (this drives IntersectionObserver targets and analytics display names), create the component in `components/sections/`, compose it in `app/page.tsx`, and update the section table in `TRACKING_PLAN.md`. Ids stay stable across redesigns so `section_viewed` history remains comparable.
+**Adding a page section:** add the `id` + `label` to `SECTIONS` in `lib/content.ts` (this drives IntersectionObserver targets and analytics display names), create the component in `components/sections/`, compose it in `app/page.tsx`, and update the section table in `TRACKING_PLAN.md`. Ids stay stable across redesigns so `section_viewed` history remains comparable. `SECTIONS` isn't home-page-only: `useSectionTracking` finds targets via `document.getElementById(id)` regardless of route, so a non-home route can add an id (see `weather-methodology` on `/weather`) without a matching `app/page.tsx` composition or nav entry, as long as some element on that route carries the id.
 
 ### Analytics System
 
@@ -95,7 +95,7 @@ components/
 │   ├── experience-section.tsx, skills-section.tsx, analytics-showcase.tsx
 │   └── about-section.tsx, contact-section.tsx
 ├── weather/                          - /weather-only components
-│   ├── weather-dashboard.tsx         - Tornado event explorer
+│   ├── weather-page-content.tsx      - /weather page content: hero, dbt + event explorers, methodology
 │   ├── dbt-project-explorer.tsx      - Native dbt project explorer (files, lineage, tests)
 │   └── tornado-event-map.tsx         - Leaflet event map (dynamically imported, client-only)
 ├── flagship-card.tsx                 - Problem / approach / outcome case-study card
@@ -130,7 +130,7 @@ vitest.config.ts               - Vitest config for lib/**/*.test.ts
 
 ### Weather Explorers
 
-- `app/weather/page.tsx` renders the case-study page. `components/weather/weather-dashboard.tsx` owns the tornado event explorer, while `components/weather/dbt-project-explorer.tsx` renders the native dbt project explorer. Both emit the scoped weather analytics described in `TRACKING_PLAN.md`.
+- `app/weather/page.tsx` renders the case-study page via `components/weather/weather-page-content.tsx`, which owns the tornado event explorer and composes `components/weather/dbt-project-explorer.tsx` (the native dbt project explorer). `weather_page_viewed` fires once on mount; `event_explorer_interaction` and `project_explorer_interaction` are scoped to each explorer; methodology-section visibility fires the shared `section_viewed` event (a `weather-methodology` entry in `SECTIONS`), not a weather-specific one. Full contract in `TRACKING_PLAN.md`.
 - `app/api/weather/events` is the only browser-facing weather data route. The server-rendered page derives v2 year shards, `dbt-project.json`, and dbt docs from `WEATHER_DATA_URL`, and falls back to a visibly labeled v2 fixture when remote validation fails.
 - The companion pipeline uses source-system staging, ephemeral intermediate conformance, and contracted marts. `fct_tornado_events` is the canonical fact, and v2 adds globally unique `eventKey` while retaining source-native `eventId`.
 - The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.

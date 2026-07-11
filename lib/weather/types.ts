@@ -44,7 +44,7 @@ export interface EventYearCount {
   count: number
 }
 
-export interface WeatherDashboardPayload {
+export interface WeatherPagePayload {
   schemaVersion: "2.0"
   sourceMode: WeatherSourceMode
   generatedAt: string
