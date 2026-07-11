@@ -85,6 +85,25 @@
     @apply border border-border/70 bg-card/70 shadow-[0_0_0_1px_rgb(255_255_255/0.02),0_24px_80px_rgb(0_0_0/0.28)] backdrop-blur;
   }
 
+  .thin-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(148 163 184 / 0.35) transparent;
+  }
+
+  .thin-scroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .thin-scroll::-webkit-scrollbar-thumb {
+    background-color: rgb(148 163 184 / 0.35);
+    border-radius: 9999px;
+  }
+
+  .thin-scroll::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
   .circuit-grid {
     background-image:
       linear-gradient(rgb(148 163 184 / 0.08) 1px, transparent 1px),
