@@ -1,6 +1,7 @@
 import { weatherFixture, weatherFixtureEventsByYear } from "@/lib/weather/fixture"
 import type {
   DbtProjectExplorerPayload,
+  EventYearCount,
   WeatherDashboardPayload,
   WeatherEvent,
   WeatherEventYearShard,
@@ -11,12 +12,21 @@ import type {
 const refreshSeconds = 900
 const maxEventResults = 100
 
+// Checks every field the weather page actually dereferences from the
+// initial payload (components/weather/weather-dashboard.tsx: generatedAt
+// feeds formatDateTime(), each eventYearIndex entry's year feeds the
+// From/Through year selects) so a malformed or partially-written artifact
+// fails this guard and falls back to the fixture, instead of passing
+// validation and throwing during render (Intl.DateTimeFormat throws on an
+// Invalid Date, which is what `new Date(undefined)` produces).
 export function isWeatherPayload(value: unknown): value is WeatherDashboardPayload {
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<WeatherDashboardPayload>
   return (
     payload.schemaVersion === "1.0" &&
+    typeof payload.generatedAt === "string" &&
     Array.isArray(payload.eventYearIndex) &&
+    payload.eventYearIndex.every((entry) => typeof (entry as Partial<EventYearCount> | null)?.year === "number") &&
     !!payload.eventCoverage &&
     typeof payload.eventCoverage.preliminaryCount === "number"
   )
@@ -110,6 +120,22 @@ export async function getWeatherEventsForYears(years: number[]): Promise<{ event
   return { events, sourceMode }
 }
 
+// Matches the timezone the dashboard displays event dates in
+// (components/weather/weather-dashboard.tsx's formatDate/formatDateTime use
+// timeZone: "America/Chicago"). Deriving the filter month via
+// `new Date(occurredAt).getMonth()` instead resolves in the server's
+// timezone (UTC on Vercel), so an event at 2023-03-31T23:30:00-05:00 would
+// display as "Mar 31" but filter as April; Intl.DateTimeFormat keeps the
+// two in agreement regardless of server timezone.
+const WEATHER_DISPLAY_TIME_ZONE = "America/Chicago"
+
+function localMonth(occurredAt: string): number {
+  return Number.parseInt(
+    new Intl.DateTimeFormat("en-US", { month: "numeric", timeZone: WEATHER_DISPLAY_TIME_ZONE }).format(new Date(occurredAt)),
+    10,
+  )
+}
+
 export function filterWeatherEvents(
   events: WeatherEvent[],
   { region, month, rating }: { region?: string | null; month?: string | null; rating?: string | null },
@@ -127,7 +153,7 @@ export function filterWeatherEvents(
 
   const matched = events
     .filter((event) => !selectedRegion || event.regionIds.includes(selectedRegion))
-    .filter((event) => !selectedMonth || new Date(event.occurredAt).getMonth() + 1 === selectedMonth)
+    .filter((event) => !selectedMonth || localMonth(event.occurredAt) === selectedMonth)
     .filter((event) => minimumRating === undefined || (event.ratingValue ?? -1) >= minimumRating)
     .sort((a, b) => +new Date(b.occurredAt) - +new Date(a.occurredAt))
 

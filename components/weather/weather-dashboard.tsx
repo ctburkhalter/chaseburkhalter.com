@@ -10,6 +10,7 @@ import type {
   WeatherEvent,
   WeatherEventsResponse,
   WeatherRegion,
+  WeatherSourceMode,
 } from "@/lib/weather/types"
 import { useAnalytics } from "@/hooks/use-analytics"
 import {
@@ -30,6 +31,15 @@ const monthOptions = [
   { value: "7", label: "Jul" }, { value: "8", label: "Aug" }, { value: "9", label: "Sep" },
   { value: "10", label: "Oct" }, { value: "11", label: "Nov" }, { value: "12", label: "Dec" },
 ]
+
+// Keep in sync with maxRangeSpan in app/api/weather/events/route.ts. That
+// route 400s a From/Through span wider than this, which the fetch effect
+// below previously surfaced as a misleading "no matching records" empty
+// state. Filtering each select's own option list against the other's
+// current value (see yearFromOptions/yearToOptions) makes an over-wide span
+// impossible to select in the first place, so the API limit can never be hit
+// from this UI.
+const maxYearRangeSpan = 20
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "America/Chicago" }).format(new Date(value))
@@ -119,6 +129,20 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
   }, [availableYears])
   const [yearFrom, setYearFrom] = useState(defaultYear)
   const [yearTo, setYearTo] = useState(defaultYear)
+  // Each select's own option list is filtered against the other select's
+  // current value, so From and Through can never be moved far enough apart
+  // in a single change to exceed maxYearRangeSpan: whichever value the other
+  // select could still reach is itself bounded by this same window. This
+  // holds the pair inside the span invariant without needing to reach into
+  // the other select's state on change.
+  const yearFromOptions = useMemo(
+    () => availableYears.filter((year) => Math.abs(year - yearTo) <= maxYearRangeSpan - 1),
+    [availableYears, yearTo],
+  )
+  const yearToOptions = useMemo(
+    () => availableYears.filter((year) => Math.abs(year - yearFrom) <= maxYearRangeSpan - 1),
+    [availableYears, yearFrom],
+  )
   const [month, setMonth] = useState("")
   const [events, setEvents] = useState<WeatherEvent[]>([])
   const [selectedEvent, setSelectedEvent] = useState<WeatherEvent | null>(null)
@@ -126,10 +150,16 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
   const [isLoading, setIsLoading] = useState(true)
   const [totalMatched, setTotalMatched] = useState(0)
   const [truncated, setTruncated] = useState(false)
+  // Tracks the sourceMode of the most recently loaded event results, not
+  // just the initial page-load payload: a specific year-shard request can
+  // independently degrade to "fixture" (see app/api/weather/events/route.ts)
+  // after the initial payload already loaded from "pipeline", and the label
+  // below needs to reflect that, not stay pinned to the initial value.
+  const [sourceMode, setSourceMode] = useState<WeatherSourceMode>(initialPayload.sourceMode)
   const dashboardViewTracked = useRef(false)
   const methodologyTracked = useRef(false)
   const methodologyRef = useRef<HTMLElement>(null)
-  const sourceLabel = initialPayload.sourceMode === "pipeline" ? "Published pipeline data" : "Local contract fixture"
+  const sourceLabel = sourceMode === "pipeline" ? "Published pipeline data" : "Local contract fixture"
 
   useEffect(() => {
     if (typeof window === "undefined" || dashboardViewTracked.current || window.__weatherDashboardViewTracked) return
@@ -182,6 +212,7 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
         setSelectedEvent(data.events[0] ?? null)
         setTotalMatched(data.totalMatched)
         setTruncated(data.truncated)
+        setSourceMode(data.sourceMode)
       })
       .catch((error: unknown) => { if ((error as Error).name !== "AbortError") { setEvents([]); setTotalMatched(0); setTruncated(false) } })
       .finally(() => setIsLoading(false))
@@ -222,7 +253,9 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
           <span className="rounded-full border border-border bg-muted/40 px-3 py-1.5 font-mono">{sourceLabel}</span>
           <span>Last successful refresh: {formatDateTime(initialPayload.generatedAt)}</span>
         </div>
-        {initialPayload.sourceMode === "fixture" && <p className="mt-4 rounded-md border border-chart-3/25 bg-chart-3/10 p-3 text-sm text-muted-foreground">This is a local schema preview, not current weather history. Set <code className="font-mono text-foreground">WEATHER_DATA_URL</code> after publishing the companion dbt artifact to display the automatically refreshed current data.</p>}
+        {sourceMode === "fixture" && (initialPayload.sourceMode === "fixture"
+          ? <p className="mt-4 rounded-md border border-chart-3/25 bg-chart-3/10 p-3 text-sm text-muted-foreground">This is a local schema preview, not current weather history. Set <code className="font-mono text-foreground">WEATHER_DATA_URL</code> after publishing the companion dbt artifact to display the automatically refreshed current data.</p>
+          : <p className="mt-4 rounded-md border border-chart-3/25 bg-chart-3/10 p-3 text-sm text-muted-foreground">The published pipeline could not load this specific year range, so the table below is showing local fallback data instead of current weather history. Other filters may still reflect published pipeline data.</p>)}
 
         <section className="mt-8 grid gap-5 lg:grid-cols-2" aria-label="Why this project and implementation">
           <article className="engine-panel rounded-lg p-5">
@@ -271,8 +304,8 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
           <h2 id="event-explorer-title" className="mt-2 text-3xl font-bold tracking-tight">Tornado Event Explorer</h2>
           <p className="mt-3 max-w-3xl text-muted-foreground">Select a source-backed confirmed event or preliminary point report to inspect rating details where available, reported impacts, narrative, and coordinate context.</p>
           <div className="mt-6 flex flex-wrap gap-4">
-            <label className="flex flex-col gap-1.5 text-sm font-medium">From year<select value={yearFrom} onChange={(event) => { const nextYear = Number(event.target.value); setYearFrom(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: nextYear, year_to: yearTo })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{availableYears.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
-            <label className="flex flex-col gap-1.5 text-sm font-medium">Through year<select value={yearTo} onChange={(event) => { const nextYear = Number(event.target.value); setYearTo(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: yearFrom, year_to: nextYear })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{availableYears.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">From year<select value={yearFrom} onChange={(event) => { const nextYear = Number(event.target.value); setYearFrom(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: nextYear, year_to: yearTo })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearFromOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
+            <label className="flex flex-col gap-1.5 text-sm font-medium">Through year<select value={yearTo} onChange={(event) => { const nextYear = Number(event.target.value); setYearTo(nextYear); trackEvent(createWeatherDashboardInteractedEvent("year_filter_changed", { selected_region: region, minimum_rating: minimumRating, year_from: yearFrom, year_to: nextYear })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground">{yearToOptions.map((year) => <option key={year} value={year}>{year}</option>)}</select></label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">Month<select value={month} onChange={(event) => { const nextMonth = event.target.value; setMonth(nextMonth); trackEvent(createWeatherDashboardInteractedEvent("month_filter_changed", { selected_region: region, minimum_rating: minimumRating, selected_month: nextMonth || "any" })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="">Any month</option>{monthOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">Analysis region<select value={region} onChange={(event) => { const nextRegion = event.target.value as WeatherRegion; setRegion(nextRegion); trackEvent(createWeatherDashboardInteractedEvent("region_filter_changed", { selected_region: nextRegion, minimum_rating: minimumRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="alabama">Alabama</option><option value="dixie">Dixie cohort</option><option value="tornado">Tornado cohort</option></select></label>
             <label className="flex flex-col gap-1.5 text-sm font-medium">Minimum rating<select value={minimumRating} onChange={(event) => { const nextRating = event.target.value; setMinimumRating(nextRating); trackEvent(createWeatherDashboardInteractedEvent("minimum_rating_changed", { selected_region: region, minimum_rating: nextRating })) }} className="rounded-md border border-border bg-card px-3 py-2 text-sm font-normal text-foreground"><option value="0">Any rating</option><option value="1">F1/EF1+</option><option value="2">F2/EF2+</option><option value="3">F3/EF3+</option></select></label>

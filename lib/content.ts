@@ -12,8 +12,8 @@ export const IDENTITY = {
   name: "Chase Burkhalter",
   title: "Senior Data & Analytics Engineer",
   positioning:
-    "Building governed, AI-ready data platforms: ingestion, dbt modeling on Snowflake, product instrumentation, semantic context, and secure AI access to trusted data.",
-  bio: "I build and run modern data platforms end to end: Fivetran ingestion, dbt modeling on Snowflake, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, custom MCP servers, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
+    "Building governed, AI-ready data platforms: ingestion, dbt modeling on cloud data warehouses, product instrumentation, semantic context, and secure AI access to trusted data.",
+  bio: "I build and run modern data platforms end to end: ingestion pipelines, dbt modeling on cloud data warehouses, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, custom MCP servers, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
   availability: "Open to senior data & analytics engineering roles",
   location: "Dothan, AL, open to remote",
   email: "chase@chaseburkhalter.com",

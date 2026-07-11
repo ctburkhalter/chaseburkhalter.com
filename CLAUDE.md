@@ -9,6 +9,7 @@ pnpm dev          # Start dev server at http://localhost:3000
 pnpm build        # Production build
 pnpm start        # Start production server
 pnpm lint         # Run ESLint (flat config; ignores .next, node_modules, resume/)
+pnpm test         # Run Vitest (lib/**/*.test.ts; pure-logic unit tests, no DOM/component rendering yet)
 ```
 
 **Package manager:** pnpm@10.15.0. Do not use npm or yarn.
@@ -81,6 +82,8 @@ Browser
 ```
 app/
 ├── api/amplitude/route.ts     - First-party proxy (Node runtime)
+├── api/weather/events/route.ts - Validated tornado event-query API (only browser-facing weather route)
+├── weather/page.tsx           - South Alabama Tornado Watch case-study route
 ├── layout.tsx                 - Root: metadata, JSON-LD, ThemeProvider (forced dark) + AnalyticsProvider
 ├── page.tsx                   - Thin composition of section components
 └── globals.css                - Tailwind + HSL CSS custom properties + reduced-motion handling
@@ -91,9 +94,15 @@ components/
 │   ├── hero-section.tsx, impact-band.tsx, work-section.tsx, ai-section.tsx
 │   ├── experience-section.tsx, skills-section.tsx, analytics-showcase.tsx
 │   └── about-section.tsx, contact-section.tsx
+├── weather/                          - /weather-only components
+│   ├── weather-dashboard.tsx         - Tornado event explorer
+│   ├── dbt-project-explorer.tsx      - Native dbt project explorer (files, lineage, tests)
+│   └── tornado-event-map.tsx         - Leaflet event map (dynamically imported, client-only)
 ├── flagship-card.tsx                 - Problem / approach / outcome case-study card
 ├── project-card.tsx                  - Compact cards (githubUrl / liveUrl props)
 ├── site-header.tsx / site-footer.tsx - Chrome, nav from NAV_ITEMS
+├── mobile-navigation.tsx             - Mobile nav sheet
+├── theme-provider.tsx                - next-themes wrapper (forcedTheme="dark")
 ├── tracked-link.tsx                  - Client leaf for outbound/contact tracking
 ├── resume-download-link.tsx          - Client leaf for resume_downloaded
 └── ui/                               - shadcn/ui primitives (button, card, sheet, badge, skeleton)
@@ -103,9 +112,13 @@ lib/
 ├── accent.ts                  - Three-hue accent class map
 ├── analytics.ts               - AmplitudeManager singleton
 ├── analytics-events.ts        - Event creators + getEventContext()
+├── analytics-events.test.ts   - Vitest coverage for event creators
 ├── analytics-consent.ts       - Privacy signal checks
-└── content.ts                 - Typed site content + SECTIONS registry
+├── content.ts                 - Typed site content + SECTIONS registry
+├── utils.ts                   - cn() className helper (clsx + tailwind-merge)
+└── weather/                   - data.ts (fetch/validate/filter), data.test.ts, fixture.ts, types.ts
 proxy.ts                       - Security headers (Node.js runtime; Next.js 16 renamed middleware.ts to proxy.ts)
+vitest.config.ts               - Vitest config for lib/**/*.test.ts
 ```
 
 ### Content Rules
@@ -136,7 +149,7 @@ Renamed from `middleware.ts` for Next.js 16 (the `middleware` file convention an
 - `Permissions-Policy`: camera, microphone, geolocation all off
 - `Content-Security-Policy-Report-Only`: `default-src 'self'`, `script-src`/`style-src` allow `'unsafe-inline'` (Next.js inline bootstrap + JSON-LD script, Tailwind inline styles), `img-src`/`connect-src` allow `https://tile.openstreetmap.org` (Leaflet tiles), `frame-ancestors 'none'`. Report-only: logs violations without blocking. Switching to enforcing (`Content-Security-Policy`, dropping `-Report-Only`) needs a period of watching real traffic for false positives first; not done yet.
 
-`app/api/amplitude/route.ts` (the Amplitude batch proxy) rejects non-`application/json` requests and bodies over 200KB before forwarding, since it is otherwise an unauthenticated relay to Amplitude's batch API.
+`app/api/amplitude/route.ts` (the Amplitude batch proxy) accepts `application/json` (the normal SDK transport) and `text/plain` (what `navigator.sendBeacon()` sends on the `pagehide` flush) and rejects everything else, plus rejects bodies over 200KB, before forwarding, since it is otherwise an unauthenticated relay to Amplitude's batch API.
 
 ### Resume
 

@@ -18,7 +18,7 @@ const inter = Inter({
 })
 
 const SITE_DESCRIPTION =
-  "Chase Burkhalter is a Senior Data & Analytics Engineer building governed, AI-ready data platforms: dbt modeling on Snowflake, Fivetran ingestion, product instrumentation, semantic layers, and secure AI access to trusted data."
+  "Chase Burkhalter is a Senior Data & Analytics Engineer building governed, AI-ready data platforms: dbt modeling on cloud data warehouses, pipeline ingestion, product instrumentation, semantic layers, and secure AI access to trusted data."
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://chaseburkhalter.com"),

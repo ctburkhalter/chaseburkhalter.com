@@ -191,9 +191,11 @@ export async function POST(request: Request) {
   // forwarding: wrong content type, or a body over 200KB (typical SDK
   // batches are well under this). The route is same-origin-only in
   // practice, but was previously an unvalidated open relay to Amplitude's
-  // batch API with no checks at all.
+  // batch API with no checks at all. Both application/json (the normal
+  // fetch() transport) and text/plain (what navigator.sendBeacon() sends on
+  // the pagehide flush, see "Tab Close Event Delivery" below) are accepted.
   const contentType = request.headers.get('content-type')
-  if (!contentType?.includes('application/json')) {
+  if (!contentType?.includes('application/json') && !contentType?.includes('text/plain')) {
     return new Response('Unsupported Content-Type', { status: 415 })
   }
 

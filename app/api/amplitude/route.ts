@@ -6,8 +6,14 @@
 const MAX_BODY_BYTES = 200_000 // 200KB; typical SDK batches are well under this
 
 export async function POST(request: Request) {
+  // Accept both application/json (the normal fetch()-based SDK transport)
+  // and text/plain (what navigator.sendBeacon() sends: browsers ignore the
+  // type argument to the Blob it builds internally and label the request
+  // text/plain;charset=UTF-8 regardless). lib/analytics.ts switches to the
+  // beacon transport on pagehide for reliable delivery on tab close; without
+  // this, that flush was getting rejected here with a 415 and silently lost.
   const contentType = request.headers.get('content-type')
-  if (!contentType?.includes('application/json')) {
+  if (!contentType?.includes('application/json') && !contentType?.includes('text/plain')) {
     return new Response('Unsupported Content-Type', { status: 415 })
   }
 

@@ -420,9 +420,11 @@ The proxy solves this by routing SDK requests through `/api/amplitude`, a Next.j
 export async function POST(request: Request) {
   // Reject anything that isn't a same-origin-shaped SDK batch call before
   // forwarding: wrong content type, or a body over 200KB (typical SDK
-  // batches are well under this).
+  // batches are well under this). Both application/json (the normal fetch()
+  // transport) and text/plain (what navigator.sendBeacon() sends on the
+  // pagehide flush, see "Tab Close Reliability" below) are accepted.
   const contentType = request.headers.get('content-type')
-  if (!contentType?.includes('application/json')) {
+  if (!contentType?.includes('application/json') && !contentType?.includes('text/plain')) {
     return new Response('Unsupported Content-Type', { status: 415 })
   }
 

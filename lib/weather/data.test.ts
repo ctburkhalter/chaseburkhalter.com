@@ -64,6 +64,18 @@ describe("filterWeatherEvents", () => {
     expect(result.map((e) => e.eventId)).toEqual(["mar"])
   })
 
+  it("filters by month in the dashboard's display timezone (America/Chicago), not server-local UTC", () => {
+    // 2023-03-31T23:30:00-05:00 is 2023-04-01T04:30:00Z in UTC. A UTC-based
+    // server (Vercel) resolving Date.getMonth() would call this April, but
+    // weather-dashboard.tsx's formatDate displays it as "Mar 31" in
+    // America/Chicago. The filter must agree with what the page shows.
+    const event = buildEvent({ eventId: "boundary", occurredAt: "2023-03-31T23:30:00-05:00" })
+    const { events: marchResult } = filterWeatherEvents([event], { month: "3" })
+    expect(marchResult.map((e) => e.eventId)).toEqual(["boundary"])
+    const { events: aprilResult } = filterWeatherEvents([event], { month: "4" })
+    expect(aprilResult).toHaveLength(0)
+  })
+
   describe("rating filter", () => {
     const rated = buildEvent({ eventId: "rated-ef2", ratingValue: 2 })
     const unrated = buildEvent({ eventId: "unrated", ratingValue: null, ratingCode: null })
@@ -122,6 +134,7 @@ describe("filterWeatherEvents", () => {
 describe("isWeatherPayload", () => {
   const validBase = {
     schemaVersion: "1.0" as const,
+    generatedAt: "2026-07-09T22:40:27.000Z",
     eventYearIndex: [] as unknown[],
     eventCoverage: { preliminaryCount: 0 },
   }
@@ -140,13 +153,32 @@ describe("isWeatherPayload", () => {
     expect(isWeatherPayload({ ...validBase, schemaVersion: "2.0" })).toBe(false)
   })
 
+  it("rejects a missing generatedAt", () => {
+    // The regression this guards against: app/weather/page.tsx renders
+    // formatDateTime(initialPayload.generatedAt), which throws on an
+    // Invalid Date instead of falling back to the fixture if this field is
+    // absent from a partially-written artifact.
+    const { schemaVersion, eventYearIndex, eventCoverage } = validBase
+    expect(isWeatherPayload({ schemaVersion, eventYearIndex, eventCoverage })).toBe(false)
+  })
+
+  it("rejects a non-string generatedAt", () => {
+    expect(isWeatherPayload({ ...validBase, generatedAt: 1720000000000 })).toBe(false)
+  })
+
   it("rejects a non-array eventYearIndex", () => {
     expect(isWeatherPayload({ ...validBase, eventYearIndex: "not-an-array" })).toBe(false)
   })
 
+  it("rejects an eventYearIndex entry missing a numeric year", () => {
+    // weather-dashboard.tsx maps eventYearIndex entries to `entry.year` to
+    // populate the From/Through year selects.
+    expect(isWeatherPayload({ ...validBase, eventYearIndex: [{ count: 4 }] })).toBe(false)
+  })
+
   it("rejects a missing eventCoverage", () => {
-    const { schemaVersion, eventYearIndex } = validBase
-    expect(isWeatherPayload({ schemaVersion, eventYearIndex })).toBe(false)
+    const { schemaVersion, generatedAt, eventYearIndex } = validBase
+    expect(isWeatherPayload({ schemaVersion, generatedAt, eventYearIndex })).toBe(false)
   })
 
   it("rejects a non-numeric preliminaryCount", () => {

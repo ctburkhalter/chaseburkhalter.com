@@ -210,6 +210,12 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
         <div className="py-3 sm:px-4"><p className="font-mono text-xl text-primary">{explorer.summary.passingTestCount}/{explorer.summary.testCount}</p><p className="mt-1 text-xs text-muted-foreground">tests passed</p></div>
         <div className="py-3 sm:px-4"><p className="font-mono text-xl text-primary">{explorer.project.commitSha.slice(0, 7)}</p><p className="mt-1 text-xs text-muted-foreground">pinned commit</p></div>
       </div>
+      {/* Project-wide node count per layer (counts explorer.nodes, the whole
+          project, same source as the stat grid above). Deliberately not a
+          function of selectedNode: keep these badges here, next to the other
+          global stats, rather than in the per-model lineage panel below,
+          where their fixed value would misleadingly imply per-model scope. */}
+      <div className="mt-4 flex flex-wrap gap-2">{modelLayers.map((layer) => <span key={layer} className="rounded-md border border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">{layer}: {explorer.nodes.filter((node) => node.layer === layer).length}</span>)}</div>
     </div>
 
     <div className="grid lg:grid-cols-[17rem_minmax(0,1fr)]">
@@ -234,7 +240,6 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
               <ChevronRight className="h-4 w-4 text-muted-foreground" />
               <div className="space-y-2">{downstream.length ? downstream.map((node) => <LineageNode key={node.id} node={node} onSelect={selectNode} />) : <p className="text-xs text-muted-foreground">No project downstreams</p>}</div>
             </div></div> : <p className="mt-3 text-sm text-muted-foreground">Select a dbt model to inspect its direct dependencies.</p>}
-            <div className="mt-5 flex flex-wrap gap-2">{modelLayers.map((layer) => <span key={layer} className="rounded-md border border-border px-2 py-1 font-mono text-[11px] text-muted-foreground">{layer}: {explorer.nodes.filter((node) => node.layer === layer).length}</span>)}</div>
           </div>
 
           <aside className="border-t border-border/70 bg-muted/15 p-5 xl:border-l xl:border-t-0 md:p-6">
