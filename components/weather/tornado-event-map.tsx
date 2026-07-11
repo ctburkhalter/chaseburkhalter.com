@@ -73,10 +73,10 @@ export function TornadoEventMap({
           />
           {mappedEvents.map((event) => (
             <CircleMarker
-              key={event.eventId}
+              key={event.eventKey}
               center={[event.beginLatitude, event.beginLongitude]}
-              radius={selectedEvent?.eventId === event.eventId ? 9 : 6}
-              pathOptions={{ color: selectedEvent?.eventId === event.eventId ? MAP_COLORS.selectedMarker : MAP_COLORS.marker, fillColor: selectedEvent?.eventId === event.eventId ? MAP_COLORS.selectedMarker : MAP_COLORS.marker, fillOpacity: 0.86, weight: 2 }}
+              radius={selectedEvent?.eventKey === event.eventKey ? 9 : 6}
+              pathOptions={{ color: selectedEvent?.eventKey === event.eventKey ? MAP_COLORS.selectedMarker : MAP_COLORS.marker, fillColor: selectedEvent?.eventKey === event.eventKey ? MAP_COLORS.selectedMarker : MAP_COLORS.marker, fillOpacity: 0.86, weight: 2 }}
               eventHandlers={{ click: () => onSelectEvent(event) }}
             >
               <Tooltip direction="top" offset={[0, -6]}>

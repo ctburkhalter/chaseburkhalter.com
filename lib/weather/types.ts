@@ -6,6 +6,7 @@ export type WeatherEventStatus = "confirmed" | "preliminary"
 export type WeatherEventSourceSystem = "ncei_storm_events" | "iem_lsr"
 
 export interface WeatherEvent {
+  eventKey: string
   eventId: string
   regionIds: WeatherRegion[]
   occurredAt: string
@@ -44,7 +45,7 @@ export interface EventYearCount {
 }
 
 export interface WeatherDashboardPayload {
-  schemaVersion: "1.0"
+  schemaVersion: "2.0"
   sourceMode: WeatherSourceMode
   generatedAt: string
   sourceCoverage: string
@@ -58,7 +59,7 @@ export interface WeatherDashboardPayload {
 }
 
 export interface WeatherEventYearShard {
-  schemaVersion: "1.0"
+  schemaVersion: "2.0"
   year: number
   events: WeatherEvent[]
 }
@@ -75,7 +76,7 @@ export interface DbtProjectExplorerFile {
 export interface DbtProjectExplorerNode {
   id: string
   name: string
-  resourceType: "model" | "source"
+  resourceType: "model" | "source" | "seed" | "exposure"
   layer: string
   path: string
   description: string
@@ -85,10 +86,15 @@ export interface DbtProjectExplorerNode {
   downstream: string[]
   tests: Array<{ name: string; status: string }>
   buildStatus: string | null
+  materialization: string | null
+  contractEnforced: boolean
+  owner: string | { name?: string } | null
+  maturity: string | null
+  meta: Record<string, unknown>
 }
 
 export interface DbtProjectExplorerPayload {
-  schemaVersion: "1.0"
+  schemaVersion: "2.0"
   generatedAt: string
   project: {
     name: string
@@ -101,6 +107,11 @@ export interface DbtProjectExplorerPayload {
   summary: {
     modelCount: number
     sourceCount: number
+    seedCount: number
+    exposureCount: number
+    contractedModelCount: number
+    documentedColumnCount: number
+    columnCount: number
     testCount: number
     passingTestCount: number
     successfulModelCount: number

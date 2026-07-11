@@ -88,7 +88,7 @@ See `.env.example` for the full variable list. Configure the same value in Verce
 
 ### Weather explorer data
 
-`/weather` renders labeled local contract fixtures until `WEATHER_DATA_URL` points to the companion pipeline's published `portfolio-weather.v1.json` artifact. The same artifact base supplies the versioned `dbt-project.v1.json` project-explorer contract and published dbt docs. The self-contained pipeline workspace includes NCEI loading, preliminary IEM Local Storm Report loading, dbt models, tests, and a GitHub Pages deployment workflow.
+`/weather` renders labeled v2 contract fixtures until `WEATHER_DATA_URL` points to the companion pipeline's `data/v2/portfolio-weather.json` artifact. The same base supplies v2 year shards, `dbt-project.json`, and dbt docs. The pipeline uses source-system staging, ephemeral intermediate conformance, a contracted canonical event fact, governed reference data, tests, and GitHub Pages publishing.
 
 `app/api/weather/events`, the only browser-facing weather data route, caps a From/Through year-range query at 20 years (`maxRangeSpan` in that route) and 400s a wider request. The dashboard's From/Through year selects are mutually constrained client-side so a visitor can never choose a wider span in the first place, rather than hitting that limit and seeing the result set clear.
 

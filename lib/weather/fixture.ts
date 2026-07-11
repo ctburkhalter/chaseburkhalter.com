@@ -3,7 +3,7 @@ import type { WeatherDashboardPayload, WeatherEvent } from "@/lib/weather/types"
 // This local contract fixture keeps the route and explorer usable before the
 // independent pipeline has been deployed. It is deliberately labeled in the UI.
 export const weatherFixture: WeatherDashboardPayload = {
-  schemaVersion: "1.0",
+  schemaVersion: "2.0",
   sourceMode: "fixture",
   generatedAt: "2026-07-09T22:40:27.000Z",
   sourceCoverage: "Local contract fixture. Configure WEATHER_DATA_URL after publishing the dbt artifact.",
@@ -22,6 +22,7 @@ export const weatherFixture: WeatherDashboardPayload = {
 
 const fixtureEvents: WeatherEvent[] = [
     {
+      eventKey: "ncei_storm_events:fixture-al-001",
       eventId: "fixture-al-001",
       regionIds: ["alabama", "dixie"],
       occurredAt: "2023-03-26T17:15:00-05:00",
@@ -52,6 +53,7 @@ const fixtureEvents: WeatherEvent[] = [
       isSurveyedTrack: false,
     },
     {
+      eventKey: "ncei_storm_events:fixture-al-002",
       eventId: "fixture-al-002",
       regionIds: ["alabama", "dixie"],
       occurredAt: "2021-03-17T21:42:00-05:00",
@@ -82,6 +84,7 @@ const fixtureEvents: WeatherEvent[] = [
       isSurveyedTrack: false,
     },
     {
+      eventKey: "ncei_storm_events:fixture-dixie-001",
       eventId: "fixture-dixie-001",
       regionIds: ["dixie"],
       occurredAt: "2020-04-12T18:10:00-05:00",

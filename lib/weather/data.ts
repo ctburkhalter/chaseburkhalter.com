@@ -1,4 +1,5 @@
 import { weatherFixture, weatherFixtureEventsByYear } from "@/lib/weather/fixture"
+import { WEATHER_REGIONS } from "@/lib/weather/types"
 import type {
   DbtProjectExplorerPayload,
   EventYearCount,
@@ -11,6 +12,8 @@ import type {
 
 const refreshSeconds = 900
 const maxEventResults = 100
+const isNullableString = (value: unknown): value is string | null => value === null || typeof value === "string"
+const isNullableNumber = (value: unknown): value is number | null => value === null || (typeof value === "number" && Number.isFinite(value))
 
 // Checks every field the weather page actually dereferences from the
 // initial payload (components/weather/weather-dashboard.tsx: generatedAt
@@ -23,11 +26,17 @@ export function isWeatherPayload(value: unknown): value is WeatherDashboardPaylo
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<WeatherDashboardPayload>
   return (
-    payload.schemaVersion === "1.0" &&
+    payload.schemaVersion === "2.0" &&
+    payload.sourceMode === "pipeline" &&
     typeof payload.generatedAt === "string" &&
+    !Number.isNaN(Date.parse(payload.generatedAt)) &&
+    typeof payload.sourceCoverage === "string" &&
     Array.isArray(payload.eventYearIndex) &&
-    payload.eventYearIndex.every((entry) => typeof (entry as Partial<EventYearCount> | null)?.year === "number") &&
+    payload.eventYearIndex.every((entry) => typeof (entry as Partial<EventYearCount> | null)?.year === "number" && typeof (entry as Partial<EventYearCount>).count === "number") &&
     !!payload.eventCoverage &&
+    isNullableString(payload.eventCoverage.confirmedThrough) &&
+    isNullableString(payload.eventCoverage.preliminaryFrom) &&
+    isNullableString(payload.eventCoverage.preliminaryThrough) &&
     typeof payload.eventCoverage.preliminaryCount === "number"
   )
 }
@@ -40,7 +49,7 @@ export async function getWeatherDashboard(): Promise<WeatherDashboardPayload> {
     const response = await fetch(sourceUrl, { next: { revalidate: refreshSeconds } })
     if (!response.ok) throw new Error(`Weather artifact returned ${response.status}`)
     const payload: unknown = await response.json()
-    if (!isWeatherPayload(payload)) throw new Error("Weather artifact does not match schema version 1.0")
+    if (!isWeatherPayload(payload)) throw new Error("Weather artifact does not match schema version 2.0")
     return { ...payload, sourceMode: "pipeline" }
   } catch (error) {
     console.error("[Weather] Failed to load dashboard artifact from WEATHER_DATA_URL, falling back to fixture", error)
@@ -49,29 +58,35 @@ export async function getWeatherDashboard(): Promise<WeatherDashboardPayload> {
 }
 
 function deriveEventYearShardUrl(dashboardUrl: string, year: number): string {
-  return dashboardUrl.replace(/portfolio-weather\.v1\.json$/, `events/${year}.json`)
+  return new URL(`events/${year}.json`, dashboardUrl).toString()
 }
 
 function deriveProjectExplorerUrl(dashboardUrl: string): string {
-  return dashboardUrl.replace(/portfolio-weather\.v1\.json$/, "dbt-project.v1.json")
+  return new URL("dbt-project.json", dashboardUrl).toString()
 }
 
 function deriveDocsUrl(dashboardUrl: string, docsPath: string): string {
-  return dashboardUrl.replace(/data\/portfolio-weather\.v1\.json$/, docsPath)
+  return new URL(`../../${docsPath}`, dashboardUrl).toString()
 }
 
 export function isProjectExplorerPayload(value: unknown): value is DbtProjectExplorerPayload {
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<DbtProjectExplorerPayload>
   return (
-    payload.schemaVersion === "1.0" &&
+    payload.schemaVersion === "2.0" &&
     !!payload.project &&
     typeof payload.project.repositoryUrl === "string" &&
     typeof payload.project.docsPath === "string" &&
     !!payload.summary &&
     typeof payload.summary.modelCount === "number" &&
+    typeof payload.summary.sourceCount === "number" &&
+    typeof payload.summary.seedCount === "number" &&
+    typeof payload.summary.exposureCount === "number" &&
+    typeof payload.summary.testCount === "number" &&
     Array.isArray(payload.files) &&
-    Array.isArray(payload.nodes)
+    payload.files.every((file) => !!file && typeof file.path === "string" && typeof file.category === "string" && typeof file.content === "string" && Array.isArray(file.relatedNodeIds)) &&
+    Array.isArray(payload.nodes) &&
+    payload.nodes.every((node) => !!node && typeof node.id === "string" && typeof node.name === "string" && typeof node.layer === "string" && Array.isArray(node.upstream) && Array.isArray(node.downstream) && Array.isArray(node.columns) && Array.isArray(node.tests))
   )
 }
 
@@ -83,7 +98,7 @@ export async function getWeatherProjectExplorer(): Promise<DbtProjectExplorerPay
     const response = await fetch(deriveProjectExplorerUrl(dashboardUrl), { next: { revalidate: refreshSeconds } })
     if (!response.ok) throw new Error(`dbt project artifact returned ${response.status}`)
     const payload: unknown = await response.json()
-    if (!isProjectExplorerPayload(payload)) throw new Error("dbt project artifact does not match schema version 1.0")
+    if (!isProjectExplorerPayload(payload)) throw new Error("dbt project artifact does not match schema version 2.0")
     return { ...payload, project: { ...payload.project, docsUrl: deriveDocsUrl(dashboardUrl, payload.project.docsPath) } }
   } catch (error) {
     console.error("[Weather] Failed to load dbt project explorer artifact from WEATHER_DATA_URL, falling back to null", error)
@@ -94,7 +109,25 @@ export async function getWeatherProjectExplorer(): Promise<DbtProjectExplorerPay
 export function isEventYearShard(value: unknown): value is WeatherEventYearShard {
   if (!value || typeof value !== "object") return false
   const shard = value as Partial<WeatherEventYearShard>
-  return shard.schemaVersion === "1.0" && Array.isArray(shard.events)
+  if (shard.schemaVersion !== "2.0" || typeof shard.year !== "number" || !Array.isArray(shard.events)) return false
+  const keys = new Set<string>()
+  return shard.events.every((candidate) => {
+    const event = candidate as Partial<WeatherEvent>
+    const valid = typeof event.eventKey === "string" && event.eventKey.length > 0 &&
+      typeof event.eventId === "string" && typeof event.occurredAt === "string" && !Number.isNaN(Date.parse(event.occurredAt)) &&
+      typeof event.state === "string" && isNullableString(event.county) && Array.isArray(event.regionIds) && event.regionIds.every((region) => WEATHER_REGIONS.includes(region)) &&
+      isNullableString(event.beginLocation) && isNullableString(event.endLocation) && isNullableString(event.ratingCode) &&
+      (event.scaleSystem === "F" || event.scaleSystem === "EF" || event.scaleSystem === "Unknown" || event.scaleSystem === null) &&
+      isNullableNumber(event.ratingValue) && isNullableNumber(event.windEstimateLowMph) && isNullableNumber(event.windEstimateHighMph) &&
+      typeof event.windEstimateNote === "string" && isNullableNumber(event.pathLengthMiles) && isNullableNumber(event.pathWidthYards) &&
+      isNullableNumber(event.beginLatitude) && isNullableNumber(event.beginLongitude) && isNullableNumber(event.endLatitude) && isNullableNumber(event.endLongitude) &&
+      isNullableNumber(event.injuries) && isNullableNumber(event.fatalities) && isNullableNumber(event.propertyDamageUsd) && isNullableNumber(event.cropDamageUsd) &&
+      isNullableString(event.narrative) && typeof event.sourceUrl === "string" && isNullableString(event.sourceAttribution) && isNullableString(event.wfo) &&
+      ((event.recordStatus === "confirmed" && event.sourceSystem === "ncei_storm_events") || (event.recordStatus === "preliminary" && event.sourceSystem === "iem_lsr")) &&
+      event.isSurveyedTrack === false && !keys.has(event.eventKey)
+    if (valid) keys.add(event.eventKey as string)
+    return valid
+  })
 }
 
 async function fetchEventYear(year: number): Promise<{ events: WeatherEvent[]; sourceMode: WeatherSourceMode }> {
@@ -105,7 +138,7 @@ async function fetchEventYear(year: number): Promise<{ events: WeatherEvent[]; s
     const response = await fetch(deriveEventYearShardUrl(dashboardUrl, year), { next: { revalidate: refreshSeconds } })
     if (!response.ok) throw new Error(`Event year artifact returned ${response.status}`)
     const payload: unknown = await response.json()
-    if (!isEventYearShard(payload)) throw new Error("Event year artifact does not match schema version 1.0")
+    if (!isEventYearShard(payload)) throw new Error("Event year artifact does not match schema version 2.0")
     return { events: payload.events, sourceMode: "pipeline" }
   } catch (error) {
     console.error(`[Weather] Failed to load event year ${year} artifact from WEATHER_DATA_URL, falling back to fixture`, error)

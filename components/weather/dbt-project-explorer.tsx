@@ -9,16 +9,16 @@ type ExplorerInteraction = "pipeline_explorer_viewed" | "pipeline_file_inspected
 const categoryLabels: Record<string, string> = {
   all: "All files",
   ingestion: "Ingestion",
-  src: "Sources",
-  dim: "Dimensions",
-  fct: "Facts",
+  staging: "Staging",
+  intermediate: "Intermediate",
   marts: "Marts",
+  seeds: "Seeds",
   tests: "Tests",
   macros: "Macros",
   config: "Setup",
 }
 
-const layerOrder = ["source", "src", "dim", "fct", "marts"]
+const layerOrder = ["source", "seed", "staging", "intermediate", "marts", "exposure"]
 
 interface FileTreeDirectory {
   directories: Map<string, FileTreeDirectory>
@@ -122,7 +122,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
   const [selectedFilePath, setSelectedFilePath] = useState<string | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
-  const [expandedDirectories, setExpandedDirectories] = useState(() => new Set([".github", ".github/workflows", "ingestion", "models", "models/fct", "tests"]))
+  const [expandedDirectories, setExpandedDirectories] = useState(() => new Set([".github", ".github/workflows", "ingestion", "models", "models/marts", "models/marts/tornado_events", "tests"]))
 
   const nodesById = useMemo(() => new Map(explorer?.nodes.map((node) => [node.id, node]) ?? []), [explorer])
   const filteredFiles = useMemo(() => (explorer?.files ?? []).filter((file) => {
@@ -132,7 +132,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
   }), [category, explorer, query])
   const selectedFile = useMemo(() => {
     const files = explorer?.files ?? []
-    return files.find((file) => file.path === selectedFilePath) ?? files.find((file) => file.path === "models/fct/fct_tornado_events_current.sql") ?? files[0] ?? null
+    return files.find((file) => file.path === selectedFilePath) ?? files.find((file) => file.path === "models/marts/tornado_events/fct_tornado_events.sql") ?? files[0] ?? null
   }, [explorer, selectedFilePath])
   const selectedNode = selectedNodeId ? nodesById.get(selectedNodeId) ?? null : selectedFile?.relatedNodeIds.map((id) => nodesById.get(id)).find(Boolean) ?? null
   const availableCategories = useMemo(() => ["all", ...Array.from(new Set((explorer?.files ?? []).map((file) => file.category)))], [explorer])
@@ -246,7 +246,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
             <div className="flex items-center gap-2"><Layers3 className="h-4 w-4 text-primary" /><h3 className="font-semibold">{selectedNode?.name ?? "File context"}</h3></div>
             {selectedNode ? <div className="mt-4 space-y-4 text-sm">
               <p className="leading-relaxed text-muted-foreground">{selectedNode.description || "This model is documented through its project layer, lineage, and attached dbt tests."}</p>
-              <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">Layer</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.layer}</dd></div><div><dt className="text-muted-foreground">Relation</dt><dd className="mt-1 truncate font-mono text-foreground">{selectedNode.relation ?? "Not materialized"}</dd></div><div><dt className="text-muted-foreground">Build</dt><dd className="mt-1 font-medium text-primary">{buildStatusLabel(selectedNode.buildStatus)}</dd></div><div><dt className="text-muted-foreground">Columns</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.columns.length}</dd></div></dl>
+              <dl className="grid grid-cols-2 gap-3 text-xs"><div><dt className="text-muted-foreground">Layer</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.layer}</dd></div><div><dt className="text-muted-foreground">Relation</dt><dd className="mt-1 truncate font-mono text-foreground">{selectedNode.relation ?? "Not materialized"}</dd></div><div><dt className="text-muted-foreground">Build</dt><dd className="mt-1 font-medium text-primary">{buildStatusLabel(selectedNode.buildStatus)}</dd></div><div><dt className="text-muted-foreground">Columns</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.columns.length}</dd></div><div><dt className="text-muted-foreground">Materialization</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.materialization ?? "None"}</dd></div><div><dt className="text-muted-foreground">Contract</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.contractEnforced ? "Enforced" : "Not enforced"}</dd></div><div><dt className="text-muted-foreground">Owner</dt><dd className="mt-1 text-foreground">{typeof selectedNode.owner === "string" ? selectedNode.owner : selectedNode.owner?.name ?? "Not specified"}</dd></div><div><dt className="text-muted-foreground">Maturity</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.maturity ?? "Not specified"}</dd></div></dl>
               <div><p className="text-xs text-muted-foreground">Attached tests</p><div className="mt-2 flex flex-wrap gap-1.5">{selectedNode.tests.length ? selectedNode.tests.map((test) => <span key={`${test.name}-${test.status}`} className="rounded-md border border-primary/30 bg-primary/5 px-2 py-1 font-mono text-[11px] text-primary">{test.name} · {buildStatusLabel(test.status)}</span>) : <span className="text-xs text-muted-foreground">No direct tests declared</span>}</div></div>
             </div> : <p className="mt-3 text-sm leading-relaxed text-muted-foreground">This public file is included to show how ingestion, dbt models, tests, and scheduled publishing work together.</p>}
           </aside>

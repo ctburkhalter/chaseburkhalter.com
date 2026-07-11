@@ -4,6 +4,7 @@ import type { WeatherEvent } from "./types"
 
 function buildEvent(overrides: Partial<WeatherEvent> = {}): WeatherEvent {
   return {
+    eventKey: `ncei_storm_events:${overrides.eventId ?? "test-event"}`,
     eventId: "test-event",
     regionIds: ["alabama"],
     occurredAt: "2023-01-15T12:00:00-06:00",
@@ -133,10 +134,12 @@ describe("filterWeatherEvents", () => {
 
 describe("isWeatherPayload", () => {
   const validBase = {
-    schemaVersion: "1.0" as const,
+    schemaVersion: "2.0" as const,
+    sourceMode: "pipeline" as const,
     generatedAt: "2026-07-09T22:40:27.000Z",
+    sourceCoverage: "Test coverage",
     eventYearIndex: [] as unknown[],
-    eventCoverage: { preliminaryCount: 0 },
+    eventCoverage: { confirmedThrough: null, preliminaryFrom: null, preliminaryThrough: null, preliminaryCount: 0 },
   }
 
   it("accepts a minimally valid payload", () => {
@@ -150,7 +153,7 @@ describe("isWeatherPayload", () => {
   })
 
   it("rejects the wrong schema version", () => {
-    expect(isWeatherPayload({ ...validBase, schemaVersion: "2.0" })).toBe(false)
+    expect(isWeatherPayload({ ...validBase, schemaVersion: "1.0" })).toBe(false)
   })
 
   it("rejects a missing generatedAt", () => {
@@ -188,12 +191,12 @@ describe("isWeatherPayload", () => {
 
 describe("isProjectExplorerPayload", () => {
   const valid = {
-    schemaVersion: "1.0" as const,
+    schemaVersion: "2.0" as const,
     project: {
       repositoryUrl: "https://github.com/ctburkhalter/dbt-portfolio-weather",
       docsPath: "dbt-docs/index.html",
     },
-    summary: { modelCount: 9 },
+    summary: { modelCount: 9, sourceCount: 2, seedCount: 1, exposureCount: 2, testCount: 10 },
     files: [] as unknown[],
     nodes: [] as unknown[],
   }
@@ -220,11 +223,11 @@ describe("isProjectExplorerPayload", () => {
 
 describe("isEventYearShard", () => {
   it("accepts a minimally valid shard", () => {
-    expect(isEventYearShard({ schemaVersion: "1.0", events: [] })).toBe(true)
+    expect(isEventYearShard({ schemaVersion: "2.0", year: 2026, events: [] })).toBe(true)
   })
 
   it("rejects a shard with a non-array events field", () => {
-    expect(isEventYearShard({ schemaVersion: "1.0", events: "nope" })).toBe(false)
+    expect(isEventYearShard({ schemaVersion: "2.0", year: 2026, events: "nope" })).toBe(false)
   })
 
   it("rejects a shard with the wrong schema version", () => {

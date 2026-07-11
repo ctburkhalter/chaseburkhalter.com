@@ -19,7 +19,7 @@ pnpm test         # Run Vitest (lib/**/*.test.ts; pure-logic unit tests, no DOM/
 Create `.env.local` with:
 ```
 NEXT_PUBLIC_AMPLITUDE_API_KEY=your_key_here
-WEATHER_DATA_URL=https://your-github-pages-domain/data/portfolio-weather.v1.json
+WEATHER_DATA_URL=https://your-github-pages-domain/data/v2/portfolio-weather.json
 ```
 Get the Amplitude key from Amplitude → Settings → Projects. In production, both are set as Vercel environment variables. `WEATHER_DATA_URL` is optional: when unset, `/weather` falls back to a visibly labeled local contract fixture (`lib/weather/fixture.ts`).
 
@@ -131,8 +131,8 @@ vitest.config.ts               - Vitest config for lib/**/*.test.ts
 ### Weather Explorers
 
 - `app/weather/page.tsx` renders the case-study page. `components/weather/weather-dashboard.tsx` owns the tornado event explorer, while `components/weather/dbt-project-explorer.tsx` renders the native dbt project explorer. Both emit the scoped weather analytics described in `TRACKING_PLAN.md`.
-- `app/api/weather/events` is the only browser-facing weather data route; the weather page itself calls `getWeatherDashboard()` and `getWeatherProjectExplorer()` server-side, not through an API route (there is no `app/api/weather/route.ts`). The events route uses `WEATHER_DATA_URL` when the companion artifact is published and falls back to a visibly labeled local contract fixture. The server-rendered weather page also derives the companion `dbt-project.v1.json` artifact and dbt docs URL from that same base, then renders a native project explorer without browser-side GitHub API calls.
-- The companion pipeline lives in its own public sibling repository, [`ctburkhalter/dbt-portfolio-weather`](https://github.com/ctburkhalter/dbt-portfolio-weather), not in this repo. It ingests NCEI confirmed history and preliminary IEM Local Storm Reports after the NCEI cutoff, then models `src`, `dim`, `fct`, and mart layers with dbt-duckdb, validates data quality, and publishes versioned JSON plus dbt docs to GitHub Pages, which this site reads through `WEATHER_DATA_URL`. See that repo's `AGENTS.md` for the producer side of this contract.
+- `app/api/weather/events` is the only browser-facing weather data route. The server-rendered page derives v2 year shards, `dbt-project.json`, and dbt docs from `WEATHER_DATA_URL`, and falls back to a visibly labeled v2 fixture when remote validation fails.
+- The companion pipeline uses source-system staging, ephemeral intermediate conformance, and contracted marts. `fct_tornado_events` is the canonical fact, and v2 adds globally unique `eventKey` while retaining source-native `eventId`.
 - The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.
 - Do not conflate confirmed NCEI tornadoes with preliminary IEM Local Storm Reports. F/EF wind values are estimates inferred from damage. Begin/end coordinates are endpoints, not survey track geometry.
 
