@@ -1,8 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  eslint: {
-    ignoreDuringBuilds: false,
-  },
+  // No `eslint` key: Next.js 16 removed `next lint` and the `eslint` config
+  // option entirely (next build no longer runs ESLint at all, regardless of
+  // this setting). Linting is enforced by the separate `pnpm lint` / CI
+  // "Lint" step instead.
   typescript: {
     ignoreBuildErrors: false,
   },
@@ -15,6 +16,10 @@ const nextConfig = {
   async headers() {
     return [
       {
+        // Hardcoded rather than imported: this file runs before the
+        // TypeScript app compiles, so it cannot import lib/content.ts's
+        // RESUME_PDF_PATH constant. Keep this path in sync with that
+        // constant by hand if the resume filename ever changes.
         source: '/resume/Chase_Burkhalter_Resume_2026.pdf',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },

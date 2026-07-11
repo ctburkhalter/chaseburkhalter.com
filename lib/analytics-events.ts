@@ -1,5 +1,7 @@
 // Analytics Events Registry: event names, property types, and creator functions
 
+import { RESUME_FILE_NAME } from "@/lib/content"
+
 // ============================================================================
 // EVENT NAMES
 // ============================================================================
@@ -22,11 +24,17 @@ export const ENGAGEMENT_EVENTS = {
   CONTACT_CLICKED: 'contact_clicked',
 } as const
 
+export const WEATHER_EVENTS = {
+  WEATHER_DASHBOARD_VIEWED: 'weather_dashboard_viewed',
+  WEATHER_DASHBOARD_INTERACTED: 'weather_dashboard_interacted',
+} as const
+
 export const ANALYTICS_EVENTS = {
   ...PAGE_EVENTS,
   ...SECTION_EVENTS,
   ...DOWNLOAD_EVENTS,
   ...ENGAGEMENT_EVENTS,
+  ...WEATHER_EVENTS,
 } as const
 
 // ============================================================================
@@ -78,6 +86,38 @@ export interface ContactClickedProperties extends BaseEventProperties {
   url: string
 }
 
+export interface WeatherDashboardViewedProperties extends BaseEventProperties {
+  data_source_mode: 'pipeline' | 'fixture'
+}
+
+export type WeatherInteractionType =
+  | 'region_filter_changed'
+  | 'minimum_rating_changed'
+  | 'year_filter_changed'
+  | 'month_filter_changed'
+  | 'event_inspected'
+  | 'source_record_opened'
+  | 'methodology_viewed'
+  | 'pipeline_explorer_viewed'
+  | 'pipeline_file_inspected'
+  | 'pipeline_model_inspected'
+  | 'pipeline_repository_opened'
+  | 'pipeline_docs_opened'
+
+export interface WeatherDashboardInteractedProperties extends BaseEventProperties {
+  interaction_type: WeatherInteractionType
+  selected_region?: string
+  minimum_rating?: string
+  year_from?: number
+  year_to?: number
+  selected_month?: string
+  event_rating?: string
+  event_state?: string
+  source_type?: 'ncei_storm_events' | 'iem_lsr'
+  pipeline_file_category?: string
+  pipeline_node_layer?: string
+}
+
 export interface AnalyticsEventPayload<T extends BaseEventProperties = BaseEventProperties> {
   name: AnalyticsEventName | string
   properties?: T
@@ -88,6 +128,8 @@ export type SectionClickedEvent = AnalyticsEventPayload<SectionClickedProperties
 export type ResumeDownloadedEvent = AnalyticsEventPayload<ResumeDownloadedProperties>
 export type ExternalLinkClickedEvent = AnalyticsEventPayload<ExternalLinkClickedProperties>
 export type ContactClickedEvent = AnalyticsEventPayload<ContactClickedProperties>
+export type WeatherDashboardViewedEvent = AnalyticsEventPayload<WeatherDashboardViewedProperties>
+export type WeatherDashboardInteractedEvent = AnalyticsEventPayload<WeatherDashboardInteractedProperties>
 
 // ============================================================================
 // EVENT CONTEXT
@@ -231,7 +273,7 @@ export function createResumeDownloadedEvent(source: string): ResumeDownloadedEve
     name: ANALYTICS_EVENTS.RESUME_DOWNLOADED,
     properties: {
       download_source: source,
-      file_name: 'Chase_Burkhalter_Resume_2026.pdf',
+      file_name: RESUME_FILE_NAME,
       url: typeof window !== 'undefined' ? window.location.href : '',
     },
   }
@@ -263,6 +305,32 @@ export function createContactClickedEvent(
       contact_method: contactMethod,
       link_location: linkLocation,
       url: typeof window !== 'undefined' ? window.location.href : '',
+    },
+  }
+}
+
+export function createWeatherDashboardViewedEvent({
+  dataSourceMode,
+}: {
+  dataSourceMode: 'pipeline' | 'fixture'
+}): WeatherDashboardViewedEvent {
+  return {
+    name: ANALYTICS_EVENTS.WEATHER_DASHBOARD_VIEWED,
+    properties: {
+      data_source_mode: dataSourceMode,
+    },
+  }
+}
+
+export function createWeatherDashboardInteractedEvent(
+  interactionType: WeatherInteractionType,
+  properties: Omit<WeatherDashboardInteractedProperties, 'interaction_type'> = {},
+): WeatherDashboardInteractedEvent {
+  return {
+    name: ANALYTICS_EVENTS.WEATHER_DASHBOARD_INTERACTED,
+    properties: {
+      interaction_type: interactionType,
+      ...properties,
     },
   }
 }

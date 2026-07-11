@@ -8,8 +8,9 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { ResumeDownloadLink } from "@/components/resume-download-link"
 import { NAV_ITEMS } from "@/lib/content"
 
-export function MobileNavigation() {
+export function MobileNavigation({ isPortfolioHome = true }: { isPortfolioHome?: boolean }) {
   const [isOpen, setIsOpen] = useState(false)
+  const navHref = (href: string) => href.startsWith("#") && !isPortfolioHome ? `/${href}` : href
 
   const handleLinkClick = () => {
     setIsOpen(false)
@@ -38,7 +39,7 @@ export function MobileNavigation() {
           {NAV_ITEMS.map((item) => (
             <Link
               key={item.href}
-              href={item.href}
+              href={navHref(item.href)}
               onClick={handleLinkClick}
               className="rounded-md font-mono text-sm font-medium text-muted-foreground transition-colors hover:bg-primary/5 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:rounded-md focus:px-2 focus:py-1"
               aria-label={`Navigate to ${item.label} section`}
@@ -49,7 +50,7 @@ export function MobileNavigation() {
           <div className="space-y-2 border-t border-border/70 pt-4">
             <Button asChild className="w-full">
               <Link
-                href="#contact"
+                href={isPortfolioHome ? "#contact" : "/#contact"}
                 onClick={handleLinkClick}
               >
                 Get in Touch

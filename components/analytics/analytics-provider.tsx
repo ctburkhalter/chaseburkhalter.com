@@ -18,12 +18,16 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
 
     const handleNavClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement
-      const link = target.closest('a[href^="#"]')
+      // On /weather, SiteHeader rewrites hash links to "/#section" (see
+      // navHref in site-header.tsx) since a bare "#section" would try to
+      // scroll the current route instead of routing home first. Match both
+      // forms so section_clicked still fires from non-home routes.
+      const link = target.closest('a[href^="#"], a[href^="/#"]')
 
       if (link) {
         const href = link.getAttribute('href')
         if (href) {
-          const sectionId = href.substring(1) // Remove the #
+          const sectionId = href.startsWith('/#') ? href.substring(2) : href.substring(1)
           if (SECTION_IDS.includes(sectionId)) {
             trackSectionClick(sectionId, "navigation")
           }

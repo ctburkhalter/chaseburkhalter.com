@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { ExternalLink } from "lucide-react"
 import { TrackedLink } from "@/components/tracked-link"
 import { IDENTITY } from "@/lib/content"
+import { hasPrivacySignalEnabled } from "@/lib/analytics-consent"
 
 interface LiveEvent {
-  id: number
+  id: string
   name: string
   section?: string
   ts: number
@@ -36,17 +37,40 @@ function EventBadge({ name }: { name: string }) {
 
 function LiveEventsTab() {
   const [events, setEvents] = useState<LiveEvent[]>([])
-  const [expandedId, setExpandedId] = useState<number | null>(null)
-  const [, setTick] = useState(0)
-  const counterRef = useRef(0)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [now, setNow] = useState<number | null>(null)
+  const [privacySignalActive, setPrivacySignalActive] = useState(false)
+
+  // Both privacySignalActive and now read browser-only state (navigator
+  // signals, wall-clock time) that is unavailable, or would differ from the
+  // server-rendered markup, during SSR. They start at an SSR-matching
+  // default (false/null) and are set for real here, once, after mount. This
+  // is the standard SSR-safe pattern for client-only initial values; it
+  // necessarily calls setState synchronously in an effect, which
+  // react-hooks/set-state-in-effect flags on principle, but computing either
+  // value inline during render would reintroduce a hydration mismatch.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPrivacySignalActive(hasPrivacySignalEnabled())
+    setNow(Date.now())
+  }, [])
 
   useEffect(() => {
     const handler = (e: Event) => {
       const detail = (e as CustomEvent<AnalyticsEventDetail>).detail
       const section = (detail.properties?.section_id as string) || (detail.properties?.path as string) || undefined
-      counterRef.current += 1
       setEvents((prev) => [
-        { id: counterRef.current, name: detail.name, section, ts: detail.timestamp, properties: detail.properties },
+        // crypto.randomUUID() rather than an incrementing ref counter: this
+        // component unmounts on /weather (it isn't rendered on that route)
+        // and remounts on return to /, which resets a ref-based counter back
+        // to 0. Next.js 16's route-transition handling can keep the
+        // departing and arriving trees briefly alive together, so two
+        // independently-zeroed counters could produce the same small
+        // integer and collide on key={ev.id}, which surfaced as a real
+        // "two children with the same key" React warning under rapid
+        // navigation. A random id can't collide regardless of how many
+        // instances exist or how they overlap.
+        { id: crypto.randomUUID(), name: detail.name, section, ts: detail.timestamp, properties: detail.properties },
         ...prev.slice(0, 5),
       ])
     }
@@ -54,20 +78,30 @@ function LiveEventsTab() {
     return () => window.removeEventListener("analytics:event", handler)
   }, [])
 
-  // Tick every 5s so elapsed times stay fresh
+  // Tick every 5s so elapsed times stay fresh. Updating state from inside
+  // the interval callback, rather than the effect body itself, is the
+  // pattern react-hooks/set-state-in-effect recommends: "subscribe to an
+  // external system, call setState in a callback."
   useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 5000)
+    const id = setInterval(() => setNow(Date.now()), 5000)
     return () => clearInterval(id)
   }, [])
-
-  const now = Date.now()
 
   return (
     <div className="space-y-2">
       {events.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-10 text-center text-sm text-muted-foreground gap-2">
-          <span className="text-2xl" aria-hidden="true">↕</span>
-          <p>Scroll or click a nav link to see events fire in real time.</p>
+          {privacySignalActive ? (
+            <>
+              <span className="text-2xl" aria-hidden="true">⛔</span>
+              <p>Tracking disabled by a browser privacy signal (Do Not Track or Global Privacy Control). This is working as intended: no events are sent while either signal is on.</p>
+            </>
+          ) : (
+            <>
+              <span className="text-2xl" aria-hidden="true">↕</span>
+              <p>Scroll or click a nav link to see events fire in real time.</p>
+            </>
+          )}
         </div>
       ) : (
         events.map((ev) => {
@@ -90,7 +124,12 @@ function LiveEventsTab() {
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                   <span className="text-xs text-muted-foreground tabular-nums">
-                    {formatElapsed(now - ev.ts)}
+                    {/* now is null only in the instant between mount and the
+                        effect above running; events can't exist yet at that
+                        point (they arrive via a listener registered in that
+                        same render), so this fallback is never actually
+                        visible, just a type-safe placeholder. */}
+                    {formatElapsed((now ?? 0) - ev.ts)}
                   </span>
                   <span className="text-muted-foreground text-xs" aria-hidden="true">{isExpanded ? "▲" : "▼"}</span>
                 </div>
@@ -123,8 +162,8 @@ function LiveEventsTab() {
 const trackingPlanRows = [
   {
     event: "page_view",
-    trigger: "Initial page load",
-    properties: "path, title, referrer, is_page_reload",
+    trigger: "Initial page load and every client-side route change",
+    properties: "path, title, referrer, is_page_reload, navigation_type",
   },
   {
     event: "section_viewed",
@@ -150,6 +189,16 @@ const trackingPlanRows = [
     event: "contact_clicked",
     trigger: "Email or LinkedIn contact click",
     properties: "contact_method, link_location",
+  },
+  {
+    event: "weather_dashboard_viewed",
+    trigger: "Weather dashboard mount",
+    properties: "data_source_mode",
+  },
+  {
+    event: "weather_dashboard_interacted",
+    trigger: "Weather filter, detail, source, methodology action",
+    properties: "interaction_type, selected_region, event_rating, source_type",
   },
 ]
 

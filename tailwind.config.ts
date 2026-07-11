@@ -6,6 +6,8 @@ const config = {
   content: [
     "./components/**/*.{ts,tsx}",
     "./app/**/*.{ts,tsx}",
+    "./lib/**/*.{ts,tsx}",
+    "./hooks/**/*.{ts,tsx}",
     "*.{js,ts,jsx,tsx,mdx}",
   ],
   prefix: "",
@@ -53,11 +55,11 @@ const config = {
           foreground: "hsl(var(--card-foreground))",
         },
         chart: {
-          1: "215 100% 50%", // Blue
-          2: "280 100% 50%", // Purple
-          3: "140 100% 40%", // Green
-          4: "30 100% 50%", // Orange
-          5: "0 100% 50%", // Red
+          1: "hsl(var(--chart-1) / <alpha-value>)",
+          2: "hsl(var(--chart-2) / <alpha-value>)",
+          3: "hsl(var(--chart-3) / <alpha-value>)",
+          4: "hsl(var(--chart-4) / <alpha-value>)",
+          5: "hsl(var(--chart-5) / <alpha-value>)",
         },
       },
       borderRadius: {

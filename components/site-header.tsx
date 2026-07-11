@@ -6,7 +6,9 @@ import { MobileNavigation } from "@/components/mobile-navigation"
 import { ResumeDownloadLink } from "@/components/resume-download-link"
 import { NAV_ITEMS } from "@/lib/content"
 
-export function SiteHeader() {
+export function SiteHeader({ isPortfolioHome = true }: { isPortfolioHome?: boolean }) {
+  const navHref = (href: string) => href.startsWith("#") && !isPortfolioHome ? `/${href}` : href
+
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/70 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/70">
       <div className="container flex h-16 items-center justify-between">
@@ -14,12 +16,12 @@ export function SiteHeader() {
           <span className="rounded border border-primary/35 bg-primary/10 px-2 py-1 font-mono text-xs font-bold text-primary">CB</span>
           <span className="hidden font-mono text-xs text-muted-foreground sm:inline">~/chase-burkhalter</span>
         </Link>
-        <nav className="hidden md:flex items-center gap-6" aria-label="Main navigation">
+        <nav className="hidden md:flex items-center gap-5" aria-label="Main navigation">
           {NAV_ITEMS.map(({ href, label }) => (
             <Link
               key={href}
-              href={href}
-              className="font-mono text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+              href={navHref(href)}
+              className="whitespace-nowrap font-mono text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
             >
               {label}
             </Link>
@@ -32,7 +34,7 @@ export function SiteHeader() {
               Resume
             </ResumeDownloadLink>
           </Button>
-          <MobileNavigation />
+          <MobileNavigation isPortfolioHome={isPortfolioHome} />
         </div>
       </div>
     </header>

@@ -103,15 +103,42 @@ UTM properties are only present when the corresponding parameter exists in the U
 
 ## Event Catalog
 
+### Weather explorer events
+
+`/weather` receives the standard `page_view` event with `page_path = "/weather"`, plus two typed events that measure use of the tornado event explorer and dbt project explorer without collecting visitor-entered data.
+
+| Event | Trigger | Properties |
+|---|---|---|
+| `weather_dashboard_viewed` | Weather explorer route mounts, once per page load | `data_source_mode` |
+| `weather_dashboard_interacted` | Event-explorer filter or inspection, project-explorer interaction, source-record open, or methodology view | `interaction_type`, `selected_region`, `minimum_rating`, `year_from`, `year_to`, `selected_month`, `event_rating`, `event_state`, `source_type`, `pipeline_file_category`, `pipeline_node_layer` |
+
+`interaction_type` is one of `region_filter_changed`, `minimum_rating_changed`, `year_filter_changed`, `month_filter_changed`, `event_inspected`, `source_record_opened`, `methodology_viewed`, `pipeline_explorer_viewed`, `pipeline_file_inspected`, `pipeline_model_inspected`, `pipeline_repository_opened`, or `pipeline_docs_opened`. Event-explorer filters record their selected region, rating, year range, or month. `source_type` is `ncei_storm_events` or `iem_lsr` when present. Project-explorer events use low-cardinality file categories (`staging`, `intermediate`, `marts`, `seeds`, `tests`, `macros`, `ingestion`, `config`) and node layers (`source`, `seed`, `staging`, `intermediate`, `marts`, `exposure`), never source text, file paths, node IDs, event IDs, event keys, or narratives. All automatic page, device, referrer, UTM, reload, and per-load link context remains attached.
+
+Example:
+
+```json
+{
+  "event": "weather_dashboard_interacted",
+  "properties": {
+    "interaction_type": "event_inspected",
+    "event_rating": "EF3",
+    "event_state": "AL",
+    "page_path": "/weather"
+  }
+}
+```
+
 ### `page_view`
 
-**Description**: Tracks the initial portfolio page load.
+**Description**: Tracks every route the visitor loads or navigates to, including client-side `<Link>` navigations between routes that share the root layout (for example `/` to `/weather`), not just the initial document load.
 
-**When to fire**: On mount, inside `useEffect`, guarded by `window.__pageViewTracked` to survive React StrictMode double-mount without firing twice. No timer delay: Amplitude's SDK queues events internally, so synchronous firing after `amplitude.init()` is safe.
+**When to fire**: Inside a `useEffect` keyed on the App Router pathname (`usePathname()`), so it re-runs on every client-side route change, not only on mount. Guarded by `window.__lastTrackedPageViewPath` to survive React StrictMode double-mount without firing twice for the *same* pathname, while still firing again when the pathname actually changes. No timer delay: Amplitude's SDK queues events internally, so synchronous firing after `amplitude.init()` is safe.
+
+**Why not a one-shot flag:** The previous guard (`window.__pageViewTracked`, a boolean) was designed only to survive StrictMode's double-mount and never reset, which meant it also silently suppressed every subsequent page view for the rest of the session. Since `AnalyticsProvider` is mounted once in the root layout and persists across client-side navigation between `/` and `/weather`, a one-shot flag meant `/weather` never received its own `page_view` when reached via the nav link, and returning to `/` didn't either. Tracking the *last tracked path* instead of a boolean fixes both: StrictMode's second effect invocation sees an unchanged pathname and is skipped, but a real navigation to a new pathname always fires.
 
 **Why no 500ms timer:** The old implementation delayed `page_view` by 500ms to give Segment's CDN time to load and call `analytics.ready()`. Amplitude's npm SDK initializes synchronously and maintains its own internal event queue. There is no "wait for CDN" step, so the delay is unnecessary and was itself a source of missed events.
 
-**Frequency**: Once per session. `window.__pageViewTracked` deduplication plus manager-level 1s dedupe.
+**Frequency**: Once per distinct pathname per StrictMode-mount cycle. `window.__lastTrackedPageViewPath` deduplication plus manager-level 1s dedupe.
 
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
@@ -120,11 +147,12 @@ UTM properties are only present when the corresponding parameter exists in the U
 | `url` | string | Yes | Full URL | `"https://chaseburkhalter.com/"` |
 | `referrer` | string | Yes | Session-stable landing referrer, or `"direct"` | `"https://linkedin.com"` |
 | `hash` | string | No | URL hash | `""` |
-| `initial_load` | boolean | Yes | Initial page-load marker | `true` |
+| `initial_load` | boolean | Yes | `true` only for the very first tracked path this page load; `false` for every subsequent client-side navigation | `true` |
+| `navigation_type` | string | Yes | `"initial"` for the first tracked path this page load, `"spa"` for client-side route changes after that | `"spa"` |
 | `is_page_reload` | boolean | Yes | Identifies browser refreshes | `false` |
 | `page_event_link_id` | number | Yes | Per-load group ID | `3847291034012` |
 
-Example payload (automatic context properties shown selectively):
+Example payload, initial load (automatic context properties shown selectively):
 
 ```json
 {
@@ -137,6 +165,7 @@ Example payload (automatic context properties shown selectively):
     "page_referrer": "https://linkedin.com",
     "hash": "",
     "initial_load": true,
+    "navigation_type": "initial",
     "is_page_reload": false,
     "page_event_link_id": 3847291034012,
     "utm_source": "linkedin",
@@ -150,6 +179,27 @@ Example payload (automatic context properties shown selectively):
 }
 ```
 
+Example payload, client-side navigation to `/weather` in the same session:
+
+```json
+{
+  "event": "page_view",
+  "properties": {
+    "path": "/weather",
+    "title": "South Alabama Tornado Watch | Chase Burkhalter",
+    "url": "https://chaseburkhalter.com/weather",
+    "referrer": "https://linkedin.com",
+    "hash": "",
+    "initial_load": false,
+    "navigation_type": "spa",
+    "is_page_reload": false,
+    "page_event_link_id": 3847291034012,
+    "timestamp": "2026-07-09T10:00:12.000Z",
+    "source": "portfolio"
+  }
+}
+```
+
 ---
 
 ### `section_viewed`
@@ -158,7 +208,7 @@ Example payload (automatic context properties shown selectively):
 
 **When to fire**: Automatically when the section's leading edge enters the bottom 80% of the viewport (`rootMargin: '0px 0px -20% 0px'`, `threshold: 0`). At that moment exactly 20% of the viewport is covered by the section, regardless of element height. This handles both compact sections and sections taller than the viewport (like Experience on mobile) where `intersectionRatio` is capped at `viewportHeight / elementHeight` and can never reach a meaningful fixed fraction.
 
-**Frequency**: Once per section per session (tracked in a `Set` inside `useSectionTracking`).
+**Frequency**: Once per section per route visit (tracked in a `Set` inside `useSectionTracking`, reset whenever the pathname changes). The observer is re-attached on every pathname change so it always watches the DOM nodes of the currently mounted route; a visitor who navigates `/` → `/weather` → `/` gets fresh `section_viewed` events on the return to `/` instead of a silently dead observer still watching unmounted elements. Routes with no tracked sections in the DOM (`/weather`) skip observation entirely rather than logging a warning per missing id.
 
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
@@ -207,7 +257,7 @@ Example payload:
 
 **Description**: Tracks clicks on internal section navigation links.
 
-**When to fire**: When a user clicks an `a[href^="#"]` link targeting a tracked section.
+**When to fire**: When a user clicks an `a[href^="#"]` link targeting a tracked section, or an `a[href^="/#"]` link (the form `SiteHeader` renders on non-home routes like `/weather`, since a bare `#section` href would try to scroll the current route instead of routing home first).
 
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
@@ -347,19 +397,6 @@ Example payload:
 
 ---
 
-### `user_identified`
-
-**Description**: Associates a valid user ID with the current analytics session.
-
-**Current status**: Supported by `analytics.identify()` in `lib/analytics.ts`. The current portfolio UI does not collect user IDs; this event exists for future use.
-
-Validation rules:
-
-- `user_id` must be at least 5 characters
-- Values like `"me"`, empty strings, or `null` are rejected at the manager level before delivery to Amplitude
-
----
-
 ## Platform Implementation
 
 ### Amplitude Browser SDK
@@ -368,9 +405,9 @@ Amplitude is initialized directly via `@amplitude/analytics-browser` in `lib/ana
 
 ```ts
 amplitude.track(eventName, properties)      // all events including page_view
-amplitude.identify(new amplitude.Identify()) // user traits
-amplitude.setUserId(userId)                 // user identity
 ```
+
+The SDK also exposes `identify()`/`setUserId()` for user-level traits, but this site is fully anonymous and does not call them.
 
 ### First-Party Proxy: Why and How
 
@@ -381,7 +418,20 @@ The proxy solves this by routing SDK requests through `/api/amplitude`, a Next.j
 ```ts
 // app/api/amplitude/route.ts
 export async function POST(request: Request) {
+  // Reject anything that isn't a same-origin-shaped SDK batch call before
+  // forwarding: wrong content type, or a body over 200KB (typical SDK
+  // batches are well under this). Both application/json (the normal fetch()
+  // transport) and text/plain (what navigator.sendBeacon() sends on the
+  // pagehide flush, see "Tab Close Reliability" below) are accepted.
+  const contentType = request.headers.get('content-type')
+  if (!contentType?.includes('application/json') && !contentType?.includes('text/plain')) {
+    return new Response('Unsupported Content-Type', { status: 415 })
+  }
+
   const body = await request.text()
+  if (body.length > 200_000) {
+    return new Response('Payload too large', { status: 413 })
+  }
 
   const clientIp =
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
@@ -485,10 +535,15 @@ PII guidance:
 
 **Duplicate events:**
 
-- Check `window.__pageViewTracked`: it should be `true` after first page load
+- Check `window.__lastTrackedPageViewPath`: it should equal the current pathname after a page view fires
 - Verify only one `AnalyticsProvider` is mounted
 - Manager-level 1s dedupe prevents identical page views in rapid succession
-- React StrictMode remounts effects in development; `window.__pageViewTracked` prevents double-fire
+- React StrictMode remounts effects in development; `window.__lastTrackedPageViewPath` prevents double-fire for the same pathname, while still allowing a new `page_view` when the pathname changes
+
+**`page_view` missing on client-side navigation:**
+
+- Confirm `usePathname()` is actually returning the new path (Next.js App Router only; a non-App-Router navigation pattern would not trigger this effect)
+- Check `window.__lastTrackedPageViewPath` was not already set to the destination path from an earlier visit in the same session without a real navigation in between
 
 **Events missing in Amplitude:**
 
@@ -513,6 +568,10 @@ PII guidance:
 
 | Version | Date | Changes |
 |---------|------|---------|
+| 5.3.0 | 2026-07-10 | Fixed `page_view` and `section_viewed` breaking across client-side route changes: `page_view` now fires on every App Router pathname change (not just initial mount) via a last-tracked-path guard replacing the old one-shot `window.__pageViewTracked` boolean; added `navigation_type` (`"initial"` \| `"spa"`) to `page_view`; `section_viewed`'s IntersectionObserver now re-attaches per pathname instead of staying bound to unmounted DOM nodes after a route round trip; `section_clicked` now also matches `a[href^="/#"]` so it fires from non-home routes. Removed the unused `user_identified` event and `analytics.identify()` plumbing (never called from the UI). |
+| 5.2.0 | 2026-07-10 | Reframed `/weather` as a tornado event explorer plus dbt project explorer. Removed chart-tab and cohort tracking while retaining event filters, event and source-record inspection, methodology, and pipeline-explorer tracking. |
+| 5.1.1 | 2026-07-10 | Added `iem_lsr` as a weather `source_type` for preliminary Local Storm Report source opens. |
+| 5.1.0 | 2026-07-09 | Added `/weather` explorer view and interaction events; documented safe weather event-property handling and excluded high-cardinality source detail. |
 | 5.0.0 | 2026-07-09 | Added `external_link_clicked` and `contact_clicked` events via `components/tracked-link.tsx`; section registry moved to `SECTIONS` in `lib/content.ts` with stable ids and explicit display names; added `ai-engineering` and `about` sections; on-page Tracking Plan tab corrected to show the first-party proxy route and full event catalog |
 | 4.0.2 | 2026-06-22 | Proxy: forward `X-Forwarded-For` to restore correct visitor geolocation in Amplitude |
 | 4.0.1 | 2026-06-22 | Fix `page_event_link_id` buffer size (`Uint8Array(7)` → `Uint8Array(13)`) to produce full 13-digit IDs |

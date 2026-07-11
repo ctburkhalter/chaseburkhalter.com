@@ -36,14 +36,6 @@
     --chart-4: 199 89% 48%;
     --chart-5: 350 89% 60%;
     --radius: 0.5rem;
-    --sidebar-background: 219 48% 10%;
-    --sidebar-foreground: 213 36% 92%;
-    --sidebar-primary: 153 76% 56%;
-    --sidebar-primary-foreground: 219 64% 7%;
-    --sidebar-accent: 260 42% 20%;
-    --sidebar-accent-foreground: 213 36% 92%;
-    --sidebar-border: 217 34% 20%;
-    --sidebar-ring: 153 76% 56%;
   }
   /* Dark is the only theme; ThemeProvider forces it. The :root block above
      defines all tokens, so no separate .dark override is needed. */

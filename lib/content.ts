@@ -12,8 +12,8 @@ export const IDENTITY = {
   name: "Chase Burkhalter",
   title: "Senior Data & Analytics Engineer",
   positioning:
-    "Building governed, AI-ready data platforms: ingestion, dbt modeling on Snowflake, product instrumentation, semantic context, and secure AI access to trusted data.",
-  bio: "I build and run modern data platforms end to end: Fivetran ingestion, dbt modeling on Snowflake, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, custom MCP servers, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
+    "Building governed, AI-ready data platforms: ingestion, dbt modeling on cloud data warehouses, product instrumentation, semantic context, and secure AI access to trusted data.",
+  bio: "I build and run modern data platforms end to end: ingestion pipelines, dbt modeling on cloud data warehouses, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, custom MCP servers, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
   availability: "Open to senior data & analytics engineering roles",
   location: "Dothan, AL, open to remote",
   email: "chase@chaseburkhalter.com",
@@ -22,12 +22,22 @@ export const IDENTITY = {
   siteRepo: "https://github.com/ctburkhalter/chaseburkhalter.com",
 } as const
 
+// Single source of truth for the resume filename, referenced by the download
+// link component and the resume_downloaded analytics event. next.config.mjs
+// also references this path for its Cache-Control header rule, but cannot
+// import from lib/content.ts (it runs before the TypeScript app compiles), so
+// it hardcodes the same path with a comment pointing back here; keep both in
+// sync when the resume filename changes.
+export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026.pdf"
+export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
+
 export const NAV_ITEMS = [
   { href: "#projects", label: "Work" },
   { href: "#ai-engineering", label: "AI" },
   { href: "#experience", label: "Experience" },
   { href: "#skills", label: "Skills" },
   { href: "#contact", label: "Contact" },
+  { href: "/weather", label: "Weather Project" },
 ] as const
 
 // Section registry: drives IntersectionObserver tracking and stable analytics
@@ -162,9 +172,18 @@ export interface Project {
   tags: string[]
   githubUrl?: string
   liveUrl?: string
+  href?: string
 }
 
 export const PROJECTS: Project[] = [
+  {
+    metric: "NCEI + IEM",
+    title: "South Alabama Tornado Watch",
+    description:
+      "A zero-cost dbt and DuckDB pipeline that models NOAA Storm Events history with preliminary Iowa State Mesonet reports, then serves an event-level explorer with rating, estimated wind range, path dimensions, and source context.",
+    tags: ["dbt", "DuckDB", "NOAA", "GitHub Actions"],
+    href: "/weather",
+  },
   {
     metric: "First-party",
     title: "This Site: Ad-Block-Proof Analytics Pipeline",
