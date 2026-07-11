@@ -135,6 +135,7 @@ vitest.config.ts               - Vitest config for lib/**/*.test.ts
 - The companion pipeline uses source-system staging, ephemeral intermediate conformance, and contracted marts. `fct_tornado_events` is the canonical fact, and v2 adds globally unique `eventKey` while retaining source-native `eventId`.
 - The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.
 - Do not conflate confirmed NCEI tornadoes with preliminary IEM Local Storm Reports. F/EF wind values are estimates inferred from damage. Begin/end coordinates are endpoints, not survey track geometry.
+- The dbt project explorer's code viewer highlights SQL, YAML, Python, and Markdown with PrismJS (`components/weather/dbt-project-explorer.tsx`), using the same stock language grammars dbt docs itself ships (no custom Jinja grammar), so `{{ ref(...) }}` is colored however the SQL grammar happens to tokenize it, not a bespoke Jinja scheme. The token-to-color mapping is a dark-theme adaptation of dbt docs' own `prism-ghcolors` palette. The "Direct lineage" and "Model details" panels are tabs, not a side-by-side split, so the panel content is never width-constrained against the file tree.
 
 ### Styling
 
