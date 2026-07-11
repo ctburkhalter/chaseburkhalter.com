@@ -13,6 +13,7 @@ import type {
 const refreshSeconds = 900
 const maxEventResults = 100
 const isNullableString = (value: unknown): value is string | null => value === null || typeof value === "string"
+const isOptionalNullableString = (value: unknown): value is string | null | undefined => value === undefined || isNullableString(value)
 const isNullableNumber = (value: unknown): value is number | null => value === null || (typeof value === "number" && Number.isFinite(value))
 const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value)
 const isStringArray = (value: unknown): value is string[] => Array.isArray(value) && value.every((item) => typeof item === "string")
@@ -153,7 +154,7 @@ export function isEventYearShard(value: unknown): value is WeatherEventYearShard
       typeof event.windEstimateNote === "string" && isNullableNumber(event.pathLengthMiles) && isNullableNumber(event.pathWidthYards) &&
       isNullableNumber(event.beginLatitude) && isNullableNumber(event.beginLongitude) && isNullableNumber(event.endLatitude) && isNullableNumber(event.endLongitude) &&
       isNullableNumber(event.injuries) && isNullableNumber(event.fatalities) && isNullableNumber(event.propertyDamageUsd) && isNullableNumber(event.cropDamageUsd) &&
-      isNullableString(event.narrative) && typeof event.sourceUrl === "string" && isNullableString(event.sourceAttribution) && isNullableString(event.wfo) &&
+      isNullableString(event.narrative) && typeof event.sourceUrl === "string" && isOptionalNullableString(event.sourceAttribution) && isOptionalNullableString(event.wfo) &&
       ((event.recordStatus === "confirmed" && event.sourceSystem === "ncei_storm_events") || (event.recordStatus === "preliminary" && event.sourceSystem === "iem_lsr")) &&
       event.isSurveyedTrack === false && !keys.has(event.eventKey)
     if (valid) keys.add(event.eventKey as string)

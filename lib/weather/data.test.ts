@@ -253,6 +253,11 @@ describe("isEventYearShard", () => {
     expect(isEventYearShard({ schemaVersion: "2.0", year: 2026, events: [] })).toBe(true)
   })
 
+  it("accepts events that omit optional source attribution fields", () => {
+    const event = buildEvent()
+    expect(isEventYearShard({ schemaVersion: "2.0", year: 2023, events: [event] })).toBe(true)
+  })
+
   it("rejects a shard with a non-array events field", () => {
     expect(isEventYearShard({ schemaVersion: "2.0", year: 2026, events: "nope" })).toBe(false)
   })
