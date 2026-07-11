@@ -18,12 +18,13 @@ pnpm lint         # Run ESLint (flat config; ignores .next, node_modules, resume
 Create `.env.local` with:
 ```
 NEXT_PUBLIC_AMPLITUDE_API_KEY=your_key_here
+WEATHER_DATA_URL=https://your-github-pages-domain/data/portfolio-weather.v1.json
 ```
-Get the key from Amplitude → Settings → Projects. In production, this is set as a Vercel environment variable.
+Get the Amplitude key from Amplitude → Settings → Projects. In production, both are set as Vercel environment variables. `WEATHER_DATA_URL` is optional: when unset, `/weather` falls back to a visibly labeled local contract fixture (`lib/weather/fixture.ts`).
 
 ## Architecture
 
-**Next.js 15 portfolio** (App Router, TypeScript, React 19) deployed to Vercel. The primary portfolio is `/` with hash-based navigation. `/weather` is a dedicated static data-product route backed by same-origin cached APIs and a companion dbt project under `weather-pipeline/`.
+**Next.js 16 portfolio** (App Router, TypeScript, React 19) deployed to Vercel. The primary portfolio is `/` with hash-based navigation. `/weather` is a dedicated static data-product route backed by same-origin cached APIs and a companion dbt/DuckDB pipeline that lives in its own sibling public repository, [`ctburkhalter/dbt-portfolio-weather`](https://github.com/ctburkhalter/dbt-portfolio-weather), not a subdirectory of this repo.
 
 ### Content Model
 
@@ -58,15 +59,15 @@ Browser
 **Tracked events:**
 | Event | When |
 |-------|------|
-| `page_view` | App init |
-| `section_viewed` | IntersectionObserver with 20% bottom rootMargin, 0 threshold |
-| `section_clicked` | Internal nav `a[href^="#"]` clicks |
+| `page_view` | App init, and again on every client-side route change (App Router `usePathname()`), e.g. `/` → `/weather` |
+| `section_viewed` | IntersectionObserver with 20% bottom rootMargin, 0 threshold; re-attached per route so it does not go stale after a route round trip |
+| `section_clicked` | Internal nav `a[href^="#"]` clicks, or `a[href^="/#"]` on non-home routes |
 | `resume_downloaded` | PDF link click, with `download_source` (hero/nav/contact) |
 | `external_link_clicked` | Outbound links via `components/tracked-link.tsx`, with `link_type` + `link_location` |
 | `contact_clicked` | Email/LinkedIn contact links via `components/tracked-link.tsx`, with `contact_method` |
 
 **Key implementation guards:**
-- `window.__pageViewTracked` survives React StrictMode double-mount to prevent duplicate `page_view`
+- `window.__lastTrackedPageViewPath` tracks the last pathname a `page_view` fired for. It survives React StrictMode double-mount (same pathname is skipped) while still firing again on a real route change (new pathname), unlike a one-shot boolean
 - `window.__pageEventLinkId` is a 13-digit random ID shared across all events from the same page load
 - `sessionStorage['portfolio:referrer']` is captured once on landing and stays stable across hash navigations
 - `pagehide` listener switches to `sendBeacon` transport on tab close for reliable flush
@@ -104,7 +105,7 @@ lib/
 ├── analytics-events.ts        - Event creators + getEventContext()
 ├── analytics-consent.ts       - Privacy signal checks
 └── content.ts                 - Typed site content + SECTIONS registry
-middleware.ts                  - Security headers (Edge Runtime)
+proxy.ts                       - Security headers (Node.js runtime; Next.js 16 renamed middleware.ts to proxy.ts)
 ```
 
 ### Content Rules
@@ -117,8 +118,8 @@ middleware.ts                  - Security headers (Edge Runtime)
 ### Weather Explorers
 
 - `app/weather/page.tsx` renders the case-study page. `components/weather/weather-dashboard.tsx` owns the tornado event explorer, while `components/weather/dbt-project-explorer.tsx` renders the native dbt project explorer. Both emit the scoped weather analytics described in `TRACKING_PLAN.md`.
-- `app/api/weather` and `app/api/weather/events` are the browser-facing event-data routes. They use `WEATHER_DATA_URL` when the companion artifact is published and fall back to visibly labeled local contract fixtures. The server-rendered weather page also derives the companion `dbt-project.v1.json` artifact and dbt docs URL from that same base, then renders a native project explorer without browser-side GitHub API calls.
-- `weather-pipeline/` is designed to move into its own public repository. It ingests NCEI confirmed history and preliminary IEM Local Storm Reports after the NCEI cutoff, then models `src`, `dim`, `fct`, and mart layers with dbt-duckdb, validates data quality, and publishes versioned JSON plus dbt docs.
+- `app/api/weather/events` is the only browser-facing weather data route; the weather page itself calls `getWeatherDashboard()` and `getWeatherProjectExplorer()` server-side, not through an API route (there is no `app/api/weather/route.ts`). The events route uses `WEATHER_DATA_URL` when the companion artifact is published and falls back to a visibly labeled local contract fixture. The server-rendered weather page also derives the companion `dbt-project.v1.json` artifact and dbt docs URL from that same base, then renders a native project explorer without browser-side GitHub API calls.
+- The companion pipeline lives in its own public sibling repository, [`ctburkhalter/dbt-portfolio-weather`](https://github.com/ctburkhalter/dbt-portfolio-weather), not in this repo. It ingests NCEI confirmed history and preliminary IEM Local Storm Reports after the NCEI cutoff, then models `src`, `dim`, `fct`, and mart layers with dbt-duckdb, validates data quality, and publishes versioned JSON plus dbt docs to GitHub Pages, which this site reads through `WEATHER_DATA_URL`. See that repo's `AGENTS.md` for the producer side of this contract.
 - The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.
 - Do not conflate confirmed NCEI tornadoes with preliminary IEM Local Storm Reports. F/EF wind values are estimates inferred from damage. Begin/end coordinates are endpoints, not survey track geometry.
 
@@ -126,13 +127,16 @@ middleware.ts                  - Security headers (Edge Runtime)
 
 Tailwind CSS 3 with HSL-based CSS custom properties defined in `globals.css`. Dark-only: ThemeProvider is `forcedTheme="dark"` and `:root` holds the single token set. Component variants use class-variance-authority. `cn()` from `lib/utils.ts` (clsx + tailwind-merge) is the standard className helper. Accent classes come from `lib/accent.ts`, not ad hoc color maps.
 
-### Security Headers (middleware.ts)
+### Security Headers (proxy.ts)
 
-Applied at the Edge before every response:
+Renamed from `middleware.ts` for Next.js 16 (the `middleware` file convention and exported function name are both deprecated in favor of `proxy`; see the Next.js 16 upgrade guide). The exported function is `proxy()`, not `middleware()`. It now runs on the Node.js runtime rather than the Edge runtime (Next 16 removed Edge runtime support for this convention entirely), which has no practical effect here since the implementation only sets response headers. Applied before every response:
 - `X-Frame-Options: DENY`
 - `X-Content-Type-Options: nosniff`
 - `Referrer-Policy: strict-origin-when-cross-origin`
 - `Permissions-Policy`: camera, microphone, geolocation all off
+- `Content-Security-Policy-Report-Only`: `default-src 'self'`, `script-src`/`style-src` allow `'unsafe-inline'` (Next.js inline bootstrap + JSON-LD script, Tailwind inline styles), `img-src`/`connect-src` allow `https://tile.openstreetmap.org` (Leaflet tiles), `frame-ancestors 'none'`. Report-only: logs violations without blocking. Switching to enforcing (`Content-Security-Policy`, dropping `-Report-Only`) needs a period of watching real traffic for false positives first; not done yet.
+
+`app/api/amplitude/route.ts` (the Amplitude batch proxy) rejects non-`application/json` requests and bodies over 200KB before forwarding, since it is otherwise an unauthenticated relay to Amplitude's batch API.
 
 ### Resume
 

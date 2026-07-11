@@ -112,7 +112,10 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
   const availableYears = useMemo(() => initialPayload.eventYearIndex.map((entry) => entry.year), [initialPayload.eventYearIndex])
   const defaultYear = useMemo(() => {
     const currentYear = new Date().getFullYear()
-    return availableYears.includes(currentYear) ? currentYear : (availableYears[0] ?? currentYear)
+    if (availableYears.includes(currentYear)) return currentYear
+    // Math.max rather than availableYears[0]: the fallback should not assume
+    // the publisher's index is sorted descending.
+    return availableYears.length > 0 ? Math.max(...availableYears) : currentYear
   }, [availableYears])
   const [yearFrom, setYearFrom] = useState(defaultYear)
   const [yearTo, setYearTo] = useState(defaultYear)
@@ -152,13 +155,25 @@ export function WeatherDashboard({ initialPayload, initialProjectExplorer }: { i
 
   useEffect(() => {
     const controller = new AbortController()
-    const params = new URLSearchParams({ region, rating: minimumRating })
+    const params = new URLSearchParams({ region })
+    // "0" is the <select>'s "Any rating" option. Omit the param entirely
+    // rather than sending rating=0, since the API now treats an explicitly
+    // passed 0 as "must have a reported rating >= 0" (excludes unrated
+    // events), not "no filter." See lib/weather/data.ts filterWeatherEvents.
+    if (minimumRating !== "0") params.set("rating", minimumRating)
     if (yearFrom === yearTo) params.set("year", String(yearFrom))
     else {
       params.set("yearFrom", String(Math.min(yearFrom, yearTo)))
       params.set("yearTo", String(Math.max(yearFrom, yearTo)))
     }
     if (month) params.set("month", month)
+    // Standard filter-driven refetch idiom: mark loading before the request
+    // that this same effect is about to start, so the table shows a loading
+    // state immediately rather than only after the fetch resolves.
+    // react-hooks/set-state-in-effect flags synchronous setState in an
+    // effect body on principle; there's no way to signal "a fetch this
+    // effect just started is in flight" without one.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsLoading(true)
     fetch(`/api/weather/events?${params}`, { signal: controller.signal })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error("Unable to load events")))

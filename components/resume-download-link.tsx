@@ -2,6 +2,7 @@
 
 import { analytics } from "@/lib/analytics"
 import { createResumeDownloadedEvent } from "@/lib/analytics-events"
+import { RESUME_PDF_PATH } from "@/lib/content"
 
 interface ResumeDownloadLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
   source: "nav" | "hero" | "contact"
@@ -15,7 +16,7 @@ export function ResumeDownloadLink({ source, onClick, children, ...props }: Resu
 
   return (
     <a
-      href="/resume/Chase_Burkhalter_Resume_2026.pdf"
+      href={RESUME_PDF_PATH}
       target="_blank"
       rel="noopener noreferrer"
       onClick={handleClick}

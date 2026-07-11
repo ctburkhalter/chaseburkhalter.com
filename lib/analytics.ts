@@ -109,22 +109,6 @@ class AmplitudeProvider {
     }
   }
 
-  identify(userId: string, traits?: AnalyticsProperties): void {
-    if (typeof window === 'undefined') return
-    try {
-      amplitude.setUserId(userId)
-      if (traits) {
-        const id = new amplitude.Identify()
-        for (const [key, value] of Object.entries(traits)) {
-          id.set(key, value as string | number | boolean)
-        }
-        amplitude.identify(id)
-      }
-      AnalyticsLogger.info('User identified', { userId, traits })
-    } catch (error) {
-      AnalyticsLogger.error('Failed to identify user', error)
-    }
-  }
 }
 
 class AnalyticsManager {
@@ -183,17 +167,6 @@ class AnalyticsManager {
       properties: { ...getEventContext(), ...pageView.properties },
     }
     this.provider.trackPageView(enriched)
-  }
-
-  identify(userId: string, traits?: AnalyticsProperties): void {
-    if (this.isDisabled || !canLoadAnalytics()) { this.isDisabled = true; return }
-    if (!this.isInitialized) this.initialize()
-
-    if (!userId || userId.trim().length < 5) {
-      AnalyticsLogger.warn('Invalid userId: must be at least 5 characters', { userId })
-      return
-    }
-    this.provider.identify(userId, traits)
   }
 }
 

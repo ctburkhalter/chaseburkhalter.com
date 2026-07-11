@@ -22,6 +22,15 @@ export const IDENTITY = {
   siteRepo: "https://github.com/ctburkhalter/chaseburkhalter.com",
 } as const
 
+// Single source of truth for the resume filename, referenced by the download
+// link component and the resume_downloaded analytics event. next.config.mjs
+// also references this path for its Cache-Control header rule, but cannot
+// import from lib/content.ts (it runs before the TypeScript app compiles), so
+// it hardcodes the same path with a comment pointing back here; keep both in
+// sync when the resume filename changes.
+export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026.pdf"
+export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
+
 export const NAV_ITEMS = [
   { href: "#projects", label: "Work" },
   { href: "/weather", label: "Weather" },

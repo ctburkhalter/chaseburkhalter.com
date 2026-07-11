@@ -47,13 +47,16 @@ Replace Segment with `@amplitude/analytics-browser` (npm), routed through a Next
 RootLayout (app/layout.tsx)
   → AnalyticsProvider (components/analytics/analytics-provider.tsx)
       → useAnalytics() (hooks/use-analytics.ts)
-          → checks window.__pageViewTracked (StrictMode guard)
-          → analytics.initialize() (lib/analytics.ts)
+          → usePathname() effect re-runs on every route change
+          → checks window.__lastTrackedPageViewPath (StrictMode guard + SPA re-fire)
+          → analytics.initialize() (lib/analytics.ts, no-ops after first call)
               → canLoadAnalytics() checks DNT / GPC browser signals
               → amplitude.init() with serverUrl: '/api/amplitude'
               → registers pagehide beacon flush listener
           → analytics.trackPageView() fires immediately, no timer delay
 ```
+
+`AnalyticsProvider` is mounted once in the root layout, so it is not remounted when the visitor navigates between `/` and `/weather` (both share the root layout). Because of that, page-view tracking is keyed on the Next.js App Router pathname (`usePathname()`) rather than on mount: every distinct pathname fires its own `page_view`, including client-side `<Link>` navigations that never trigger a full document reload.
 
 Amplitude is initialized only when:
 
@@ -81,36 +84,46 @@ Event created by creator function (lib/analytics-events.ts)
               → LiveEventsTab in AnalyticsShowcase picks this up for real-time display
 ```
 
-### Page View: No Timer
+### Page View: No Timer, Re-fires on Route Change
 
-The old implementation used a 500ms `setTimeout` to delay `page_view`, assuming Segment would be ready by then. Amplitude's npm SDK queues events internally from the moment `amplitude.init()` is called; no "ready" callback is needed. `page_view` now fires synchronously in `useEffect`, guarded by `window.__pageViewTracked` to survive React StrictMode double-mount.
+The old implementation used a 500ms `setTimeout` to delay `page_view`, assuming Segment would be ready by then. Amplitude's npm SDK queues events internally from the moment `amplitude.init()` is called; no "ready" callback is needed. `page_view` fires synchronously in a `useEffect` keyed on `usePathname()`, guarded by `window.__lastTrackedPageViewPath` to survive React StrictMode double-mount without suppressing real navigations.
 
 ```
-useEffect() fires (after hydration)
-  → window.__pageViewTracked check (returns early if already set)
-  → window.__pageViewTracked = true
-  → analytics.initialize() (initializes Amplitude SDK)
-  → analytics.trackPageView() (fires immediately, SDK queues internally)
+useEffect() fires (after hydration, and again on every pathname change)
+  → window.__lastTrackedPageViewPath === pathname? return (StrictMode re-invoke of the same mount)
+  → isInitialLoad = window.__lastTrackedPageViewPath === undefined
+  → window.__lastTrackedPageViewPath = pathname
+  → analytics.initialize() (no-ops after the first real call)
+  → analytics.trackPageView({ ..., initial_load: isInitialLoad, navigation_type: isInitialLoad ? 'initial' : 'spa' })
 ```
+
+**Why this matters:** `AnalyticsProvider` lives in the root layout and is not remounted on client-side navigation. A plain one-shot boolean (the previous `window.__pageViewTracked`) could tell "first mount" from "StrictMode's second invocation of that same mount," but not from "a real navigation to a new route." That meant `/weather` never got a `page_view` when reached via the nav link, and returning to `/` didn't either. Tracking the last tracked *path* instead of a boolean fixes this: the effect still no-ops on StrictMode's duplicate invocation (same pathname), but fires again the moment the pathname actually changes.
 
 ### Section Tracking
 
 ```
+Pathname changes (including initial mount)
+  → useSectionTracking effect re-runs, resets the tracked-sections Set,
+    disconnects any previous observer, and attaches a fresh one
 User scrolls
   → IntersectionObserver (rootMargin -20% bottom, threshold 0) detects section
-      → section_viewed fires once per section per session
+      → section_viewed fires once per section per route visit
           → tracked in Set<string> in useSectionTracking ref
 ```
 
 Section ids and display names come from the `SECTIONS` registry in `lib/content.ts`. The registry is the single source shared by the IntersectionObserver target list, the navigation components, and the analytics display-name lookup.
 
+**Why the observer re-attaches per route:** `useSectionTracking`'s effect used to run once (stable `sectionIds`/`trackEvent` deps) and never again. Since `AnalyticsProvider` persists across client-side navigation, after `/` → `/weather` → `/` the observer was still watching the *original*, now-unmounted section DOM nodes, so `section_viewed` silently stopped firing for the rest of the session. Adding `pathname` to the effect's dependency array forces a clean disconnect-and-reattach on every route change, and resetting the tracked-sections `Set` means a returning visit to `/` tracks sections again instead of treating them as already-seen from the prior visit. On routes with none of the tracked section ids in the DOM (`/weather`), the effect finds nothing to observe and skips silently rather than warning once per missing id.
+
 ### Navigation Tracking
 
 ```
-User clicks an internal hash link
+User clicks an internal hash link: a[href^="#"] (home) or a[href^="/#"] (non-home routes)
   → document click handler (analytics-provider.tsx)
       → section_clicked fires with click_source = "navigation"
 ```
+
+`SiteHeader` rewrites hash hrefs to `/#section` on routes other than `/` (see `navHref` in `site-header.tsx`), since a bare `#section` would try to scroll the current route instead of routing to the homepage first. The click handler matches both forms and strips the appropriate prefix before checking the id against `SECTION_IDS`.
 
 ### Weather Explorer Tracking
 
@@ -174,7 +187,20 @@ The API route forwards the payload verbatim with the original client IP:
 
 ```ts
 export async function POST(request: Request) {
+  // Reject anything that isn't a same-origin-shaped SDK batch call before
+  // forwarding: wrong content type, or a body over 200KB (typical SDK
+  // batches are well under this). The route is same-origin-only in
+  // practice, but was previously an unvalidated open relay to Amplitude's
+  // batch API with no checks at all.
+  const contentType = request.headers.get('content-type')
+  if (!contentType?.includes('application/json')) {
+    return new Response('Unsupported Content-Type', { status: 415 })
+  }
+
   const body = await request.text()
+  if (body.length > 200_000) {
+    return new Response('Payload too large', { status: 413 })
+  }
 
   const clientIp =
     request.headers.get('x-forwarded-for')?.split(',')[0].trim() ??
@@ -264,7 +290,7 @@ The showcase has two tabs:
 
 | Event | Trigger | Key Properties |
 |-------|---------|----------------|
-| `page_view` | App init | `path`, `title`, `referrer`, `is_page_reload`, `initial_load` |
+| `page_view` | App init, and every client-side route change thereafter | `path`, `title`, `referrer`, `is_page_reload`, `initial_load`, `navigation_type` |
 | `section_viewed` | Leading edge 20% above viewport bottom | `section_id`, `section_name`, `referrer`, `interaction_type` |
 | `section_clicked` | Internal nav link click | `section_id`, `section_name`, `referrer`, `click_source` |
 | `resume_downloaded` | Resume link click | `download_source`, `file_name`, `referrer` |
@@ -294,12 +320,12 @@ Defined in the `SECTIONS` registry in `lib/content.ts` (ids are stable; labels a
 
 | Guard | Location | What it prevents |
 |-------|----------|-----------------|
-| `window.__pageViewTracked` | `hooks/use-analytics.ts` | React StrictMode double-mount page_view race |
+| `window.__lastTrackedPageViewPath` | `hooks/use-analytics.ts` | React StrictMode double-mount page_view race, without suppressing page views on later route changes |
 | Manager-level 1s dedupe | `lib/analytics.ts` | Identical page views less than 1s apart |
-| `Set<string>` of viewed sections | `hooks/use-analytics.ts` | Duplicate `section_viewed` per session |
+| `Set<string>` of viewed sections, reset per pathname | `hooks/use-analytics.ts` | Duplicate `section_viewed` within a route visit |
 | One `AnalyticsProvider` | `app/layout.tsx` | Multiple providers |
 
-The previous implementation had module-level `globalInitialized` and `pageViewTracked` flags, but these reset between React StrictMode mounts, causing the page_view to be skipped on the second mount. `window.__pageViewTracked` survives StrictMode unmount/remount because it lives on the global `window` object, not a module variable.
+The previous implementation had module-level `globalInitialized` and `pageViewTracked` flags, but these reset between React StrictMode mounts, causing the page_view to be skipped on the second mount. A later fix moved to a `window.__pageViewTracked` boolean, which survived StrictMode unmount/remount correctly but, as a one-shot flag, also suppressed every `page_view` after the first, including on genuine client-side route changes. `window.__lastTrackedPageViewPath` replaces the boolean with the last-tracked pathname string: unchanged pathname means "skip" (StrictMode's duplicate invocation), changed pathname means "track" (a real navigation).
 
 ---
 
@@ -311,8 +337,7 @@ app/
     amplitude/
       route.ts                         # First-party proxy → api2.amplitude.com/batch (Node runtime)
     weather/
-      route.ts                         # Cached weather-explorer contract API
-      events/route.ts                  # Validated event-explorer query API
+      events/route.ts                  # Validated event-explorer query API (the only browser-facing weather route; the weather page itself calls lib/weather/data.ts server-side)
   layout.tsx                           # Root layout: metadata, JSON-LD, mounts AnalyticsProvider
   page.tsx                             # Thin composition of section components
   weather/page.tsx                     # Dedicated weather case-study route
@@ -333,7 +358,7 @@ lib/
   analytics-consent.ts                 # DNT / GPC browser signal checks
   analytics-events.ts                  # Event constants, types, creators, getEventContext()
   content.ts                           # Site content + SECTIONS registry (ids, labels)
-middleware.ts                          # Edge Runtime: security response headers
+proxy.ts                                # Node.js runtime: security response headers (renamed from middleware.ts in Next.js 16)
 TRACKING_PLAN.md                       # Event specifications
 ANALYTICS_SYSTEM.md                    # This document
 ```

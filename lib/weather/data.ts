@@ -11,7 +11,7 @@ import type {
 const refreshSeconds = 900
 const maxEventResults = 100
 
-function isWeatherPayload(value: unknown): value is WeatherDashboardPayload {
+export function isWeatherPayload(value: unknown): value is WeatherDashboardPayload {
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<WeatherDashboardPayload>
   return (
@@ -32,7 +32,8 @@ export async function getWeatherDashboard(): Promise<WeatherDashboardPayload> {
     const payload: unknown = await response.json()
     if (!isWeatherPayload(payload)) throw new Error("Weather artifact does not match schema version 1.0")
     return { ...payload, sourceMode: "pipeline" }
-  } catch {
+  } catch (error) {
+    console.error("[Weather] Failed to load dashboard artifact from WEATHER_DATA_URL, falling back to fixture", error)
     return weatherFixture
   }
 }
@@ -49,7 +50,7 @@ function deriveDocsUrl(dashboardUrl: string, docsPath: string): string {
   return dashboardUrl.replace(/data\/portfolio-weather\.v1\.json$/, docsPath)
 }
 
-function isProjectExplorerPayload(value: unknown): value is DbtProjectExplorerPayload {
+export function isProjectExplorerPayload(value: unknown): value is DbtProjectExplorerPayload {
   if (!value || typeof value !== "object") return false
   const payload = value as Partial<DbtProjectExplorerPayload>
   return (
@@ -74,12 +75,13 @@ export async function getWeatherProjectExplorer(): Promise<DbtProjectExplorerPay
     const payload: unknown = await response.json()
     if (!isProjectExplorerPayload(payload)) throw new Error("dbt project artifact does not match schema version 1.0")
     return { ...payload, project: { ...payload.project, docsUrl: deriveDocsUrl(dashboardUrl, payload.project.docsPath) } }
-  } catch {
+  } catch (error) {
+    console.error("[Weather] Failed to load dbt project explorer artifact from WEATHER_DATA_URL, falling back to null", error)
     return null
   }
 }
 
-function isEventYearShard(value: unknown): value is WeatherEventYearShard {
+export function isEventYearShard(value: unknown): value is WeatherEventYearShard {
   if (!value || typeof value !== "object") return false
   const shard = value as Partial<WeatherEventYearShard>
   return shard.schemaVersion === "1.0" && Array.isArray(shard.events)
@@ -95,7 +97,8 @@ async function fetchEventYear(year: number): Promise<{ events: WeatherEvent[]; s
     const payload: unknown = await response.json()
     if (!isEventYearShard(payload)) throw new Error("Event year artifact does not match schema version 1.0")
     return { events: payload.events, sourceMode: "pipeline" }
-  } catch {
+  } catch (error) {
+    console.error(`[Weather] Failed to load event year ${year} artifact from WEATHER_DATA_URL, falling back to fixture`, error)
     return { events: weatherFixtureEventsByYear[year] ?? [], sourceMode: "fixture" }
   }
 }
@@ -113,12 +116,19 @@ export function filterWeatherEvents(
 ): { events: WeatherEvent[]; totalMatched: number } {
   const selectedRegion = region as WeatherRegion | undefined
   const selectedMonth = month ? Number.parseInt(month, 10) : undefined
-  const minimumRating = rating ? Number.parseInt(rating, 10) : undefined
+  // `rating` absent/null/empty means "no rating filter" (matches the
+  // dashboard's "Any rating" option, which now omits the param entirely
+  // rather than sending "0"). An explicitly passed rating of "0" is a
+  // deliberate filter value: "must have a reported rating of F0/EF0 or
+  // higher," which excludes unrated events (ratingValue null). Coercing
+  // "no param" and "param=0" together was accidental, not deliberate; this
+  // keeps the two cases distinct regardless of what a caller sends.
+  const minimumRating = rating !== undefined && rating !== null && rating !== "" ? Number.parseInt(rating, 10) : undefined
 
   const matched = events
     .filter((event) => !selectedRegion || event.regionIds.includes(selectedRegion))
     .filter((event) => !selectedMonth || new Date(event.occurredAt).getMonth() + 1 === selectedMonth)
-    .filter((event) => !minimumRating || (event.ratingValue ?? -1) >= minimumRating)
+    .filter((event) => minimumRating === undefined || (event.ratingValue ?? -1) >= minimumRating)
     .sort((a, b) => +new Date(b.occurredAt) - +new Date(a.occurredAt))
 
   return { events: matched.slice(0, maxEventResults), totalMatched: matched.length }

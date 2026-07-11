@@ -1,5 +1,7 @@
 // Analytics Events Registry: event names, property types, and creator functions
 
+import { RESUME_FILE_NAME } from "@/lib/content"
+
 // ============================================================================
 // EVENT NAMES
 // ============================================================================
@@ -271,7 +273,7 @@ export function createResumeDownloadedEvent(source: string): ResumeDownloadedEve
     name: ANALYTICS_EVENTS.RESUME_DOWNLOADED,
     properties: {
       download_source: source,
-      file_name: 'Chase_Burkhalter_Resume_2026.pdf',
+      file_name: RESUME_FILE_NAME,
       url: typeof window !== 'undefined' ? window.location.href : '',
     },
   }

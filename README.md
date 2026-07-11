@@ -2,11 +2,11 @@
 
 Personal portfolio for Chase Burkhalter, Senior Data & Analytics Engineer. Live at [chaseburkhalter.com](https://chaseburkhalter.com).
 
-Built with Next.js 15 and Tailwind CSS, and designed, implemented, instrumented, and documented with Claude Code. The site carries a production-grade analytics implementation that demonstrates real-world instrumentation architecture, ad-blocker bypass, and event enrichment patterns; the live demo section on the page runs the exact pipeline described below.
+Built with Next.js 16 and Tailwind CSS, and designed, implemented, instrumented, and documented with Claude Code. The site carries a production-grade analytics implementation that demonstrates real-world instrumentation architecture, ad-blocker bypass, and event enrichment patterns; the live demo section on the page runs the exact pipeline described below.
 
 ## Features
 
-- **Modern stack**: Next.js 15 App Router, React 19, TypeScript, Tailwind CSS
+- **Modern stack**: Next.js 16 App Router, React 19, TypeScript, Tailwind CSS
 - **Typed content model**: all copy and structured data live in `lib/content.ts`, so content edits never touch JSX
 - **Production analytics**: Amplitude Browser SDK with a first-party proxy, fully instrumented
 - **Live analytics showcase**: real-time event stream and rendered tracking plan, visible to site visitors
@@ -14,7 +14,7 @@ Built with Next.js 15 and Tailwind CSS, and designed, implemented, instrumented,
 - **Ad-blocker bypass**: events route through `/api/amplitude` (same domain) instead of `amplitude.com`, which is on EasyList
 - **Engagement tracking**: resume downloads, outbound link clicks, and contact clicks, each with source attribution
 - **Privacy-aware loading**: respects Do Not Track and Global Privacy Control browser signals
-- **Security headers**: X-Frame-Options, nosniff, referrer and permissions policies via Edge Runtime middleware
+- **Security headers**: X-Frame-Options, nosniff, referrer and permissions policies, plus a report-only CSP, via `proxy.ts` (Node.js runtime)
 - **Dark engineering design system**: navy UI, terminal-style panels, three restrained accent hues
 - **Accessible and responsive**: skip link, semantic landmarks, reduced-motion support, mobile-first layout
 - **Tornado data engineering demo**: `/weather` pairs a focused tornado event explorer with a native dbt project explorer, both backed by a companion dbt-duckdb pipeline that combines confirmed NCEI events with labeled preliminary IEM Local Storm Reports after the NCEI cutoff
@@ -127,7 +127,7 @@ lib/
   analytics-consent.ts              # DNT / GPC browser signal checks
   analytics-events.ts               # Event constants, types, creators, getEventContext()
   content.ts                        # Typed site content + SECTIONS registry
-middleware.ts                       # Edge Runtime security headers
+proxy.ts                            # Node.js runtime security headers (renamed from middleware.ts in Next.js 16)
 public/
   headshot.jpg                      # Profile photo (hero section)
   resume/

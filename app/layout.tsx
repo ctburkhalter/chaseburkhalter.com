@@ -6,7 +6,10 @@ import { Suspense } from "react"
 import { ThemeProvider } from "@/components/theme-provider"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
 
-import "leaflet/dist/leaflet.css"
+// leaflet.css is intentionally not imported here: it is scoped to
+// components/weather/tornado-event-map.tsx, which is the only consumer, so
+// it only loads with that dynamically-imported chunk on /weather instead of
+// shipping to every route including / (which never renders a map).
 import "./globals.css"
 
 const inter = Inter({
@@ -67,14 +70,11 @@ export const metadata: Metadata = {
     title: "Chase Burkhalter | Senior Data & Analytics Engineer",
     description: SITE_DESCRIPTION,
     siteName: "Chase Burkhalter Portfolio",
-    images: [
-      {
-        url: "/opengraph-image",
-        width: 1200,
-        height: 630,
-        alt: "Chase Burkhalter, Senior Data & Analytics Engineer",
-      },
-    ],
+    // No explicit `images` here: the file-convention app/opengraph-image.tsx
+    // is auto-detected and fully overrides this field (confirmed via
+    // rendered <head>: only one og:image tag renders, pointing at the file
+    // convention's route, not this literal URL). An explicit entry here is
+    // dead config, not a fallback.
   },
 }
 
@@ -146,8 +146,16 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  // data-scroll-behavior="smooth" opts back into Next.js's pre-16 behavior of
+  // temporarily overriding CSS scroll-behavior during route transitions
+  // (Next 16 stopped doing this by default). globals.css sets
+  // `scroll-behavior: smooth` globally for in-page hash navigation
+  // (#projects, #contact, etc.); without this attribute, that same smooth
+  // easing would also apply to the scroll-to-top on / -> /weather route
+  // changes, which reads as a jarring full-page animation rather than an
+  // instant transition.
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-scroll-behavior="smooth">
       <head>
         <script
           type="application/ld+json"
