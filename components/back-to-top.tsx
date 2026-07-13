@@ -31,6 +31,12 @@ export function BackToTop() {
       type="button"
       onClick={scrollToTop}
       aria-label="Back to top"
+      // The button stays mounted so it can fade in and out, but opacity-0 and
+      // pointer-events-none only hide it from sight and from the mouse: it would
+      // still be a tab stop and still reach the accessibility tree. `inert` (React
+      // 19 supports it natively) takes it out of tab order and the a11y tree while
+      // it is invisible, so keyboard users do not land on a control they cannot see.
+      inert={!visible}
       className={`fixed bottom-5 right-5 z-40 flex h-11 w-11 items-center justify-center rounded-full border border-primary/40 bg-background/80 text-primary shadow-[0_0_24px_rgb(34_197_94/0.18)] backdrop-blur transition-opacity hover:bg-primary hover:text-primary-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary ${
         visible ? "opacity-100" : "pointer-events-none opacity-0"
       }`}
