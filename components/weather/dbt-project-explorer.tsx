@@ -137,7 +137,7 @@ function CodeViewer({ file, copied, onCopy, onGithubOpen }: { file: DbtProjectEx
           <a href={file.githubUrl} target="_blank" rel="noreferrer" onClick={onGithubOpen} className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary hover:text-primary">View on GitHub <ExternalLink className="h-3.5 w-3.5" /></a>
         </div>
       </div>
-      <pre className="thin-scroll max-h-[30rem] overflow-auto bg-background/55 py-3 text-xs leading-6 text-muted-foreground"><code>{highlightedLines.map((content, index) => <span key={index} className="grid grid-cols-[3.25rem_minmax(0,1fr)] px-4"><span className="select-none pr-4 text-right text-muted-foreground/60">{index + 1}</span><span className="whitespace-pre-wrap break-words text-foreground/90">{content}</span></span>)}</code></pre>
+      <pre className="thin-scroll max-h-[30rem] overflow-auto bg-background/55 py-3 text-xs leading-6 text-muted-foreground"><code>{highlightedLines.map((content, index) => <span key={index} className="grid grid-cols-[2.5rem_minmax(0,1fr)] px-3 sm:grid-cols-[3.25rem_minmax(0,1fr)] sm:px-4"><span className="select-none pr-2 text-right text-muted-foreground/60 sm:pr-4">{index + 1}</span><span className="whitespace-pre-wrap break-words text-foreground/90">{content}</span></span>)}</code></pre>
     </div>
   )
 }
@@ -154,22 +154,22 @@ function FileTree({ directory, path = "", expandedDirectories, selectedFilePath,
   onToggle: (path: string) => void
   onSelect: (file: DbtProjectExplorerFile) => void
 }) {
-  return <ul className={path ? "ml-3 border-l border-border/60 pl-2" : "space-y-0.5"}>
+  return <ul className={path ? "ml-2 border-l border-border/60 pl-1.5" : ""}>
     {Array.from(directory.directories.entries()).sort(([left], [right]) => left.localeCompare(right)).map(([name, child]) => {
       const childPath = path ? `${path}/${name}` : name
       const expanded = expandedDirectories.has(childPath)
       return <li key={childPath}>
-        <button type="button" onClick={() => onToggle(childPath)} title={name} className="flex min-w-full items-center gap-1.5 rounded-md px-2 py-1.5 text-left text-xs text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground" aria-expanded={expanded}>
-          {expanded ? <ChevronDown className="h-3.5 w-3.5 shrink-0" /> : <ChevronRight className="h-3.5 w-3.5 shrink-0" />}
-          {expanded ? <FolderOpen className="h-4 w-4 shrink-0 text-primary" /> : <Folder className="h-4 w-4 shrink-0 text-primary" />}
+        <button type="button" onClick={() => onToggle(childPath)} title={name} className="flex min-w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-xs leading-5 text-muted-foreground transition-colors hover:bg-background/70 hover:text-foreground" aria-expanded={expanded}>
+          {expanded ? <ChevronDown className="h-3 w-3 shrink-0" /> : <ChevronRight className="h-3 w-3 shrink-0" />}
+          {expanded ? <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary" /> : <Folder className="h-3.5 w-3.5 shrink-0 text-primary" />}
           <span className="whitespace-nowrap font-mono">{name}</span>
         </button>
         {expanded && <FileTree directory={child} path={childPath} expandedDirectories={expandedDirectories} selectedFilePath={selectedFilePath} onToggle={onToggle} onSelect={onSelect} />}
       </li>
     })}
     {[...directory.files].sort((left, right) => left.path.localeCompare(right.path)).map((file) => <li key={file.path}>
-      <button type="button" onClick={() => onSelect(file)} title={file.path} className={`flex min-w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs transition-colors ${selectedFilePath === file.path ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"}`}>
-        <FileCode2 className="h-4 w-4 shrink-0 text-primary" />
+      <button type="button" onClick={() => onSelect(file)} title={file.path} className={`flex min-w-full items-center gap-1.5 rounded px-1.5 py-0.5 text-left text-xs leading-5 transition-colors ${selectedFilePath === file.path ? "bg-primary/10 text-foreground" : "text-muted-foreground hover:bg-background/70 hover:text-foreground"}`}>
+        <FileCode2 className="h-3.5 w-3.5 shrink-0 text-primary" />
         <span className="whitespace-nowrap font-mono">{file.path.split("/").at(-1)}</span>
       </button>
     </li>)}
@@ -188,6 +188,9 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const [nodePanelTab, setNodePanelTab] = useState<"details" | "lineage">("details")
   const [copied, setCopied] = useState(false)
+  // Collapsed by default so the code viewer, not a tall file tree, is what a
+  // phone shows first. Ignored at lg+, where the tree is a persistent sidebar.
+  const [filesOpen, setFilesOpen] = useState(false)
   const [expandedDirectories, setExpandedDirectories] = useState(() => new Set([".github", ".github/workflows", "ingestion", "models", "models/marts", "models/marts/tornado_events", "tests"]))
 
   const nodesById = useMemo(() => new Map(explorer?.nodes.map((node) => [node.id, node]) ?? []), [explorer])
@@ -230,6 +233,10 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
     setSelectedNodeId(file.relatedNodeIds[0] ?? null)
     const directories = file.path.split("/").slice(0, -1)
     setExpandedDirectories((current) => new Set([...current, ...directories.map((_, index) => directories.slice(0, index + 1).join("/"))]))
+    // On mobile the tree is a collapsible drawer over the code viewer; close it
+    // on selection so the chosen file's source scrolls into view. No-op at lg+,
+    // where the drawer classes are overridden and the sidebar stays open.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) setFilesOpen(false)
     onInteraction("pipeline_file_inspected", { pipeline_file_category: file.category })
   }
   const toggleDirectory = (path: string) => setExpandedDirectories((current) => {
@@ -255,6 +262,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
   }
   const upstream = (selectedNode?.upstream ?? []).map((id) => nodesById.get(id)).filter((node): node is DbtProjectExplorerNode => Boolean(node))
   const downstream = (selectedNode?.downstream ?? []).map((id) => nodesById.get(id)).filter((node): node is DbtProjectExplorerNode => Boolean(node))
+  const passingTestCount = (selectedNode?.tests ?? []).filter((test) => test.status === "success" || test.status === "pass").length
   const modelLayers = layerOrder.filter((layer) => explorer.nodes.some((node) => node.layer === layer))
 
   return <section ref={sectionRef} className="engine-panel mt-10 overflow-hidden rounded-lg" aria-labelledby="pipeline-explorer-title">
@@ -262,7 +270,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
       <div className="flex flex-wrap items-start justify-between gap-5">
         <div className="max-w-3xl">
           <p className="section-kicker">dbt project explorer</p>
-          <h2 id="pipeline-explorer-title" className="mt-2 text-3xl font-bold tracking-tight">See the data product behind the event explorer</h2>
+          <h2 id="pipeline-explorer-title" className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">See the data product behind the event explorer</h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">This is a versioned view of the project files, dbt graph, and test results from the exact pipeline run that produced the weather artifact.</p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -285,13 +293,23 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
     </div>
 
     <div className="grid lg:grid-cols-[17rem_minmax(0,1fr)]">
-      <aside className="flex flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r">
-        <div className="shrink-0 border-b border-border/70 p-4">
-          <label className="sr-only" htmlFor="pipeline-file-search">Search project files</label>
-          <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2"><Search className="h-4 w-4 text-muted-foreground" /><input id="pipeline-file-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search files" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Clear file search" title="Clear file search" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}</div>
-          <div className="mt-3 flex flex-wrap gap-1.5">{availableCategories.map((value) => <button key={value} type="button" onClick={() => setCategory(value)} className={`rounded-md border px-2 py-1 text-xs transition-colors ${category === value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/50 text-muted-foreground hover:text-foreground"}`}>{categoryLabels[value] ?? displayName(value)}</button>)}</div>
+      <aside className="flex min-w-0 flex-col border-b border-border/70 bg-muted/20 lg:border-b-0 lg:border-r">
+        <button type="button" onClick={() => setFilesOpen((open) => !open)} aria-expanded={filesOpen} aria-controls="pipeline-file-drawer" className="flex items-center justify-between gap-2 border-b border-border/70 px-4 py-3 text-sm font-medium text-foreground transition-colors hover:bg-background/60 lg:hidden">
+          <span className="flex items-center gap-2"><Folder className="h-4 w-4 shrink-0 text-primary" />Browse project files <span className="text-muted-foreground">({filteredFiles.length})</span></span>
+          {filesOpen ? <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" /> : <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />}
+        </button>
+        <div id="pipeline-file-drawer" className={`${filesOpen ? "flex" : "hidden"} min-h-0 flex-col lg:flex lg:flex-1`}>
+          <div className="shrink-0 border-b border-border/70 p-4">
+            <label className="sr-only" htmlFor="pipeline-file-search">Search project files</label>
+            <div className="flex items-center gap-2 rounded-md border border-border bg-background px-3 py-2"><Search className="h-4 w-4 shrink-0 text-muted-foreground" /><input id="pipeline-file-search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search files" className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground" />{query && <button type="button" onClick={() => setQuery("")} aria-label="Clear file search" title="Clear file search" className="text-muted-foreground hover:text-foreground"><X className="h-4 w-4" /></button>}</div>
+            <div className="mt-3 flex flex-wrap gap-1.5">{availableCategories.map((value) => <button key={value} type="button" onClick={() => setCategory(value)} className={`rounded-md border px-2 py-1 text-xs transition-colors ${category === value ? "border-primary bg-primary/10 text-primary" : "border-border bg-background/50 text-muted-foreground hover:text-foreground"}`}>{categoryLabels[value] ?? displayName(value)}</button>)}</div>
+          </div>
+          {/* An `auto` grid row sizes to its items' max-content, and overflow-auto
+              does not cap that, so without an explicit max-height here the tree's
+              full length stretches the whole explorer. Capping it lets the code +
+              details column drive the height while the tree scrolls internally. */}
+          <div className="thin-scroll max-h-[32rem] overflow-auto p-2 lg:max-h-[40rem] lg:min-h-0 lg:flex-1">{filteredFiles.length ? <FileTree directory={fileTree} expandedDirectories={query ? searchExpandedDirectories : expandedDirectories} selectedFilePath={selectedFile?.path ?? null} onToggle={toggleDirectory} onSelect={selectFile} /> : <p className="px-3 py-6 text-center text-sm text-muted-foreground">No public project files match.</p>}</div>
         </div>
-        <div className="thin-scroll max-h-[32rem] overflow-auto p-2 lg:max-h-none lg:min-h-0 lg:flex-1">{filteredFiles.length ? <FileTree directory={fileTree} expandedDirectories={query ? searchExpandedDirectories : expandedDirectories} selectedFilePath={selectedFile?.path ?? null} onToggle={toggleDirectory} onSelect={selectFile} /> : <p className="px-3 py-6 text-center text-sm text-muted-foreground">No public project files match.</p>}</div>
       </aside>
 
       <div className="min-w-0">
@@ -306,8 +324,7 @@ export function DbtProjectExplorer({ explorer, onInteraction }: {
             <h3 className="font-semibold">{selectedNode?.name ?? "File context"}</h3>
             {selectedNode ? <div className="mt-4 max-w-3xl space-y-4 text-sm">
               <p className="leading-relaxed text-muted-foreground">{selectedNode.description || "This model is documented through its project layer, lineage, and attached dbt tests."}</p>
-              <dl className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><dt className="text-muted-foreground">Layer</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.layer}</dd></div><div className="min-w-0"><dt className="text-muted-foreground">Relation</dt><dd className="mt-1 truncate font-mono text-foreground" title={selectedNode.relation ?? undefined}>{selectedNode.relation ?? "Not materialized"}</dd></div><div><dt className="text-muted-foreground">Build</dt><dd className="mt-1 font-medium text-primary">{buildStatusLabel(selectedNode.buildStatus)}</dd></div><div><dt className="text-muted-foreground">Columns</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.columns.length}</dd></div><div><dt className="text-muted-foreground">Materialization</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.materialization ?? "None"}</dd></div><div><dt className="text-muted-foreground">Contract</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.contractEnforced ? "Enforced" : "Not enforced"}</dd></div><div><dt className="text-muted-foreground">Owner</dt><dd className="mt-1 text-foreground">{typeof selectedNode.owner === "string" ? selectedNode.owner : selectedNode.owner?.name ?? "Not specified"}</dd></div><div><dt className="text-muted-foreground">Maturity</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.maturity ?? "Not specified"}</dd></div></dl>
-              <div><p className="text-xs text-muted-foreground">Attached tests</p><div className="mt-2 flex flex-wrap gap-1.5">{selectedNode.tests.length ? selectedNode.tests.map((test) => <span key={`${test.name}-${test.status}`} className="rounded-md border border-primary/30 bg-primary/5 px-2 py-1 font-mono text-[11px] text-primary">{test.name} · {buildStatusLabel(test.status)}</span>) : <span className="text-xs text-muted-foreground">No direct tests declared</span>}</div></div>
+              <dl className="grid grid-cols-2 gap-3 text-xs sm:grid-cols-4"><div><dt className="text-muted-foreground">Layer</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.layer}</dd></div><div className="min-w-0"><dt className="text-muted-foreground">Relation</dt><dd className="mt-1 truncate font-mono text-foreground" title={selectedNode.relation ?? undefined}>{selectedNode.relation ?? "Not materialized"}</dd></div><div><dt className="text-muted-foreground">Build</dt><dd className="mt-1 font-medium text-primary">{buildStatusLabel(selectedNode.buildStatus)}</dd></div><div><dt className="text-muted-foreground">Columns</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.columns.length}</dd></div><div><dt className="text-muted-foreground">Tests</dt><dd className={`mt-1 font-medium ${selectedNode.tests.length ? "text-primary" : "text-muted-foreground"}`}>{selectedNode.tests.length ? `${passingTestCount}/${selectedNode.tests.length} passing` : "None"}</dd></div><div><dt className="text-muted-foreground">Materialization</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.materialization ?? "None"}</dd></div><div><dt className="text-muted-foreground">Contract</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.contractEnforced ? "Enforced" : "Not enforced"}</dd></div><div><dt className="text-muted-foreground">Owner</dt><dd className="mt-1 text-foreground">{typeof selectedNode.owner === "string" ? selectedNode.owner : selectedNode.owner?.name ?? "Not specified"}</dd></div><div><dt className="text-muted-foreground">Maturity</dt><dd className="mt-1 font-mono text-foreground">{selectedNode.maturity ?? "Not specified"}</dd></div></dl>
             </div> : <p className="mt-3 text-sm leading-relaxed text-muted-foreground">This public file is included to show how ingestion, dbt models, tests, and scheduled publishing work together.</p>}
           </div> : <div className="mt-4" role="tabpanel">
             {selectedNode ? <div className="thin-scroll overflow-x-auto pb-2"><div className="grid min-w-[42rem] grid-cols-[minmax(10rem,1fr)_1.5rem_minmax(10rem,1fr)_1.5rem_minmax(10rem,1fr)] items-center gap-3">

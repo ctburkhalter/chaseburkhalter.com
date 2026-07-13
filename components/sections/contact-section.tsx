@@ -7,7 +7,7 @@ import { CONTACT, IDENTITY } from "@/lib/content"
 
 export function ContactSection() {
   return (
-    <section id="contact" className="w-full py-16 md:py-24">
+    <section id="contact" className="w-full py-12 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="mx-auto max-w-lg flex flex-col items-center text-center gap-6">
           <div className="space-y-2">

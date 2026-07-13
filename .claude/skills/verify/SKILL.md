@@ -42,6 +42,12 @@ Useful hooks already built into the app for verification:
   anything else on the page.
 - Nav links: `nav a[href="/weather"]`, home logo is
   `a[aria-label="Chase Burkhalter Home"]` (not a nav link).
+- The dbt project explorer's file tree only renders as a persistent sidebar
+  at `lg+` (>=1024px). Below that it lives in `#pipeline-file-drawer`, which
+  is collapsed by default, so at a phone viewport the tree nodes are not in
+  the DOM's visible state until you click the "Browse project files" toggle.
+  Selecting a file there re-closes the drawer by design. Don't read a missing
+  file tree at 375px as a regression; check the viewport width first.
 
 Console noise to ignore, not a regression: `Invalid API key:
 ci-placeholder-key` and `400 Bad Request` from the Amplitude proxy whenever
