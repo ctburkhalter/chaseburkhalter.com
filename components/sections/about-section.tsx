@@ -2,7 +2,7 @@ import { ABOUT } from "@/lib/content"
 
 export function AboutSection() {
   return (
-    <section id="about" className="w-full border-y border-border/70 bg-muted/20 py-16 md:py-24">
+    <section id="about" className="w-full border-y border-border/70 bg-muted/20 py-12 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="mx-auto max-w-2xl flex flex-col items-center text-center gap-4">
           <p className="section-kicker">{ABOUT.kicker}</p>

@@ -238,7 +238,7 @@ export function WeatherPageContent({ initialPayload, initialProjectExplorer }: {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen overflow-x-hidden">
       <div className="circuit-grid pointer-events-none absolute inset-x-0 top-0 h-[460px] opacity-60" aria-hidden="true" />
       <div className="container relative px-4 py-8 md:px-6 md:py-12">
         <Link href="/" className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-primary"><ArrowLeft className="h-4 w-4" /> Back to portfolio</Link>

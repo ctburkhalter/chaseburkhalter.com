@@ -16,7 +16,7 @@ Built with Next.js 16 and Tailwind CSS, and designed, implemented, instrumented,
 - **Privacy-aware loading**: respects Do Not Track and Global Privacy Control browser signals
 - **Security headers**: X-Frame-Options, nosniff, referrer and permissions policies, plus a report-only CSP, via `proxy.ts` (Node.js runtime)
 - **Dark engineering design system**: navy UI, terminal-style panels, three restrained accent hues
-- **Accessible and responsive**: skip link, semantic landmarks, reduced-motion support, mobile-first layout
+- **Accessible and responsive**: skip link, semantic landmarks, reduced-motion support, and a mobile layout tuned per breakpoint (tighter section rhythm on phones, a scroll-to-top button, and a dbt project explorer whose file tree collapses into a drawer so the code viewer leads on small screens)
 - **Tornado data engineering demo**: `/weather` pairs a focused tornado event explorer with a native dbt project explorer, both backed by a companion dbt-duckdb pipeline that combines confirmed NCEI events with labeled preliminary IEM Local Storm Reports after the NCEI cutoff
 - **Dedicated Weather navigation**: the primary header links directly to the weather case study from every route
 
@@ -142,6 +142,7 @@ components/
   project-card.tsx                  # Compact project cards (githubUrl / liveUrl)
   site-header.tsx / site-footer.tsx
   mobile-navigation.tsx             # Mobile nav sheet
+  back-to-top.tsx                   # Scroll-to-top button, mounted once in app/layout.tsx (both routes)
   theme-provider.tsx                # next-themes wrapper (forcedTheme="dark")
   resume-download-link.tsx          # Tracked resume download link (client component)
   tracked-link.tsx                  # Tracked outbound / contact link (client component)

@@ -78,7 +78,7 @@
 
 @layer components {
   .section-kicker {
-    @apply font-mono text-xs font-semibold uppercase tracking-[0.22em] text-primary;
+    @apply font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary sm:tracking-[0.22em];
   }
 
   .engine-panel {

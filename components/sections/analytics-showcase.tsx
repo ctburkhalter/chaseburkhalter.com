@@ -268,7 +268,7 @@ export function AnalyticsShowcase() {
   const [activeTab, setActiveTab] = useState<"events" | "plan">("events")
 
   return (
-    <section id="demos" className="w-full border-y border-border/70 bg-muted/25 py-16 md:py-24">
+    <section id="demos" className="w-full border-y border-border/70 bg-muted/25 py-12 md:py-24">
       <div className="container px-4 md:px-6">
         <div className="mx-auto max-w-3xl">
           <div className="flex flex-col gap-3 mb-8 text-center">

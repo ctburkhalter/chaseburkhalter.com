@@ -28,22 +28,22 @@ export function HeroSection() {
     <section id="hero" className="relative w-full overflow-hidden pt-10 pb-12 md:pt-16 md:pb-16">
       <div className="pointer-events-none absolute right-[-12rem] top-12 h-96 w-96 rounded-full bg-violet-500/20 blur-3xl" aria-hidden="true" />
       <div className="pointer-events-none absolute left-[-10rem] top-56 h-80 w-80 rounded-full bg-emerald-500/14 blur-3xl" aria-hidden="true" />
-      <div className="container relative px-4 md:px-6 space-y-8">
+      <div className="container relative px-4 md:px-6 space-y-6 md:space-y-8">
 
         {/* Identity strip */}
         <div className="engine-panel flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg p-4">
-          <div className="flex items-center gap-4 shrink-0">
+          <div className="flex min-w-0 items-center gap-4">
             <Image
               src="/headshot.jpg"
               alt="Chase Burkhalter"
               width={88}
               height={88}
-              className="rounded-full object-cover ring-2 ring-primary/45 shadow-[0_0_34px_rgb(34_197_94/0.24)] shrink-0"
+              className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-primary/45 shadow-[0_0_34px_rgb(34_197_94/0.24)] sm:h-[88px] sm:w-[88px]"
               priority
             />
-            <div>
+            <div className="min-w-0">
               <p className="section-kicker">{IDENTITY.title}</p>
-              <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
+              <h1 className="text-2xl font-bold tracking-tight text-balance sm:text-4xl lg:text-5xl">
                 {IDENTITY.name}
               </h1>
             </div>
@@ -60,7 +60,7 @@ export function HeroSection() {
         </div>
 
         {/* Bio, CTAs, socials, pills */}
-        <div className="max-w-3xl flex flex-col gap-5">
+        <div className="max-w-3xl flex flex-col gap-4 md:gap-5">
           <div className="inline-flex w-fit items-center gap-2 rounded-full border border-violet-400/25 bg-violet-400/10 px-3 py-1 font-mono text-xs text-violet-300">
             <Terminal className="h-3.5 w-3.5" aria-hidden="true" />
             building governed, AI-ready data platforms

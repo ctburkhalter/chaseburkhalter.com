@@ -102,6 +102,7 @@ components/
 ├── project-card.tsx                  - Compact cards (githubUrl / liveUrl props)
 ├── site-header.tsx / site-footer.tsx - Chrome, nav from NAV_ITEMS
 ├── mobile-navigation.tsx             - Mobile nav sheet
+├── back-to-top.tsx                   - Client leaf, scroll-to-top button (mounted once in app/layout.tsx, both routes)
 ├── theme-provider.tsx                - next-themes wrapper (forcedTheme="dark")
 ├── tracked-link.tsx                  - Client leaf for outbound/contact tracking
 ├── resume-download-link.tsx          - Client leaf for resume_downloaded
@@ -136,10 +137,14 @@ vitest.config.ts               - Vitest config for lib/**/*.test.ts
 - The pipeline discovers the latest NCEI 2025 and 2026 files on each scheduled run, appends them to the historical baseline, then appends preliminary IEM point reports only for records after the latest confirmed NCEI timestamp. The event map uses source endpoint or point coordinates, and its connection line must never be described as a surveyed track.
 - Do not conflate confirmed NCEI tornadoes with preliminary IEM Local Storm Reports. F/EF wind values are estimates inferred from damage. Begin/end coordinates are endpoints, not survey track geometry.
 - The dbt project explorer's code viewer highlights SQL, YAML, Python, and Markdown with PrismJS (`components/weather/dbt-project-explorer.tsx`), using the same stock language grammars dbt docs itself ships (no custom Jinja grammar), so `{{ ref(...) }}` is colored however the SQL grammar happens to tokenize it, not a bespoke Jinja scheme. The token-to-color mapping is a dark-theme adaptation of dbt docs' own `prism-ghcolors` palette. The "Direct lineage" and "Model details" panels are tabs, not a side-by-side split, so the panel content is never width-constrained against the file tree.
+- The dbt project explorer is a two-column `lg:grid-cols-[17rem_minmax(0,1fr)]` sidebar-plus-code split at `lg+`. Below `lg` that collapses to one column, where the file tree becomes a "Browse project files" drawer that is closed by default (so the code viewer, not a tall tree, is what a phone sees first) and closes again on file selection. Two layout constraints keep it from blowing past the viewport: the `<aside>` needs `min-w-0`, because a grid item defaults to `min-width: auto` and the tree's `whitespace-nowrap` filenames would otherwise set a ~430px min-content that stretches the whole explorer; and the tree's scroll container needs an explicit `max-height` at every breakpoint, because an `auto` grid row sizes to its items' max-content and `overflow-auto` alone does not cap that.
+- "Model details" reports attached dbt tests as a single `Tests: N/N passing` count in the metadata grid, not a per-test badge list. The per-test names (`not_null_fct_tornado_events_event_key` and similar) are long, repetitive, and already covered by the project-level "tests passed" summary stat.
 
 ### Styling
 
 Tailwind CSS 3 with HSL-based CSS custom properties defined in `globals.css`. Dark-only: ThemeProvider is `forcedTheme="dark"` and `:root` holds the single token set. Component variants use class-variance-authority. `cn()` from `lib/utils.ts` (clsx + tailwind-merge) is the standard className helper. Accent classes come from `lib/accent.ts`, not ad hoc color maps.
+
+**Responsive rhythm:** home-page sections use `py-12 md:py-24` with `mb-8 md:mb-12` on their centered heading block. Mobile gets the tighter value and desktop keeps the original spacing, so a new section should follow the same pair rather than a flat `py-16`. `.section-kicker` also tightens its letter-spacing on small screens (`tracking-[0.14em] sm:tracking-[0.22em]`), since the uppercase mono kickers are wide enough to overflow a phone otherwise.
 
 ### Security Headers (proxy.ts)
 

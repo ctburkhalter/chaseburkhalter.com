@@ -5,6 +5,7 @@ import { Suspense } from "react"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { AnalyticsProvider } from "@/components/analytics/analytics-provider"
+import { BackToTop } from "@/components/back-to-top"
 
 // leaflet.css is intentionally not imported here: it is scoped to
 // components/weather/tornado-event-map.tsx, which is the only consumer, so
@@ -167,6 +168,7 @@ export default function RootLayout({
           <ThemeProvider attribute="class" forcedTheme="dark" disableTransitionOnChange>
             <AnalyticsProvider>
               {children}
+              <BackToTop />
             </AnalyticsProvider>
           </ThemeProvider>
         </Suspense>

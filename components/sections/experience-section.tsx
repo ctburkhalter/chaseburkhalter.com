@@ -4,9 +4,9 @@ import { EDUCATION, EXPERIENCE } from "@/lib/content"
 
 export function ExperienceSection() {
   return (
-    <section id="experience" className="w-full border-y border-border/70 bg-muted/20 py-16 md:py-24">
+    <section id="experience" className="w-full border-y border-border/70 bg-muted/20 py-12 md:py-24">
       <div className="container px-4 md:px-6">
-        <div className="flex flex-col items-center text-center gap-3 mb-12">
+        <div className="flex flex-col items-center text-center gap-3 mb-8 md:mb-12">
           <p className="section-kicker">Work History</p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Experience</h2>
           <p className="max-w-2xl text-muted-foreground">

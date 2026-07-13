@@ -3,9 +3,9 @@ import { ALSO_WORKED_WITH, SKILL_CATEGORIES } from "@/lib/content"
 
 export function SkillsSection() {
   return (
-    <section id="skills" className="w-full py-16 md:py-24">
+    <section id="skills" className="w-full py-12 md:py-24">
       <div className="container px-4 md:px-6">
-        <div className="flex flex-col items-center text-center gap-3 mb-12">
+        <div className="flex flex-col items-center text-center gap-3 mb-8 md:mb-12">
           <p className="section-kicker">Toolchain</p>
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Technical Skills</h2>
           <p className="max-w-2xl text-muted-foreground">
