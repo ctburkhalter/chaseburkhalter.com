@@ -159,4 +159,4 @@ Renamed from `middleware.ts` for Next.js 16 (the `middleware` file convention an
 
 ### Resume
 
-Static PDF at `/public/resume/Chase_Burkhalter_Resume_2026.pdf`. Cache headers set in `next.config.mjs` (86400s public, 604800s stale-while-revalidate). The `resume/` directory at the repo root (source PDF + work summary) is gitignored and must never be committed.
+Static PDF at `/public/resume/Chase_Burkhalter_Resume_2026-07.pdf`. Cache headers set in `next.config.mjs` (86400s public, 604800s stale-while-revalidate). The filename carries a version suffix because of that caching: replacing the bytes at a stable URL would keep serving the old resume to recent visitors for up to a day, plus a week of stale-while-revalidate. Bump the suffix whenever the resume content changes, and update `RESUME_FILE_NAME` in `lib/content.ts`, the hardcoded path in `next.config.mjs`, the pinned expectation in `lib/analytics-events.test.ts`, and the examples in `TRACKING_PLAN.md`, `README.md`, `AGENTS.md`, and `CLAUDE.md`. The `resume/` directory at the repo root (source PDF + work summary) is gitignored and must never be committed.

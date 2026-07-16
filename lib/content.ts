@@ -33,9 +33,15 @@ export const IDENTITY = {
 // next.config.mjs allows a day of max-age plus a week of
 // stale-while-revalidate, so replacing the bytes at a stable URL would keep
 // serving the old resume to anyone who downloaded it recently. Bump the suffix
-// whenever the resume content changes so the new file is a new URL, and update
-// next.config.mjs, the pinned expectation in lib/analytics-events.test.ts, and
-// the examples in TRACKING_PLAN.md and README.md to match.
+// whenever the resume content changes so the new file is a new URL.
+//
+// Bumping it means updating all of these, since none of them can import this
+// constant:
+//   - next.config.mjs             (cache rule; runs before the app compiles)
+//   - lib/analytics-events.test.ts (pins the file_name in resume_downloaded)
+//   - TRACKING_PLAN.md            (event property example)
+//   - README.md                   (repo tree)
+//   - AGENTS.md, CLAUDE.md        (agent instructions; part of the contract)
 export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026-07.pdf"
 export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
 
