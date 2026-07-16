@@ -48,7 +48,7 @@ describe("createResumeDownloadedEvent", () => {
     expect(event.name).toBe("resume_downloaded")
     expect(event.properties).toMatchObject({
       download_source: "hero",
-      file_name: "Chase_Burkhalter_Resume_2026.pdf",
+      file_name: "Chase_Burkhalter_Resume_2026-07.pdf",
     })
   })
 })

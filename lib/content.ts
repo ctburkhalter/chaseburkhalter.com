@@ -28,7 +28,15 @@ export const IDENTITY = {
 // import from lib/content.ts (it runs before the TypeScript app compiles), so
 // it hardcodes the same path with a comment pointing back here; keep both in
 // sync when the resume filename changes.
-export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026.pdf"
+//
+// The filename carries a version suffix on purpose. The cache rule in
+// next.config.mjs allows a day of max-age plus a week of
+// stale-while-revalidate, so replacing the bytes at a stable URL would keep
+// serving the old resume to anyone who downloaded it recently. Bump the suffix
+// whenever the resume content changes so the new file is a new URL, and update
+// next.config.mjs, the pinned expectation in lib/analytics-events.test.ts, and
+// the examples in TRACKING_PLAN.md and README.md to match.
+export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026-07.pdf"
 export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
 
 export const NAV_ITEMS = [
