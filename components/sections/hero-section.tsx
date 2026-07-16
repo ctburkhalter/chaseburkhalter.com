@@ -33,12 +33,16 @@ export function HeroSection() {
         {/* Identity strip */}
         <div className="engine-panel flex flex-wrap items-center gap-x-6 gap-y-4 rounded-lg p-4">
           <div className="flex min-w-0 items-center gap-4">
+            {/* Arch frame: a semicircular top over straight sides and a flat base
+                (rounded-t-full leaves the bottom corners square). The source photo is
+                portrait with the head near the top edge, so object-top anchors the
+                crop there; a centered crop cut into the top of the head. */}
             <Image
               src="/headshot.jpg"
               alt="Chase Burkhalter"
               width={88}
-              height={88}
-              className="h-16 w-16 shrink-0 rounded-full object-cover ring-2 ring-primary/45 shadow-[0_0_34px_rgb(34_197_94/0.24)] sm:h-[88px] sm:w-[88px]"
+              height={101}
+              className="h-[74px] w-16 shrink-0 rounded-t-full object-cover object-top ring-2 ring-primary/45 shadow-[0_0_34px_rgb(34_197_94/0.24)] sm:h-[101px] sm:w-[88px]"
               priority
             />
             <div className="min-w-0">

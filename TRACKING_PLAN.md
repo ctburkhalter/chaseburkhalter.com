@@ -318,7 +318,7 @@ Example payload:
 | Property | Type | Required | Description | Example |
 |----------|------|----------|-------------|---------|
 | `download_source` | string | Yes | Where the download was triggered | `"hero"`, `"nav"`, `"contact"` |
-| `file_name` | string | Yes | PDF filename | `"Chase_Burkhalter_Resume_2026.pdf"` |
+| `file_name` | string | Yes | PDF filename | `"Chase_Burkhalter_Resume_2026-07.pdf"` |
 | `url` | string | Yes | Current page URL | `"https://chaseburkhalter.com/"` |
 | `referrer` | string | Yes | Session-stable referrer, or `"direct"` | `"https://linkedin.com"` |
 | `page_event_link_id` | number | Yes | Per-load group ID | `3847291034012` |
@@ -330,7 +330,7 @@ Example payload:
   "event": "resume_downloaded",
   "properties": {
     "download_source": "hero",
-    "file_name": "Chase_Burkhalter_Resume_2026.pdf",
+    "file_name": "Chase_Burkhalter_Resume_2026-07.pdf",
     "url": "https://chaseburkhalter.com/",
     "referrer": "https://linkedin.com",
     "utm_source": "linkedin",

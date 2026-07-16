@@ -20,10 +20,33 @@ const nextConfig = {
         // TypeScript app compiles, so it cannot import lib/content.ts's
         // RESUME_PDF_PATH constant. Keep this path in sync with that
         // constant by hand if the resume filename ever changes.
-        source: '/resume/Chase_Burkhalter_Resume_2026.pdf',
+        //
+        // The caching below is why that filename carries a version suffix:
+        // a day of max-age plus a week of stale-while-revalidate means
+        // replacing the bytes at a stable URL would keep serving the old
+        // resume to recent visitors. New content gets a new filename.
+        source: '/resume/Chase_Burkhalter_Resume_2026-07.pdf',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' },
         ],
+      },
+    ]
+  },
+  async redirects() {
+    return [
+      {
+        // Bookmarks, emailed links, and search results still point at the
+        // pre-version filename, which no longer exists. Without this they 404.
+        //
+        // Deliberately not `permanent: true`. A 308 is cached by the browser
+        // indefinitely, so the next version bump would leave anyone who ever
+        // hit the old URL pinned to 2026-07 forever, which is the same
+        // stale-content bug the versioning exists to prevent. A temporary
+        // redirect is re-asked each time and always lands on whatever is
+        // current, so retarget this destination on every bump.
+        source: '/resume/Chase_Burkhalter_Resume_2026.pdf',
+        destination: '/resume/Chase_Burkhalter_Resume_2026-07.pdf',
+        permanent: false,
       },
     ]
   },

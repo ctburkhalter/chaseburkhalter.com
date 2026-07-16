@@ -13,7 +13,7 @@ export const IDENTITY = {
   title: "Senior Data & Analytics Engineer",
   positioning:
     "Building governed, AI-ready data platforms: ingestion, dbt modeling on cloud data warehouses, product instrumentation, semantic context, and secure AI access to trusted data.",
-  bio: "I build and run modern data platforms end to end: ingestion pipelines, dbt modeling on cloud data warehouses, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, custom MCP servers, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
+  bio: "I build and run modern data platforms end to end: ingestion pipelines, dbt modeling on cloud data warehouses, product instrumentation, and BI delivery. My recent work makes that stack AI-ready with governed documentation, MCP tooling, and least-privilege natural language access to trusted data. Six-plus years across fintech, SaaS, digital media, and health tech, usually as the sole data hire.",
   availability: "Open to senior data & analytics engineering roles",
   location: "Dothan, AL, open to remote",
   email: "chase@chaseburkhalter.com",
@@ -28,7 +28,21 @@ export const IDENTITY = {
 // import from lib/content.ts (it runs before the TypeScript app compiles), so
 // it hardcodes the same path with a comment pointing back here; keep both in
 // sync when the resume filename changes.
-export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026.pdf"
+//
+// The filename carries a version suffix on purpose. The cache rule in
+// next.config.mjs allows a day of max-age plus a week of
+// stale-while-revalidate, so replacing the bytes at a stable URL would keep
+// serving the old resume to anyone who downloaded it recently. Bump the suffix
+// whenever the resume content changes so the new file is a new URL.
+//
+// Bumping it means updating all of these, since none of them can import this
+// constant:
+//   - next.config.mjs             (cache rule; runs before the app compiles)
+//   - lib/analytics-events.test.ts (pins the file_name in resume_downloaded)
+//   - TRACKING_PLAN.md            (event property example)
+//   - README.md                   (repo tree)
+//   - AGENTS.md, CLAUDE.md        (agent instructions; part of the contract)
+export const RESUME_FILE_NAME = "Chase_Burkhalter_Resume_2026-07.pdf"
 export const RESUME_PDF_PATH = `/resume/${RESUME_FILE_NAME}`
 
 export const NAV_ITEMS = [
@@ -92,7 +106,7 @@ export const IMPACT_STATS: ImpactStat[] = [
   { value: "2.4B", label: "Rows recovered, verified parity", sub: "13-day Fivetran incident response" },
   { value: "$100K+/yr", label: "BI licensing eliminated", sub: "Superset migration at Shortcut" },
   { value: "7", label: "Properties, one Amplitude taxonomy", sub: "Solo rollout at the AJC" },
-  { value: "3", label: "MCP servers in production use", sub: "Snowflake, Hightouch, Linear" },
+  { value: "6", label: "Systems wired for AI access via MCP", sub: "Snowflake, dbt, Looker, Hex, Hightouch, Linear" },
 ]
 
 // ============================================================================
@@ -143,7 +157,7 @@ export const FLAGSHIPS: Flagship[] = [
     title: "AI-Ready Context Platform",
     problem: "AI tools querying the warehouse inferred business logic from column names and got metrics wrong.",
     approach:
-      "Enabled dbt persist_docs so every model and column description lands in Snowflake as object comments, migrated 18 mart models to governed per-model YAML, parsed 58 LookML views into 90 AI context guides covering 539 measures, and generated 53 MetricFlow semantic models from the same source of truth.",
+      "Enabled dbt persist_docs so every model and column description lands in Snowflake as object comments, migrated all core mart models to governed per-model YAML, parsed 58 LookML views into 90 AI context guides covering 539 measures, and generated 53 MetricFlow semantic models from the same source of truth.",
     outcome:
       "Hex AI, Claude, and BI tools now read governed business definitions directly from the warehouse instead of guessing.",
     tags: ["dbt", "LookML", "MetricFlow", "Snowflake", "Hex AI"],
@@ -245,15 +259,15 @@ export interface AiEntry {
 
 export const AI_ENTRIES: AiEntry[] = [
   {
-    title: "Custom MCP Servers",
+    title: "MCP Tooling",
     description:
-      "Three FastMCP servers in production use: Snowflake with RSA key auth and automatic query limits, Hightouch for sync operations, and Linear for ticket workflows. Built to run real engineering work from Claude Code sessions, not as demos.",
+      "Configured and extended MCP servers across six production systems, from Snowflake with RSA key auth and automatic query limits to Hightouch sync operations and Linear ticket workflows. Set up for company-wide use to run real engineering work from Claude Code sessions, not as demos.",
     tags: ["FastMCP", "Python", "MCP"],
   },
   {
     title: "Governed Natural-Language Access",
     description:
-      "Designed the role model that connects Claude to production Snowflake for 13 teammates: read-only grants scoped to the mart schema, future grants so new models inherit access, and raw PII schemas excluded entirely.",
+      "Designed the role model that connects Claude to production Snowflake for non-technical teammates: read-only grants scoped to the mart schema, future grants so new models inherit access, and raw PII schemas excluded entirely.",
     tags: ["Snowflake", "Claude", "Access Control"],
   },
   {
@@ -303,10 +317,11 @@ export const EXPERIENCE: Role[] = [
     scope: "Sole analytics-engineering contractor on the core Analytics team: 84 of 90 assigned Linear issues completed and about 30 PRs merged across modeling, infrastructure, AI enablement, and incident response in four months.",
     bullets: [
       "Cut Snowflake credits on the 11 costliest dbt models by 80%, worth $12,312 a year, by converting full-refresh builds to incremental and archiving dead models. Schema spend held about 25% below baseline while query volume grew 58%.",
-      "Built the AI-ready analytics foundation: dbt persist_docs into Snowflake, 18 mart models migrated to governed per-model YAML, 90 LookML-derived context guides covering 539 measures, and 53 generated MetricFlow semantic models.",
-      "Designed least-privilege Claude access to production Snowflake for 13 teammates, read-only and scoped to the mart schema with raw PII schemas excluded.",
+      "Built the AI-ready analytics foundation: dbt persist_docs into Snowflake, all core mart models migrated to governed per-model YAML, 90 LookML-derived context guides covering 539 measures, and 53 generated MetricFlow semantic models.",
+      "Designed least-privilege Claude access to production Snowflake for non-technical teammates, read-only and scoped to the mart schema with raw PII schemas excluded. Helped stand up the MCP tooling behind it, configuring and extending servers across Snowflake, dbt, Looker, Hex, Hightouch, and Linear for company-wide use.",
+      "Led the Amplitude product-analytics revamp across both production projects, mobile app and web: audited the full event and user-property taxonomy, rebuilt event standards that had drifted between surfaces and lacked any link from goals to metrics to events, and partnered with engineering on a canonical-ID fix that ended cross-device double-counting.",
       "Led a 13-day Fivetran Aurora PostgreSQL incident to full recovery, sequencing resyncs of 2.4 billion rows across three connectors with verified row parity, then won a $1,000 billing credit in the follow-up usage dispute.",
-      "Owned source-to-mart integrations for Intercom, Amplitude, Iterable, and Google Search Console, covering ingestion, identity resolution, and modeling through production marts, and replaced a stale, agency-maintained affiliate-spend spreadsheet with a scheduled API-driven pipeline plus source-freshness monitoring that ended chronic stale data and false alerts.",
+      "Owned source-to-mart ingestion across the full first- and third-party data estate: production Aurora PostgreSQL app data, Stripe finance data, paid media (Meta, Google Ads, TikTok), and product and support tools (Amplitude, Intercom, Iterable, Shopify, Google Search Console), covering ingestion, identity resolution, and modeling through production marts. Replaced a stale, agency-maintained affiliate-spend spreadsheet with a scheduled API-driven pipeline plus source-freshness monitoring that ended chronic stale data and false alerts.",
     ],
     tags: ["dbt", "Snowflake", "Fivetran", "Python", "LookML", "Hex", "MCP"],
   },
@@ -389,7 +404,7 @@ export const SKILL_CATEGORIES: SkillCategory[] = [
   {
     label: "AI-Ready Data Systems",
     accent: "violet",
-    tools: ["MCP Server Development", "FastMCP", "Governed AI Data Access", "Context Engineering", "Claude", "Claude Code", "ChatGPT / Codex", "Hex AI (Context Studio)"],
+    tools: ["MCP Tooling & Integration", "FastMCP", "Governed AI Data Access", "Context Engineering", "Claude", "Claude Code", "ChatGPT / Codex", "Hex AI (Context Studio)"],
   },
   {
     label: "Product Analytics & Instrumentation",

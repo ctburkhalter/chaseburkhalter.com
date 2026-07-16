@@ -5,7 +5,7 @@ import type { MetadataRoute } from "next"
 // "today," which would defeat the field's purpose for crawlers entirely.
 // Bump these when a route's content changes meaningfully.
 const LAST_MODIFIED = {
-  home: new Date("2026-07-09"), // portfolio refresh, PR #17/#18 (resume sync)
+  home: new Date("2026-07-16"), // resume accuracy refresh, PR #23 (MCP/ingestion claims, Amplitude work, versioned resume)
   weather: new Date("2026-07-10"), // South Alabama Tornado Watch dashboard launch
 }
 

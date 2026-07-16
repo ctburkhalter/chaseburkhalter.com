@@ -165,7 +165,7 @@ proxy.ts                            # Node.js runtime security headers (renamed 
 public/
   headshot.jpg                      # Profile photo (hero section)
   resume/
-    Chase_Burkhalter_Resume_2026.pdf
+    Chase_Burkhalter_Resume_2026-07.pdf
 .claude/
   skills/
     verify/
